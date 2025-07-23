@@ -51,8 +51,8 @@ If you plan to use custom domains, ensure you have:
 
 Required DNS records:
 ```
-api-dev.levelupcsp.com    CNAME   your-api-app.azurewebsites.net
-mcp-dev.levelupcsp.com    CNAME   your-mcp-app.azurewebsites.net
+fabrikam-api-dev.levelupcsp.com    CNAME   fabrikam-api-dev-izbd.azurewebsites.net
+fabrikam-mcp-dev.levelupcsp.com    CNAME   fabrikam-mcp-dev-izbd.azurewebsites.net
 ```
 
 ---
@@ -195,8 +195,8 @@ if ($customDomain) {
     Write-Host "Setting up custom domains..." -ForegroundColor Cyan
     
     # Custom domain names
-    $apiCustomDomain = "api-$environment.$customDomain"
-    $mcpCustomDomain = "mcp-$environment.$customDomain"
+    $apiCustomDomain = "fabrikam-api-$environment.$customDomain"
+    $mcpCustomDomain = "fabrikam-mcp-$environment.$customDomain"
     
     Write-Host "API will be available at: https://$apiCustomDomain" -ForegroundColor Green
     Write-Host "MCP will be available at: https://$mcpCustomDomain" -ForegroundColor Green
@@ -212,6 +212,7 @@ if ($customDomain) {
     az webapp config hostname add `
       --webapp-name $mcpAppName `
       --resource-group $resourceGroup `
+
       --hostname $mcpCustomDomain
     
     # Enable HTTPS for custom domains (requires App Service Certificate or Let's Encrypt)
@@ -259,10 +260,19 @@ Create a service principal for GitHub Actions:
 az config set extension.use_dynamic_install=yes_without_prompt
 
 # Create service principal with contributor access (New method - recommended)
+# Note: --years parameter limits credential lifetime to comply with tenant policies
 $sp = az ad sp create-for-rbac `
   --name "sp-fabrikam-deploy" `
   --role "Contributor" `
-  --scopes "/subscriptions/$subscriptionId"
+  --scopes "/subscriptions/$subscriptionId" `
+  --years 1
+
+# Alternative: If 1 year is still too long, try without --years (uses default ~2 years)
+# and let Azure apply the tenant policy limit automatically
+# $sp = az ad sp create-for-rbac `
+#   --name "sp-fabrikam-deploy" `
+#   --role "Contributor" `
+#   --scopes "/subscriptions/$subscriptionId"
 
 # Save the JSON output - you'll need this for GitHub secrets
 echo $sp
@@ -546,6 +556,125 @@ $randomSuffix = "xyz9"
 $randomSuffix = -join ((65..90) + (97..122) | Get-Random -Count 6 | ForEach-Object {[char]$_})
 ```
 
+#### 6. **Service Principal Credential Lifetime Error**
+If you get "Credential lifetime exceeds the max value allowed" due to tenant policies:
+
+```bash
+# Method 1: Let tenant policy apply automatically (RECOMMENDED)
+# This creates the service principal with whatever credential lifetime your tenant allows
+# Option A: Resource group-wide Contributor access (less secure but simpler)
+# $resourceGroupScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev"
+# $sp = az ad sp create-for-rbac `
+#   --name "sp-fabrikam-deploy" `
+#   --role "Contributor" `
+#   --scopes $resourceGroupScope
+
+# Option B: Web app-specific Website Contributor access (MOST SECURE - RECOMMENDED)
+# First, get the web app resource IDs (after creating the web apps)
+$apiAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-api-dev-$randomSuffix"
+$mcpAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-mcp-dev-$randomSuffix"
+
+# Create service principal with Website Contributor role on specific web apps
+$sp = az ad sp create-for-rbac `
+  --name "sp-fabrikam-deploy" `
+  --role "Website Contributor" `
+  --scopes $apiAppScope $mcpAppScope `
+  --years 0
+
+# Method 2: Use Workload Identity Federation (RECOMMENDED for production)
+# This is more secure and doesn't have credential expiration issues
+# Step 1: Create service principal without credentials (web app scoped)
+$apiAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-api-dev-$randomSuffix"
+$mcpAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-mcp-dev-$randomSuffix"
+
+$sp = az ad sp create-for-rbac `
+  --name "sp-fabrikam-deploy" `
+  --role "Website Contributor" `
+  --scopes $apiAppScope $mcpAppScope `
+  --skip-assignment
+
+# Step 2: Configure federated credential for GitHub
+$spObject = $sp | ConvertFrom-Json
+az ad app federated-credential create `
+  --id $spObject.appId `
+  --parameters '{
+    "name": "github-deploy",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:davebirr/Fabrikam-Project:ref:refs/heads/main",
+    "description": "GitHub Actions deployment",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
+
+# Step 3: Assign role to service principal (web app scoped)
+$apiAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-api-dev-$randomSuffix"
+$mcpAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-mcp-dev-$randomSuffix"
+
+az role assignment create `
+  --assignee $spObject.appId `
+  --role "Website Contributor" `
+  --scope $apiAppScope
+
+az role assignment create `
+  --assignee $spObject.appId `
+  --role "Website Contributor" `
+  --scope $mcpAppScope
+
+# Method 3: Create app registration manually (if automated methods fail)
+# Step 1: Create app registration
+$app = az ad app create --display-name "sp-fabrikam-deploy" | ConvertFrom-Json
+
+# Step 2: Create service principal for the app
+$sp = az ad sp create --id $app.appId | ConvertFrom-Json
+
+# Step 3: Create a client secret (respects tenant policy)
+$credential = az ad app credential reset --id $app.appId | ConvertFrom-Json
+
+# Step 4: Assign role (web app scoped)
+$apiAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-api-dev-$randomSuffix"
+$mcpAppScope = "/subscriptions/$subscriptionId/resourceGroups/rg-fabrikam-dev/providers/Microsoft.Web/sites/fabrikam-mcp-dev-$randomSuffix"
+
+az role assignment create `
+  --assignee $sp.appId `
+  --role "Website Contributor" `
+  --scope $apiAppScope
+
+az role assignment create `
+  --assignee $sp.appId `
+  --role "Website Contributor" `
+  --scope $mcpAppScope
+
+# Format for GitHub secret (Method 3)
+$githubSecret = @{
+    clientId = $sp.appId
+    clientSecret = $credential.password
+    subscriptionId = $subscriptionId
+    tenantId = $credential.tenant
+    activeDirectoryEndpointUrl = "https://login.microsoftonline.com"
+    resourceManagerEndpointUrl = "https://management.azure.com/"
+    activeDirectoryGraphResourceId = "https://graph.windows.net/"
+    sqlManagementEndpointUrl = "https://management.core.windows.net:8443/"
+    galleryEndpointUrl = "https://gallery.azure.com/"
+    managementEndpointUrl = "https://management.core.windows.net/"
+}
+$githubSecret | ConvertTo-Json
+```
+
+**Important Notes:**
+- **Method 1** is simplest and works with most tenant policies
+- **Method 2** (Workload Identity Federation) is most secure and recommended for production
+- **Method 3** gives you more control over the creation process
+- **Website Contributor role** provides only the permissions needed for web app deployments
+- **Web app-specific scoping** limits access to only the specific web apps that need deployment
+- **Multiple environments**: Create separate service principals for each environment with environment-specific web app scopes
+- The `--years` parameter is not supported when tenant policies restrict credential lifetime
+
+**Permissions Comparison:**
+| Role | Scope | Can Deploy Code | Can Modify App Settings | Can Access Other Resources |
+|------|-------|----------------|------------------------|---------------------------|
+| **Contributor** | Subscription | ✅ | ✅ | ❌ **Full subscription access** |
+| **Contributor** | Resource Group | ✅ | ✅ | ❌ **All RG resources** |
+| **Website Contributor** | Web App | ✅ | ✅ | ✅ **Only specific web apps** |
+
 ### Debugging Steps:
 
 1. **Check workflow logs** in GitHub Actions
@@ -611,3 +740,362 @@ az monitor metrics alert create \
 - ✅ Enable application logs and monitoring
 
 This setup provides a robust, scalable deployment pipeline for your Fabrikam project that can grow with your needs while maintaining separation of concerns and proper CI/CD practices.
+
+---
+
+## 🌐 Azure Portal CI/CD Setup (Recommended for Tenant Restrictions)
+
+If you cannot create service principals manually due to tenant policies, the Azure portal provides an excellent alternative that handles authentication automatically.
+
+### 🎯 **Benefits of Portal-Based Setup:**
+- ✅ **No service principal creation required** - Azure handles authentication
+- ✅ **Automatic GitHub integration** - Sets up secrets and workflows
+- ✅ **Tenant policy compliance** - Works within organizational restrictions
+- ✅ **Visual configuration** - Easy setup through Azure portal UI
+- ✅ **Automatic updates** - Azure manages credentials and renewals
+
+### 📋 **Prerequisites:**
+1. **GitHub repository** with your Fabrikam project code
+2. **Azure App Services** already created (API and MCP web apps)
+3. **GitHub account** connected to your repository
+4. **Proper repository structure** with both services
+
+---
+
+## 🔧 **Step-by-Step Portal Setup**
+
+### **Step 1: Setup GitHub Repository Structure**
+
+Ensure your repository has the proper structure for monorepo deployment:
+
+```
+Fabrikam-Project/
+├── FabrikamApi/
+│   ├── src/
+│   │   ├── FabrikamApi.csproj
+│   │   ├── Program.cs
+│   │   └── Controllers/
+│   └── infra/
+└── FabrikamMcp/
+    ├── src/
+    │   ├── FabrikamMcp.csproj
+    │   ├── Program.cs
+    │   └── Tools/
+    └── infra/
+```
+
+### **Step 2: Configure FabrikamApi CI/CD**
+
+1. **Navigate to Azure Portal** → Your API App Service
+2. **Go to Deployment Center**:
+   - App Services → `fabrikam-api-dev-{suffix}` → Deployment Center (left menu)
+3. **Select Source**:
+   - **Source**: GitHub
+   - Click **Authorize** if not already connected
+   - **Organization**: Your GitHub username
+   - **Repository**: `Fabrikam-Project`
+   - **Branch**: `main`
+4. **Configure Build Provider**:
+   - **Build provider**: GitHub Actions
+   - The portal will automatically detect .NET and configure accordingly
+5. **Important**: The portal will create a workflow file, but it may not point to the correct folder for a monorepo
+
+### **Step 3: Configure FabrikamMcp CI/CD**
+
+1. **Navigate to Azure Portal** → Your MCP App Service  
+2. **Go to Deployment Center**:
+   - App Services → `fabrikam-mcp-dev-{suffix}` → Deployment Center (left menu)
+3. **Select Source**:
+   - **Source**: GitHub
+   - **Organization**: Your GitHub username (already connected)
+   - **Repository**: `Fabrikam-Project`
+   - **Branch**: `main`
+4. **Configure Build Provider**:
+   - **Build provider**: GitHub Actions
+
+### **Step 4: Fix Auto-Generated Workflows for Monorepo**
+
+Azure will create workflows in your repository, but they'll need to be modified for the monorepo structure:
+
+#### **Original Auto-Generated Workflow (needs fixing):**
+```yaml
+# .github/workflows/main_fabrikam-api-dev-xyz.yml
+- name: Build with dotnet
+  run: dotnet build --configuration Release    # ❌ Wrong - builds root
+  
+- name: dotnet publish
+  run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp    # ❌ Wrong - publishes root
+```
+
+#### **Fixed Workflow for FabrikamApi:**
+```yaml
+# .github/workflows/main_fabrikam-api-dev-xyz.yml
+- name: Build with dotnet
+  run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release    # ✅ Correct
+  
+- name: dotnet publish
+  run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp    # ✅ Correct
+```
+
+#### **Fixed Workflow for FabrikamMcp:**
+```yaml
+# .github/workflows/main_fabrikam-mcp-dev-xyz.yml
+- name: Build with dotnet
+  run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release    # ✅ Correct
+  
+- name: dotnet publish
+  run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp    # ✅ Correct
+```
+
+### **Step 5: Complete Workflow Modifications**
+
+You'll need to edit the auto-generated workflows in GitHub to work with the monorepo structure:
+
+#### **For FabrikamApi workflow:**
+1. **Go to your GitHub repository** → `.github/workflows/`
+2. **Edit the API workflow file** (e.g., `main_fabrikam-api-dev-xyz.yml`)
+3. **Update all dotnet commands** to include the correct path:
+   ```yaml
+   # Original (auto-generated)
+   - name: Build with dotnet
+     run: dotnet build --configuration Release
+   
+   - name: dotnet publish  
+     run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+   
+   # Fixed for monorepo
+   - name: Build with dotnet
+     run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
+   
+   - name: dotnet publish
+     run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+   ```
+
+4. **Add path-based triggers** to only deploy when API code changes:
+   ```yaml
+   on:
+     push:
+       branches:
+         - main
+       paths:
+         - 'FabrikamApi/**'    # Only deploy when API changes
+     workflow_dispatch:
+   ```
+
+#### **For FabrikamMcp workflow:**
+1. **Edit the MCP workflow file** (e.g., `main_fabrikam-mcp-dev-xyz.yml`)
+2. **Update all dotnet commands**:
+   ```yaml
+   # Fixed for monorepo
+   - name: Build with dotnet
+     run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
+   
+   - name: dotnet publish
+     run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+   ```
+
+3. **Add path-based triggers**:
+   ```yaml
+   on:
+     push:
+       branches:
+         - main
+       paths:
+         - 'FabrikamMcp/**'    # Only deploy when MCP changes
+     workflow_dispatch:
+   ```
+
+### **Step 6: Configure MCP to API Integration**
+
+After both services are set up, configure the MCP to connect to the API:
+
+1. **Navigate to MCP App Service** → Configuration → Application Settings
+2. **Add new setting**:
+   - **Name**: `FabrikamApi__BaseUrl`
+   - **Value**: `https://fabrikam-api-dev-{suffix}.azurewebsites.net`
+   - **Click Save**
+
+### **Step 7: Test the Setup**
+
+1. **Make a small change** to code in `FabrikamApi/src/`
+2. **Commit and push** to main branch
+3. **Check GitHub Actions** - should see the API workflow trigger
+4. **Make a change** to code in `FabrikamMcp/src/`
+5. **Commit and push** to main branch  
+6. **Check GitHub Actions** - should see the MCP workflow trigger
+
+---
+
+## 🎯 **Complete Example Workflow Files**
+
+### **FabrikamApi Workflow:**
+```yaml
+# .github/workflows/main_fabrikam-api-dev-xyz.yml
+name: Build and deploy ASP.Net Core app to Azure Web App - fabrikam-api-dev-xyz
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'FabrikamApi/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '9.0.x'
+          include-prerelease: true
+
+      - name: Build with dotnet
+        run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: .net-app
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'fabrikam-api-dev-xyz'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXXXXXXX }}
+          package: .
+          
+      - name: Health Check
+        run: |
+          sleep 30
+          curl -f https://fabrikam-api-dev-xyz.azurewebsites.net/health
+```
+
+### **FabrikamMcp Workflow:**
+```yaml
+# .github/workflows/main_fabrikam-mcp-dev-xyz.yml  
+name: Build and deploy ASP.Net Core app to Azure Web App - fabrikam-mcp-dev-xyz
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'FabrikamMcp/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '9.0.x'
+          include-prerelease: true
+
+      - name: Build with dotnet
+        run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v3
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: .net-app
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'fabrikam-mcp-dev-xyz'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_YYYYYYYYY }}
+          package: .
+          
+      - name: Health Check
+        run: |
+          sleep 30
+          curl -f https://fabrikam-mcp-dev-xyz.azurewebsites.net/status
+```
+
+---
+
+## 🔐 **Secrets Management with Portal Setup**
+
+### **Auto-Generated Secrets:**
+
+When you set up CI/CD through the portal, Azure automatically creates these secrets in your GitHub repository:
+
+| Secret Name | Purpose | Format |
+|-------------|---------|--------|
+| `AZUREAPPSERVICE_PUBLISHPROFILE_XXXXXXXXX` | API deployment credentials | XML publish profile |
+| `AZUREAPPSERVICE_PUBLISHPROFILE_YYYYYYYYY` | MCP deployment credentials | XML publish profile |
+
+These secrets contain the authentication information needed to deploy to your specific App Services.
+
+---
+
+## 🚀 **Quick Start Summary**
+
+### **For Portal-Based Setup:**
+
+1. ✅ **Create Azure resources** using the PowerShell script
+2. ✅ **Setup CI/CD in Azure Portal** for each App Service (basic setup)
+3. ✅ **Edit the auto-generated workflows** to work with monorepo structure
+4. ✅ **Add path-based triggers** for intelligent deployments
+5. ✅ **Configure MCP-to-API integration** via App Settings
+6. ✅ **Test deployments** by making code changes
+
+### **Key Points:**
+
+- ✅ **Portal creates basic workflows** but you need to modify them for monorepo
+- ✅ **No advanced settings needed** - just edit the generated YAML files
+- ✅ **Path-based triggers** ensure only relevant services deploy
+- ✅ **Works perfectly** with tenant policy restrictions
+- ✅ **Production-ready** CI/CD without manual service principal setup
+
+This approach is actually **easier and more secure** than manual setup, and gives you full control over the deployment process! 🎉
+
+---

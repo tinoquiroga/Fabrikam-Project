@@ -21,20 +21,129 @@ Single Repository (Monorepo)
 
 ---
 
-## 🛠️ Pre-Deployment Setup
+## � Prerequisites
+
+Before starting the deployment, ensure you have:
+
+- **Azure CLI** installed and updated to the latest version
+- **PowerShell** (Windows PowerShell or PowerShell Core)
+- **Azure subscription** with Contributor access
+- **GitHub account** for repository and CI/CD setup
+
+### Azure CLI Extensions
+
+The deployment scripts will automatically install required Azure CLI extensions using:
+```powershell
+az config set extension.use_dynamic_install=yes_without_prompt
+```
+
+This automatically installs extensions like:
+- `application-insights` - For Application Insights management
+- `log-analytics` - For Log Analytics workspace operations  
+- `webapp` - For enhanced App Service features
+
+### Custom Domain Setup
+
+If you plan to use custom domains, ensure you have:
+- **DNS control** for your domain (e.g., levelupcsp.com)
+- **SSL certificate** for HTTPS (App Service Certificate or Let's Encrypt)
+- **CNAME records** configured before running the deployment
+
+Required DNS records:
+```
+api-dev.levelupcsp.com    CNAME   your-api-app.azurewebsites.net
+mcp-dev.levelupcsp.com    CNAME   your-mcp-app.azurewebsites.net
+```
+
+---
+
+## �🛠️ Pre-Deployment Setup
 
 ### 1. Azure Resources Setup
 
-Create Azure resources for each environment:
+#### Option 1: Use the Automated Script (Recommended)
+
+Use the provided PowerShell script for easier deployment:
+
+```powershell
+# Basic deployment
+.\Deploy-Azure-Resources.ps1 -SubscriptionId "your-subscription-id"
+
+# With custom domain
+.\Deploy-Azure-Resources.ps1 `
+  -SubscriptionId "your-subscription-id" `
+  -Environment "dev" `
+  -CustomDomain "levelupcsp.com"
+
+# Production deployment
+.\Deploy-Azure-Resources.ps1 `
+  -SubscriptionId "your-subscription-id" `
+  -Environment "prod" `
+  -CustomDomain "levelupcsp.com" `
+  -Location "East US"
+```
+
+#### Option 2: Manual Step-by-Step
+
+Create Azure resources for each environment manually:
 
 ```powershell
 # Set variables
 $environment = "dev"  # or "staging", "production"
-$location = "East US"
+$location = "East US 2" # or "East US"
 $resourceGroup = "rg-fabrikam-$environment"
+$subscriptionId = "your-subscription-id-here"
+$customDomain = "levelupcsp.com"  # Replace with your custom domain
+
+# Generate random suffix for globally unique resource names (4 characters)
+$randomSuffix = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+Write-Host "Using random suffix: $randomSuffix" -ForegroundColor Green
+
+# Configure Azure CLI to auto-install extensions without prompting
+az config set extension.use_dynamic_install=yes_without_prompt
 
 # Create resource group
 az group create --name $resourceGroup --location $location
+
+# Create Log Analytics Workspace (shared for monitoring)
+az monitor log-analytics workspace create `
+  --resource-group $resourceGroup `
+  --workspace-name "log-fabrikam-$environment" `
+  --location $location
+
+# Get Log Analytics Workspace ID for Application Insights
+$workspaceId = az monitor log-analytics workspace show `
+  --resource-group $resourceGroup `
+  --workspace-name "log-fabrikam-$environment" `
+  --query id --output tsv
+
+# Create Application Insights instances
+az monitor app-insights component create `
+  --app "appi-fabrikam-api-$environment" `
+  --location $location `
+  --resource-group $resourceGroup `
+  --workspace $workspaceId `
+  --kind web `
+  --application-type web
+
+az monitor app-insights component create `
+  --app "appi-fabrikam-mcp-$environment" `
+  --location $location `
+  --resource-group $resourceGroup `
+  --workspace $workspaceId `
+  --kind web `
+  --application-type web
+
+# Get Application Insights connection strings
+$apiInsightsKey = az monitor app-insights component show `
+  --app "appi-fabrikam-api-$environment" `
+  --resource-group $resourceGroup `
+  --query connectionString --output tsv
+
+$mcpInsightsKey = az monitor app-insights component show `
+  --app "appi-fabrikam-mcp-$environment" `
+  --resource-group $resourceGroup `
+  --query connectionString --output tsv
 
 # Create App Service Plans
 az appservice plan create `
@@ -47,18 +156,98 @@ az appservice plan create `
   --resource-group $resourceGroup `
   --sku B1 --is-linux
 
-# Create Web Apps
+# Create Web Apps with random suffixes for global uniqueness
+$apiAppName = "fabrikam-api-$environment-$randomSuffix"
+$mcpAppName = "fabrikam-mcp-$environment-$randomSuffix"
+
+Write-Host "Creating API app: $apiAppName" -ForegroundColor Yellow
 az webapp create `
-  --name "fabrikam-api-$environment" `
+  --name $apiAppName `
   --resource-group $resourceGroup `
   --plan "plan-fabrikam-api-$environment" `
   --runtime "DOTNETCORE:9.0"
 
+Write-Host "Creating MCP app: $mcpAppName" -ForegroundColor Yellow
 az webapp create `
-  --name "fabrikam-mcp-$environment" `
+  --name $mcpAppName `
   --resource-group $resourceGroup `
   --plan "plan-fabrikam-mcp-$environment" `
   --runtime "DOTNETCORE:9.0"
+
+# Configure Application Insights for Web Apps
+az webapp config appsettings set `
+  --name $apiAppName `
+  --resource-group $resourceGroup `
+  --settings "APPLICATIONINSIGHTS_CONNECTION_STRING=$apiInsightsKey" `
+             "ApplicationInsightsAgent_EXTENSION_VERSION=~3" `
+             "ASPNETCORE_ENVIRONMENT=$environment"
+
+az webapp config appsettings set `
+  --name $mcpAppName `
+  --resource-group $resourceGroup `
+  --settings "APPLICATIONINSIGHTS_CONNECTION_STRING=$mcpInsightsKey" `
+             "ApplicationInsightsAgent_EXTENSION_VERSION=~3" `
+             "ASPNETCORE_ENVIRONMENT=$environment" `
+             "FabrikamApi__BaseUrl=https://$apiAppName.azurewebsites.net"
+
+# Configure custom domains (optional - requires DNS setup)
+if ($customDomain) {
+    Write-Host "Setting up custom domains..." -ForegroundColor Cyan
+    
+    # Custom domain names
+    $apiCustomDomain = "api-$environment.$customDomain"
+    $mcpCustomDomain = "mcp-$environment.$customDomain"
+    
+    Write-Host "API will be available at: https://$apiCustomDomain" -ForegroundColor Green
+    Write-Host "MCP will be available at: https://$mcpCustomDomain" -ForegroundColor Green
+    
+    # Add custom domains (DNS must be configured first)
+    Write-Host "Adding custom domain for API..." -ForegroundColor Yellow
+    az webapp config hostname add `
+      --webapp-name $apiAppName `
+      --resource-group $resourceGroup `
+      --hostname $apiCustomDomain
+    
+    Write-Host "Adding custom domain for MCP..." -ForegroundColor Yellow
+    az webapp config hostname add `
+      --webapp-name $mcpAppName `
+      --resource-group $resourceGroup `
+      --hostname $mcpCustomDomain
+    
+    # Enable HTTPS for custom domains (requires App Service Certificate or Let's Encrypt)
+    Write-Host "Enabling HTTPS for custom domains..." -ForegroundColor Yellow
+    az webapp config ssl bind `
+      --certificate-thumbprint "your-certificate-thumbprint" `
+      --ssl-type SNI `
+      --name $apiAppName `
+      --resource-group $resourceGroup
+    
+    az webapp config ssl bind `
+      --certificate-thumbprint "your-certificate-thumbprint" `
+      --ssl-type SNI `
+      --name $mcpAppName `
+      --resource-group $resourceGroup
+    
+    # Update MCP app settings to use custom API domain
+    az webapp config appsettings set `
+      --name $mcpAppName `
+      --resource-group $resourceGroup `
+      --settings "FabrikamApi__BaseUrl=https://$apiCustomDomain"
+}
+
+# Display final URLs
+Write-Host "`n=== Deployment Complete ===" -ForegroundColor Green
+Write-Host "API App Name: $apiAppName" -ForegroundColor Cyan
+Write-Host "MCP App Name: $mcpAppName" -ForegroundColor Cyan
+Write-Host "`nDefault URLs:" -ForegroundColor White
+Write-Host "  API: https://$apiAppName.azurewebsites.net" -ForegroundColor Yellow
+Write-Host "  MCP: https://$mcpAppName.azurewebsites.net" -ForegroundColor Yellow
+
+if ($customDomain) {
+    Write-Host "`nCustom URLs (after DNS setup):" -ForegroundColor White
+    Write-Host "  API: https://api-$environment.$customDomain" -ForegroundColor Green
+    Write-Host "  MCP: https://mcp-$environment.$customDomain" -ForegroundColor Green
+}
 ```
 
 ### 2. Service Principal Creation
@@ -66,15 +255,35 @@ az webapp create `
 Create a service principal for GitHub Actions:
 
 ```powershell
-# Create service principal with contributor access
+# Configure Azure CLI to auto-install extensions (if not already set)
+az config set extension.use_dynamic_install=yes_without_prompt
+
+# Create service principal with contributor access (New method - recommended)
 $sp = az ad sp create-for-rbac `
   --name "sp-fabrikam-deploy" `
   --role "Contributor" `
-  --scopes "/subscriptions/{your-subscription-id}" `
-  --sdk-auth
+  --scopes "/subscriptions/$subscriptionId"
 
 # Save the JSON output - you'll need this for GitHub secrets
 echo $sp
+
+# Alternative: If you need the old SDK format, manually format the output
+$spObject = $sp | ConvertFrom-Json
+$sdkFormat = @{
+    clientId = $spObject.appId
+    clientSecret = $spObject.password
+    subscriptionId = $subscriptionId
+    tenantId = $spObject.tenant
+    activeDirectoryEndpointUrl = "https://login.microsoftonline.com"
+    resourceManagerEndpointUrl = "https://management.azure.com/"
+    activeDirectoryGraphResourceId = "https://graph.windows.net/"
+    sqlManagementEndpointUrl = "https://management.core.windows.net:8443/"
+    galleryEndpointUrl = "https://gallery.azure.com/"
+    managementEndpointUrl = "https://management.core.windows.net/"
+}
+
+# Convert to JSON for GitHub secret
+$sdkFormat | ConvertTo-Json
 ```
 
 ### 3. GitHub Repository Setup
@@ -155,24 +364,32 @@ graph TD
 
 #### Development
 ```bash
-# App Names
-AZURE_API_WEBAPP_NAME=fabrikam-api-dev
-AZURE_MCP_WEBAPP_NAME=fabrikam-mcp-dev
+# App Names (with random suffix for uniqueness)
+AZURE_API_WEBAPP_NAME=fabrikam-api-dev-{randomSuffix}
+AZURE_MCP_WEBAPP_NAME=fabrikam-mcp-dev-{randomSuffix}
 
-# URLs
-API_URL=https://fabrikam-api-dev.azurewebsites.net
-MCP_URL=https://fabrikam-mcp-dev.azurewebsites.net
+# Default URLs
+API_URL=https://fabrikam-api-dev-{randomSuffix}.azurewebsites.net
+MCP_URL=https://fabrikam-mcp-dev-{randomSuffix}.azurewebsites.net
+
+# Custom Domain URLs (if configured)
+API_CUSTOM_URL=https://api-dev.levelupcsp.com
+MCP_CUSTOM_URL=https://mcp-dev.levelupcsp.com
 ```
 
 #### Production
 ```bash
-# App Names  
-AZURE_API_WEBAPP_NAME=fabrikam-api-prod
-AZURE_MCP_WEBAPP_NAME=fabrikam-mcp-prod
+# App Names (with random suffix for uniqueness)
+AZURE_API_WEBAPP_NAME=fabrikam-api-prod-{randomSuffix}
+AZURE_MCP_WEBAPP_NAME=fabrikam-mcp-prod-{randomSuffix}
 
-# URLs
-API_URL=https://fabrikam-api-prod.azurewebsites.net
-MCP_URL=https://fabrikam-mcp-prod.azurewebsites.net
+# Default URLs
+API_URL=https://fabrikam-api-prod-{randomSuffix}.azurewebsites.net
+MCP_URL=https://fabrikam-mcp-prod-{randomSuffix}.azurewebsites.net
+
+# Custom Domain URLs (if configured)
+API_CUSTOM_URL=https://api.levelupcsp.com
+MCP_CUSTOM_URL=https://mcp.levelupcsp.com
 ```
 
 ---
@@ -301,6 +518,32 @@ az role assignment list --assignee {service-principal-client-id}
 
 # Check if resource group exists
 az group show --name rg-fabrikam-dev
+```
+
+#### 4. **Custom Domain Issues**
+```bash
+# Verify DNS configuration
+nslookup api-dev.levelupcsp.com
+
+# Check custom domain status
+az webapp config hostname list --webapp-name your-app-name --resource-group your-rg
+
+# Verify SSL certificate binding
+az webapp config ssl list --resource-group your-rg
+
+# Test custom domain access
+curl -I https://api-dev.levelupcsp.com/health
+```
+
+#### 5. **App Name Already Taken**
+If you get "The name 'your-app-name' is not available":
+```bash
+# The script generates random suffixes, but if still taken:
+# Manually set a different suffix
+$randomSuffix = "xyz9"
+
+# Or generate a new random suffix
+$randomSuffix = -join ((65..90) + (97..122) | Get-Random -Count 6 | ForEach-Object {[char]$_})
 ```
 
 ### Debugging Steps:

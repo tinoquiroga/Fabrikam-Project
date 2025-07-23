@@ -1,0 +1,129 @@
+### Fabrikam API Testing
+### Health Check
+GET https://localhost:7297/health
+
+### API Info
+GET https://localhost:7297/api/info
+
+###
+### CUSTOMERS
+###
+
+### Get all customers
+GET https://localhost:7297/api/customers
+
+### Get customers by region
+GET https://localhost:7297/api/customers?region=Pacific Northwest
+
+### Get customer by ID
+GET https://localhost:7297/api/customers/1
+
+###
+### PRODUCTS
+###
+
+### Get all products
+GET https://localhost:7297/api/products
+
+### Get products by category
+GET https://localhost:7297/api/products?category=SingleFamily
+
+### Get in-stock products
+GET https://localhost:7297/api/products?inStock=true
+
+### Get product by ID
+GET https://localhost:7297/api/products/1
+
+### Get inventory summary
+GET https://localhost:7297/api/products/inventory
+
+###
+### ORDERS
+###
+
+### Get all orders
+GET https://localhost:7297/api/orders
+
+### Get orders by status
+GET https://localhost:7297/api/orders?status=Pending
+
+### Get orders by region
+GET https://localhost:7297/api/orders?region=Pacific Northwest
+
+### Get order by ID
+GET https://localhost:7297/api/orders/1
+
+### Get sales analytics
+GET https://localhost:7297/api/orders/analytics
+
+### Create new order
+POST https://localhost:7297/api/orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 1,
+      "customOptions": "Standard finish"
+    }
+  ],
+  "shippingAddress": "123 New Home Street",
+  "shippingCity": "Seattle",
+  "shippingState": "WA",
+  "shippingZipCode": "98101",
+  "notes": "Rush delivery requested"
+}
+
+###
+### SUPPORT TICKETS
+###
+
+### Get all support tickets
+GET https://localhost:7297/api/supporttickets
+
+### Get tickets by status
+GET https://localhost:7297/api/supporttickets?status=Open
+
+### Get tickets by priority
+GET https://localhost:7297/api/supporttickets?priority=High
+
+### Get ticket by ID
+GET https://localhost:7297/api/supporttickets/1
+
+### Get support analytics
+GET https://localhost:7297/api/supporttickets/analytics
+
+### Create new support ticket
+POST https://localhost:7297/api/supporttickets
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "orderId": 1,
+  "subject": "Delivery delay question",
+  "description": "I was wondering about the status of my order and when I can expect delivery",
+  "priority": "Medium",
+  "category": "DeliveryIssue"
+}
+
+### Add note to ticket
+POST https://localhost:7297/api/supporttickets/1/notes
+Content-Type: application/json
+
+{
+  "note": "Customer called for update. Provided tracking information.",
+  "createdBy": "Support Agent",
+  "isInternal": false
+}
+
+### Update ticket status
+PATCH https://localhost:7297/api/supporttickets/1/status
+Content-Type: application/json
+
+{
+  "status": "InProgress",
+  "assignedTo": "John Smith",
+  "priority": "High"
+}

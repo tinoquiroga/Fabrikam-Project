@@ -1,0 +1,126 @@
+# FabrikamApi - CI/CD Pipeline
+# Deploys the business API to Azure App Service when changes are made to FabrikamApi/
+
+name: Deploy FabrikamApi
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'FabrikamApi/**'
+      - '.github/workflows/deploy-api.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'FabrikamApi/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+env:
+  AZURE_WEBAPP_NAME: fabrikam-api-${{ github.event.inputs.environment || 'dev' }}
+  AZURE_WEBAPP_PACKAGE_PATH: './FabrikamApi/src'
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛒 Checkout code
+      uses: actions/checkout@v4
+
+    - name: ⚙️ Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: 📦 Restore dependencies
+      run: dotnet restore ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/FabrikamApi.csproj
+
+    - name: 🔨 Build application
+      run: dotnet build ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/FabrikamApi.csproj --configuration Release --no-restore
+
+    - name: 🧪 Run tests
+      run: dotnet test ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/FabrikamApi.csproj --no-build --verbosity normal
+
+    - name: 📋 Publish application
+      run: dotnet publish ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/FabrikamApi.csproj --configuration Release --no-build --output ./publish
+
+    - name: 📤 Upload artifact for deployment
+      uses: actions/upload-artifact@v4
+      with:
+        name: fabrikam-api
+        path: ./publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment: 
+      name: ${{ github.event.inputs.environment || 'development' }}
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+    - name: 📥 Download artifact from build job
+      uses: actions/download-artifact@v4
+      with:
+        name: fabrikam-api
+
+    - name: 🔐 Login to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: 🚀 Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        slot-name: 'Production'
+        package: .
+
+    - name: ✅ Verify deployment
+      run: |
+        echo "🎉 FabrikamApi deployed successfully!"
+        echo "🌐 Application URL: ${{ steps.deploy-to-webapp.outputs.webapp-url }}"
+        echo "📊 Health Check: ${{ steps.deploy-to-webapp.outputs.webapp-url }}/health"
+        echo "📖 API Docs: ${{ steps.deploy-to-webapp.outputs.webapp-url }}/swagger"
+
+  health-check:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: 🏥 Wait for deployment to be ready
+      run: sleep 30
+
+    - name: 🔍 Health check
+      run: |
+        max_attempts=10
+        attempt=1
+        while [ $attempt -le $max_attempts ]; do
+          echo "Health check attempt $attempt/$max_attempts"
+          if curl -f -s "https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"; then
+            echo "✅ Health check passed!"
+            break
+          else
+            echo "❌ Health check failed, retrying in 15 seconds..."
+            sleep 15
+            attempt=$((attempt + 1))
+          fi
+        done
+        
+        if [ $attempt -gt $max_attempts ]; then
+          echo "💥 Health check failed after $max_attempts attempts"
+          exit 1
+        fi

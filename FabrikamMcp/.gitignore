@@ -1,0 +1,180 @@
+# FabrikamMcp specific .gitignore
+# This supplements the root .gitignore with MCP-specific patterns
+
+# .NET Core build artifacts
+bin/
+obj/
+publish/
+*.dll
+*.exe
+!tools/
+!tools/**
+
+# ASP.NET Core specific
+*.user
+launchSettings.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# User secrets
+UserSecrets/
+
+# Azure deployment
+.azure/
+# Except environment files needed for deployment
+!.azure/.env
+!.azure/*/.env
+
+# Bicep compiled ARM templates (auto-generated)
+infra/*.json
+!infra/*.parameters.json
+!infra/*.parameters.*.json
+
+# MCP Server specific
+# Log files
+logs/
+*.log
+mcp-server.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Model Context Protocol cache
+.mcp-cache/
+
+# Testing
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Documentation build
+_site/
+.jekyll-metadata
+
+# Local development
+local.settings.json
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# MCP client configurations (may contain sensitive data)
+mcp-client-config.json
+client-settings.json
+
+# IDE specific
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.vs/
+*.suo
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# NuGet packages (if using packages folder)
+packages/
+!packages/build/
+
+# Health check database
+healthchecksdb
+
+# Application Insights
+ApplicationInsights.config
+
+# Web publish profiles
+PublishProfiles/
+*.pubxml
+*.azurePubxml
+
+# Package files
+*.nupkg
+*.snupkg
+
+# Rider
+.idea/
+*.sln.iml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# Python (if any Python tools are used)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node.js (if any Node.js tools are used)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Tool-specific
+# MCP Inspector
+.mcp-inspector/
+
+# HTTP files with sensitive data
+*.http
+!*.template.http
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificate files
+*.pfx
+*.p12
+*.key
+*.crt
+*.cer
+
+# Azure Functions (if any)
+local.settings.json
+host.json
+proxies.json
+
+# Backup files
+*.backup
+*.bak
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code extensions
+*.vsix
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z

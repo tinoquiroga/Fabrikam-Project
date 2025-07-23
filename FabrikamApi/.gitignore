@@ -1,0 +1,114 @@
+# FabrikamApi specific .gitignore
+# This supplements the root .gitignore with API-specific patterns
+
+# Build artifacts
+bin/
+obj/
+publish/
+*.dll
+*.exe
+!tools/
+!tools/**
+
+# ASP.NET Core specific
+*.user
+launchSettings.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# User secrets
+UserSecrets/
+
+# Azure deployment
+.azure/
+# Except environment files needed for deployment
+!.azure/.env
+!.azure/*/.env
+
+# Bicep compiled templates
+infra/*.json
+!infra/*.parameters.json
+!infra/*.parameters.*.json
+
+# Logs
+logs/
+*.log
+
+# Entity Framework
+*.mdf
+*.ldf
+Migrations/
+
+# Testing
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Documentation build
+_site/
+.jekyll-metadata
+
+# API documentation
+api-docs/generated/
+
+# Local development
+local.settings.json
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE specific
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.vs/
+*.suo
+*.user
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# NuGet packages (if using packages folder)
+packages/
+!packages/build/
+
+# Azure Functions (if any)
+local.settings.json
+
+# Health check database
+healthchecksdb
+
+# Application Insights
+ApplicationInsights.config
+
+# Web publish profiles
+PublishProfiles/
+*.pubxml
+*.azurePubxml
+
+# Azure Web App publish settings
+*.azurePubxml
+
+# Package files
+*.nupkg
+*.snupkg
+
+# Rider
+.idea/
+*.sln.iml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini

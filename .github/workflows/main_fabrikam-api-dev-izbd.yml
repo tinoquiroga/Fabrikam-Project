@@ -7,6 +7,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'FabrikamApi/**'
+      - '.github/workflows/main_fabrikam-api-dev-izbd.yml'
   workflow_dispatch:
 
 jobs:
@@ -24,10 +27,10 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -62,4 +65,18 @@ jobs:
           app-name: 'fabrikam-api-dev-izbD'
           slot-name: 'Production'
           package: .
+          
+      - name: Health Check
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 30
+          
+          echo "Testing API health endpoint..."
+          curl -f https://fabrikam-api-dev-izbd.azurewebsites.net/health || {
+            echo "Health check failed - checking if service is starting..."
+            sleep 30
+            curl -f https://fabrikam-api-dev-izbd.azurewebsites.net/health
+          }
+          
+          echo "API deployment completed successfully!"
           

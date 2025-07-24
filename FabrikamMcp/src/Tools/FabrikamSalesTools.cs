@@ -16,8 +16,9 @@ public class FabrikamSalesTools
         _configuration = configuration;
     }
 
-    [McpServerTool, Description("Get all orders with optional filtering by status, region, and date range. Returns order details including customer info and items.")]
+    [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists.")]
     public async Task<string> GetOrders(
+        int? orderId = null,
         string? status = null,
         string? region = null,
         string? fromDate = null,
@@ -28,6 +29,27 @@ public class FabrikamSalesTools
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            
+            // If orderId is provided, get specific order details
+            if (orderId.HasValue)
+            {
+                var orderResponse = await _httpClient.GetAsync($"{baseUrl}/api/orders/{orderId.Value}");
+                
+                if (orderResponse.IsSuccessStatusCode)
+                {
+                    var order = await orderResponse.Content.ReadAsStringAsync();
+                    return $"Order details for ID {orderId.Value}:\n{order}";
+                }
+                
+                if (orderResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return $"Order with ID {orderId.Value} not found";
+                }
+                
+                return $"Error retrieving order {orderId.Value}: {orderResponse.StatusCode} - {orderResponse.ReasonPhrase}";
+            }
+            
+            // Build query parameters for order list
             var queryParams = new List<string>();
             
             if (!string.IsNullOrEmpty(status)) queryParams.Add($"status={Uri.EscapeDataString(status)}");
@@ -53,33 +75,6 @@ public class FabrikamSalesTools
         catch (Exception ex)
         {
             return $"Error retrieving orders: {ex.Message}";
-        }
-    }
-
-    [McpServerTool, Description("Get detailed information about a specific order by ID, including customer details and all order items.")]
-    public async Task<string> GetOrderById(int orderId)
-    {
-        try
-        {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/orders/{orderId}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var order = await response.Content.ReadAsStringAsync();
-                return $"Order details for ID {orderId}:\n{order}";
-            }
-            
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return $"Order with ID {orderId} not found";
-            }
-            
-            return $"Error retrieving order {orderId}: {response.StatusCode} - {response.ReasonPhrase}";
-        }
-        catch (Exception ex)
-        {
-            return $"Error retrieving order {orderId}: {ex.Message}";
         }
     }
 
@@ -111,12 +106,33 @@ public class FabrikamSalesTools
         }
     }
 
-    [McpServerTool, Description("Get all customers with optional filtering by region. Returns customer contact information and summary data.")]
-    public async Task<string> GetCustomers(string? region = null, int page = 1, int pageSize = 20)
+    [McpServerTool, Description("Get customers with optional filtering by region or specific customer ID. Use customerId for detailed customer info including order history and support tickets, or use region filter for customer lists.")]
+    public async Task<string> GetCustomers(int? customerId = null, string? region = null, int page = 1, int pageSize = 20)
     {
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            
+            // If customerId is provided, get specific customer details
+            if (customerId.HasValue)
+            {
+                var customerResponse = await _httpClient.GetAsync($"{baseUrl}/api/customers/{customerId.Value}");
+                
+                if (customerResponse.IsSuccessStatusCode)
+                {
+                    var customer = await customerResponse.Content.ReadAsStringAsync();
+                    return $"Customer details for ID {customerId.Value}:\n{customer}";
+                }
+                
+                if (customerResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return $"Customer with ID {customerId.Value} not found";
+                }
+                
+                return $"Error retrieving customer {customerId.Value}: {customerResponse.StatusCode} - {customerResponse.ReasonPhrase}";
+            }
+            
+            // Build query parameters for customer list
             var queryParams = new List<string>();
             
             if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
@@ -139,33 +155,6 @@ public class FabrikamSalesTools
         catch (Exception ex)
         {
             return $"Error retrieving customers: {ex.Message}";
-        }
-    }
-
-    [McpServerTool, Description("Get detailed customer information by ID including order history and support tickets.")]
-    public async Task<string> GetCustomerById(int customerId)
-    {
-        try
-        {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/customers/{customerId}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var customer = await response.Content.ReadAsStringAsync();
-                return $"Customer details for ID {customerId}:\n{customer}";
-            }
-            
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return $"Customer with ID {customerId} not found";
-            }
-            
-            return $"Error retrieving customer {customerId}: {response.StatusCode} - {response.ReasonPhrase}";
-        }
-        catch (Exception ex)
-        {
-            return $"Error retrieving customer {customerId}: {ex.Message}";
         }
     }
 }

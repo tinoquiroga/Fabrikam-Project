@@ -16,10 +16,12 @@ public class FabrikamInventoryTools
         _configuration = configuration;
     }
 
-    [McpServerTool, Description("Get all products with optional filtering by category, stock status, and price range. Returns product details including stock levels.")]
+    [McpServerTool, Description("Get products with optional filtering by category, stock status, price range, specific product ID, or low stock items. Use productId for detailed product info, lowStock=true for items at/below reorder level, or use filters for product lists.")]
     public async Task<string> GetProducts(
+        int? productId = null,
         string? category = null,
         bool? inStock = null,
+        bool lowStock = false,
         decimal? minPrice = null,
         decimal? maxPrice = null,
         int page = 1,
@@ -28,6 +30,41 @@ public class FabrikamInventoryTools
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            
+            // If productId is provided, get specific product details
+            if (productId.HasValue)
+            {
+                var productResponse = await _httpClient.GetAsync($"{baseUrl}/api/products/{productId.Value}");
+                
+                if (productResponse.IsSuccessStatusCode)
+                {
+                    var product = await productResponse.Content.ReadAsStringAsync();
+                    return $"Product details for ID {productId.Value}:\n{product}";
+                }
+                
+                if (productResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return $"Product with ID {productId.Value} not found";
+                }
+                
+                return $"Error retrieving product {productId.Value}: {productResponse.StatusCode} - {productResponse.ReasonPhrase}";
+            }
+            
+            // Handle low stock products request
+            if (lowStock)
+            {
+                var lowStockResponse = await _httpClient.GetAsync($"{baseUrl}/api/products/low-stock");
+                
+                if (lowStockResponse.IsSuccessStatusCode)
+                {
+                    var lowStockProducts = await lowStockResponse.Content.ReadAsStringAsync();
+                    return $"Products that are out of stock or running low (at or below reorder level):\n{lowStockProducts}";
+                }
+                
+                return $"Error retrieving low stock products: {lowStockResponse.StatusCode} - {lowStockResponse.ReasonPhrase}";
+            }
+            
+            // Build query parameters for product list
             var queryParams = new List<string>();
             
             if (!string.IsNullOrEmpty(category)) queryParams.Add($"category={Uri.EscapeDataString(category)}");
@@ -56,34 +93,7 @@ public class FabrikamInventoryTools
         }
     }
 
-    [McpServerTool, Description("Get detailed product information by ID including specifications, pricing, and current stock level.")]
-    public async Task<string> GetProductById(int productId)
-    {
-        try
-        {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/products/{productId}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var product = await response.Content.ReadAsStringAsync();
-                return $"Product details for ID {productId}:\n{product}";
-            }
-            
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return $"Product with ID {productId} not found";
-            }
-            
-            return $"Error retrieving product {productId}: {response.StatusCode} - {response.ReasonPhrase}";
-        }
-        catch (Exception ex)
-        {
-            return $"Error retrieving product {productId}: {ex.Message}";
-        }
-    }
-
-    [McpServerTool, Description("Get comprehensive inventory summary including total products, stock status, low stock items, and inventory value by category.")]
+    [McpServerTool, Description("Get comprehensive inventory operations including summary, stock analysis, and product availability checks. Use summary=true for inventory overview, or provide productIds and quantities to check availability for orders.")]
     public async Task<string> GetInventorySummary()
     {
         try
@@ -94,10 +104,74 @@ public class FabrikamInventoryTools
             if (response.IsSuccessStatusCode)
             {
                 var inventory = await response.Content.ReadAsStringAsync();
-                return $"Current inventory summary:\n{inventory}";
+    [McpServerTool, Description("Get comprehensive inventory operations including summary, stock analysis, and product availability checks. Use summary=true for inventory overview, or provide productIds and quantities to check availability for orders.")]
+    public async Task<string> GetInventory(bool summary = false, string? productIds = null, string? quantities = null)
+    {
+        try
+        {
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            
+            // Handle inventory summary request
+            if (summary)
+            {
+                var summaryResponse = await _httpClient.GetAsync($"{baseUrl}/api/products/inventory");
+                
+                if (summaryResponse.IsSuccessStatusCode)
+                {
+                    var inventory = await summaryResponse.Content.ReadAsStringAsync();
+                    return $"Current inventory summary:\n{inventory}";
+                }
+                
+                return $"Error retrieving inventory summary: {summaryResponse.StatusCode} - {summaryResponse.ReasonPhrase}";
             }
             
-            return $"Error retrieving inventory summary: {response.StatusCode} - {response.ReasonPhrase}";
+            // Handle product availability check
+            if (!string.IsNullOrEmpty(productIds) && !string.IsNullOrEmpty(quantities))
+            {
+                var productIdArray = productIds.Split(',').Select(id => int.Parse(id.Trim())).ToArray();
+                var quantityArray = quantities.Split(',').Select(q => int.Parse(q.Trim())).ToArray();
+
+                if (productIdArray.Length != quantityArray.Length)
+                {
+                    return "Error: Number of product IDs must match number of quantities";
+                }
+
+                var results = new List<string>();
+
+                for (int i = 0; i < productIdArray.Length; i++)
+                {
+                    var productId = productIdArray[i];
+                    var requestedQty = quantityArray[i];
+                    
+                    var response = await _httpClient.GetAsync($"{baseUrl}/api/products/{productId}");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var productJson = await response.Content.ReadFromJsonAsync<dynamic>();
+                        var productName = productJson?.GetProperty("name").GetString() ?? "Unknown";
+                        var currentStock = productJson?.GetProperty("stockQuantity").GetInt32() ?? 0;
+                        var available = currentStock >= requestedQty;
+                        
+                        results.Add($"Product ID {productId} ({productName}): Requested {requestedQty}, Available {currentStock} - {(available ? "✓ AVAILABLE" : "✗ INSUFFICIENT STOCK")}");
+                    }
+                    else
+                    {
+                        results.Add($"Product ID {productId}: Not found");
+                    }
+                }
+
+                return $"Product availability check results:\n{string.Join("\n", results)}";
+            }
+            
+            // Default: return basic inventory info
+            return "Please specify either summary=true for inventory overview, or provide productIds and quantities for availability check.";
+        }
+        catch (Exception ex)
+        {
+            return $"Error in inventory operation: {ex.Message}";
+        }
+    }
+}            return $"Error retrieving inventory summary: {response.StatusCode} - {response.ReasonPhrase}";
         }
         catch (Exception ex)
         {

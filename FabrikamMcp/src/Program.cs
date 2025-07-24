@@ -12,10 +12,7 @@ builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithTools<FabrikamSalesTools>()
     .WithTools<FabrikamInventoryTools>()
-    .WithTools<FabrikamCustomerServiceTools>()
-    // Keep some sample tools for demonstration
-    .WithTools<MultiplicationTool>()
-    .WithTools<TemperatureConverterTool>();
+    .WithTools<FabrikamCustomerServiceTools>();
 
 // Add CORS for HTTP transport support in browsers
 builder.Services.AddCors(options =>

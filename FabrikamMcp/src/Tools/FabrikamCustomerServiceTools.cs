@@ -16,19 +16,42 @@ public class FabrikamCustomerServiceTools
         _configuration = configuration;
     }
 
-    [McpServerTool, Description("Get all support tickets with optional filtering by status, priority, category, region, or assigned agent.")]
+    [McpServerTool, Description("Get support tickets with optional filtering by status, priority, category, region, assigned agent, or specific ticket ID. Use ticketId for detailed ticket info, or use filters for ticket lists. Set urgent=true for high/critical priority tickets.")]
     public async Task<string> GetSupportTickets(
+        int? ticketId = null,
         string? status = null,
         string? priority = null,
         string? category = null,
         string? region = null,
         string? assignedTo = null,
+        bool urgent = false,
         int page = 1,
         int pageSize = 20)
     {
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            
+            // If ticketId is provided, get specific ticket details
+            if (ticketId.HasValue)
+            {
+                var ticketResponse = await _httpClient.GetAsync($"{baseUrl}/api/supporttickets/{ticketId.Value}");
+                
+                if (ticketResponse.IsSuccessStatusCode)
+                {
+                    var ticket = await ticketResponse.Content.ReadAsStringAsync();
+                    return $"Support ticket details for ID {ticketId.Value}:\n{ticket}";
+                }
+                
+                if (ticketResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return $"Support ticket with ID {ticketId.Value} not found";
+                }
+                
+                return $"Error retrieving support ticket {ticketId.Value}: {ticketResponse.StatusCode} - {ticketResponse.ReasonPhrase}";
+            }
+            
+            // Build query parameters for ticket list
             var queryParams = new List<string>();
             
             if (!string.IsNullOrEmpty(status)) queryParams.Add($"status={Uri.EscapeDataString(status)}");
@@ -36,6 +59,13 @@ public class FabrikamCustomerServiceTools
             if (!string.IsNullOrEmpty(category)) queryParams.Add($"category={Uri.EscapeDataString(category)}");
             if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
             if (!string.IsNullOrEmpty(assignedTo)) queryParams.Add($"assignedTo={Uri.EscapeDataString(assignedTo)}");
+            
+            // Handle urgent tickets filter
+            if (urgent)
+            {
+                queryParams.Add("urgent=true");
+            }
+            
             queryParams.Add($"page={page}");
             queryParams.Add($"pageSize={pageSize}");
 
@@ -47,7 +77,8 @@ public class FabrikamCustomerServiceTools
                 var tickets = await response.Content.ReadAsStringAsync();
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
-                return $"Found {totalCount ?? "unknown"} total support tickets. Page {page} results:\n{tickets}";
+                var urgentText = urgent ? " urgent" : "";
+                return $"Found {totalCount ?? "unknown"} total{urgentText} support tickets. Page {page} results:\n{tickets}";
             }
             
             return $"Error retrieving support tickets: {response.StatusCode} - {response.ReasonPhrase}";
@@ -55,33 +86,6 @@ public class FabrikamCustomerServiceTools
         catch (Exception ex)
         {
             return $"Error retrieving support tickets: {ex.Message}";
-        }
-    }
-
-    [McpServerTool, Description("Get detailed support ticket information by ID including customer details, order information, and all conversation notes.")]
-    public async Task<string> GetSupportTicketById(int ticketId)
-    {
-        try
-        {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/supporttickets/{ticketId}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var ticket = await response.Content.ReadAsStringAsync();
-                return $"Support ticket details for ID {ticketId}:\n{ticket}";
-            }
-            
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                return $"Support ticket with ID {ticketId} not found";
-            }
-            
-            return $"Error retrieving support ticket {ticketId}: {response.StatusCode} - {response.ReasonPhrase}";
-        }
-        catch (Exception ex)
-        {
-            return $"Error retrieving support ticket {ticketId}: {ex.Message}";
         }
     }
 
@@ -186,41 +190,6 @@ public class FabrikamCustomerServiceTools
         catch (Exception ex)
         {
             return $"Error updating ticket {ticketId}: {ex.Message}";
-        }
-    }
-
-    [McpServerTool, Description("Get all open support tickets that require immediate attention (high/critical priority or overdue).")]
-    public async Task<string> GetUrgentTickets()
-    {
-        try
-        {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            
-            // Get high priority open tickets
-            var highPriorityResponse = await _httpClient.GetAsync($"{baseUrl}/api/supporttickets?status=Open&priority=High&pageSize=50");
-            var criticalPriorityResponse = await _httpClient.GetAsync($"{baseUrl}/api/supporttickets?status=Open&priority=Critical&pageSize=50");
-            
-            var results = new List<string>();
-            
-            if (highPriorityResponse.IsSuccessStatusCode)
-            {
-                var highPriorityTickets = await highPriorityResponse.Content.ReadAsStringAsync();
-                results.Add("HIGH PRIORITY OPEN TICKETS:");
-                results.Add(highPriorityTickets);
-            }
-            
-            if (criticalPriorityResponse.IsSuccessStatusCode)
-            {
-                var criticalPriorityTickets = await criticalPriorityResponse.Content.ReadAsStringAsync();
-                results.Add("\nCRITICAL PRIORITY OPEN TICKETS:");
-                results.Add(criticalPriorityTickets);
-            }
-            
-            return string.Join("\n", results);
-        }
-        catch (Exception ex)
-        {
-            return $"Error retrieving urgent tickets: {ex.Message}";
         }
     }
 }

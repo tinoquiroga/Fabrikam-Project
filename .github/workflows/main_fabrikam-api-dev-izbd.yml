@@ -30,22 +30,31 @@ jobs:
         run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ./publish
+        run: |
+          echo "Publishing FabrikamApi project..."
+          dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ./publish-api \
+            --no-build \
+            --verbosity normal \
+            /p:PublishSingleFile=false \
+            /p:PublishTrimmed=false
+          echo "Publish completed successfully"
 
       - name: Verify build output
         run: |
           echo "Build output contents:"
-          ls -la ./publish/
+          ls -la ./publish-api/
           echo "Looking for .runtimeconfig.json files:"
-          find ./publish/ -name "*.runtimeconfig.json" || echo "No .runtimeconfig.json files found"
+          find ./publish-api/ -name "*.runtimeconfig.json" || echo "No .runtimeconfig.json files found"
           echo "Looking for main DLL:"
-          find ./publish/ -name "FabrikamApi.dll" || echo "FabrikamApi.dll not found"
+          find ./publish-api/ -name "FabrikamApi.dll" || echo "FabrikamApi.dll not found"
+          echo "Checking for appsettings files (should only be API ones):"
+          find ./publish-api/ -name "appsettings*.json" -exec echo "Found: {}" \;
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app-api
-          path: ./publish
+          path: ./publish-api
 
   deploy:
     runs-on: ubuntu-latest

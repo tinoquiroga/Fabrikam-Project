@@ -15,7 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FabrikamApi\src\FabrikamApi.csproj" />
+    <ProjectReference Include="..\..\FabrikamApi\src\FabrikamApi.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime;contentFiles</ExcludeAssets>
+      <IncludeAssets>compile</IncludeAssets>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <CopyLocal>false</CopyLocal>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

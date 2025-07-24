@@ -30,22 +30,40 @@ jobs:
         run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ./publish
+        run: |
+          echo "Publishing FabrikamMcp project..."
+          dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ./publish-mcp \
+            --no-build \
+            --verbosity normal \
+            /p:PublishSingleFile=false \
+            /p:PublishTrimmed=false
+          echo "Publish completed successfully"
 
       - name: Verify build output
         run: |
           echo "Build output contents:"
-          ls -la ./publish/
+          ls -la ./publish-mcp/
           echo "Looking for .runtimeconfig.json files:"
-          find ./publish/ -name "*.runtimeconfig.json" || echo "No .runtimeconfig.json files found"
+          find ./publish-mcp/ -name "*.runtimeconfig.json" || echo "No .runtimeconfig.json files found"
           echo "Looking for main DLL:"
-          find ./publish/ -name "FabrikamMcp.dll" || echo "FabrikamMcp.dll not found"
+          find ./publish-mcp/ -name "FabrikamMcp.dll" || echo "FabrikamMcp.dll not found"
+          echo "Checking for appsettings files (should only be MCP ones):"
+          find ./publish-mcp/ -name "appsettings*.json" -exec echo "Found: {}" \;
+          echo "Verifying no duplicate API files:"
+          find ./publish-mcp/ -name "*FabrikamApi*" -exec echo "WARNING - API file found: {}" \; || echo "✅ No API files found in MCP publish"
+          if [ -f "./publish-mcp/appsettings.json" ]; then
+            echo "✅ MCP appsettings.json found"
+            echo "Content preview:"
+            head -5 "./publish-mcp/appsettings.json"
+          else
+            echo "❌ MCP appsettings.json not found"
+          fi
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app-mcp
-          path: ./publish
+          path: ./publish-mcp
 
   deploy:
     runs-on: ubuntu-latest

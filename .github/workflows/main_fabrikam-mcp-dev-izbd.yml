@@ -57,6 +57,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app-mcp
+          
+      - name: Verify deployment package
+        run: |
+          echo "Contents of deployment package:"
+          ls -la
+          echo "Runtime config files:"
+          find . -name "*.runtimeconfig.json" -type f
+          echo "DLL files:"
+          find . -name "*.dll" -type f
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -72,7 +81,15 @@ jobs:
           app-name: 'fabrikam-mcp-dev-izbD'
           slot-name: 'Production'
           package: .
-          startup-command: 'dotnet FabrikamMcp.dll'
+          
+      - name: Set startup command
+        run: |
+          az webapp config set --resource-group rg-fabrikam-dev-izbd --name fabrikam-mcp-dev-izbD --startup-file "dotnet FabrikamMcp.dll"
+          echo "Startup command set to: dotnet FabrikamMcp.dll"
+          
+          echo "Restarting app to apply startup command..."
+          az webapp restart --resource-group rg-fabrikam-dev-izbd --name fabrikam-mcp-dev-izbD
+          echo "App restarted successfully"
           
       - name: Health Check
         run: |

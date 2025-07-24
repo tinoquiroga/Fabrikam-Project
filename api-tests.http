@@ -1,0 +1,102 @@
+### Fabrikam API Testing Collection
+### Use this file with REST Client extension or similar tools
+
+# Variables
+@baseUrl = http://localhost:5235
+@prodBaseUrl = https://your-production-api.azurewebsites.net
+
+### Health Check
+GET {{baseUrl}}/api/info
+Accept: application/json
+
+### 
+### ORDERS ENDPOINTS
+###
+
+### Get all orders (basic)
+GET {{baseUrl}}/api/orders
+Accept: application/json
+
+### Get orders with pagination
+GET {{baseUrl}}/api/orders?page=1&pageSize=5
+Accept: application/json
+
+### Get orders with filters
+GET {{baseUrl}}/api/orders?status=pending&region=Southwest&fromDate=2025-01-01
+Accept: application/json
+
+### Get specific order
+GET {{baseUrl}}/api/orders/1
+Accept: application/json
+
+### Get sales analytics (THE CRITICAL ONE for MCP)
+GET {{baseUrl}}/api/orders/analytics
+Accept: application/json
+
+### Get sales analytics with date range
+GET {{baseUrl}}/api/orders/analytics?fromDate=2025-01-01&toDate=2025-12-31
+Accept: application/json
+
+###
+### CUSTOMERS ENDPOINTS
+###
+
+### Get all customers
+GET {{baseUrl}}/api/customers
+Accept: application/json
+
+### Get specific customer
+GET {{baseUrl}}/api/customers/1
+Accept: application/json
+
+###
+### PRODUCTS ENDPOINTS
+###
+
+### Get all products
+GET {{baseUrl}}/api/products
+Accept: application/json
+
+### Get specific product
+GET {{baseUrl}}/api/products/1
+Accept: application/json
+
+###
+### SUPPORT TICKETS ENDPOINTS
+###
+
+### Get all support tickets
+GET {{baseUrl}}/api/supporttickets
+Accept: application/json
+
+### Get support tickets with filters
+GET {{baseUrl}}/api/supporttickets?status=open&priority=high
+Accept: application/json
+
+### Get specific support ticket
+GET {{baseUrl}}/api/supporttickets/1
+Accept: application/json
+
+###
+### ERROR TESTING
+###
+
+### Test non-existent endpoint
+GET {{baseUrl}}/api/nonexistent
+Accept: application/json
+
+### Test invalid ID
+GET {{baseUrl}}/api/orders/999999
+Accept: application/json
+
+###
+### PRODUCTION TESTING (when deployed)
+###
+
+### Production analytics endpoint
+# GET {{prodBaseUrl}}/api/orders/analytics
+# Accept: application/json
+
+### Production health check
+# GET {{prodBaseUrl}}/api/info
+# Accept: application/json

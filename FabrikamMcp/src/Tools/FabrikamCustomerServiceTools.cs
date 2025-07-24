@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Net.Http.Json;
+using System.Text.Json;
 using ModelContextProtocol.Server;
+using FabrikamApi.DTOs;
 
 namespace FabrikamMcp.Tools;
 
@@ -17,7 +19,7 @@ public class FabrikamCustomerServiceTools
     }
 
     [McpServerTool, Description("Get support tickets with optional filtering by status, priority, category, region, assigned agent, or specific ticket ID. Use ticketId for detailed ticket info, or use filters for ticket lists. Set urgent=true for high/critical priority tickets. When called without parameters, returns active tickets requiring attention.")]
-    public async Task<string> GetSupportTickets(
+    public async Task<object> GetSupportTickets(
         int? ticketId = null,
         string? status = null,
         string? priority = null,
@@ -39,16 +41,70 @@ public class FabrikamCustomerServiceTools
                 
                 if (ticketResponse.IsSuccessStatusCode)
                 {
-                    var ticket = await ticketResponse.Content.ReadAsStringAsync();
-                    return $"Support ticket details for ID {ticketId.Value}:\n{ticket}";
+                    var ticketJson = await ticketResponse.Content.ReadAsStringAsync();
+                    var ticket = JsonSerializer.Deserialize<SupportTicketDetailDto>(ticketJson, new JsonSerializerOptions 
+                    { 
+                        PropertyNameCaseInsensitive = true 
+                    });
+
+                    return new
+                    {
+                        content = new object[]
+                        {
+                            new
+                            {
+                                type = "resource",
+                                resource = new
+                                {
+                                    uri = $"{baseUrl}/api/supporttickets/{ticketId.Value}",
+                                    name = $"Ticket #{ticket?.Id ?? ticketId.Value}",
+                                    description = $"Support ticket for {ticket?.Customer.Name ?? "customer"}: {ticket?.Title ?? "N/A"}",
+                                    mimeType = "application/json"
+                                }
+                            },
+                            new
+                            {
+                                type = "text",
+                                text = FormatTicketDetailText(ticket)
+                            }
+                        },
+                        ticketData = ticket,
+                        outputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                id = new { type = "integer", description = "Ticket ID" },
+                                ticketNumber = new { type = "string", description = "Ticket number" },
+                                status = new { type = "string", description = "Current ticket status" },
+                                priority = new { type = "string", description = "Ticket priority level" },
+                                customerInfo = new { type = "object", description = "Customer information" },
+                                resolutionDetails = new { type = "object", description = "Resolution information" }
+                            }
+                        }
+                    };
                 }
                 
                 if (ticketResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    return $"Support ticket with ID {ticketId.Value} not found";
+                    return new
+                    {
+                        error = new
+                        {
+                            code = 404,
+                            message = $"Support ticket with ID {ticketId.Value} not found"
+                        }
+                    };
                 }
                 
-                return $"Error retrieving support ticket {ticketId.Value}: {ticketResponse.StatusCode} - {ticketResponse.ReasonPhrase}";
+                return new
+                {
+                    error = new
+                    {
+                        code = (int)ticketResponse.StatusCode,
+                        message = $"Error retrieving support ticket {ticketId.Value}: {ticketResponse.StatusCode} - {ticketResponse.ReasonPhrase}"
+                    }
+                };
             }
             
             // Build query parameters for ticket list
@@ -85,31 +141,74 @@ public class FabrikamCustomerServiceTools
             
             if (response.IsSuccessStatusCode)
             {
-                var tickets = await response.Content.ReadAsStringAsync();
+                var ticketsJson = await response.Content.ReadAsStringAsync();
+                var tickets = JsonSerializer.Deserialize<SupportTicketInfoDto>(ticketsJson, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
-                // Build context-aware response message
-                var contextMessage = "";
-                if (string.IsNullOrEmpty(status) && string.IsNullOrEmpty(priority) && 
-                    string.IsNullOrEmpty(category) && string.IsNullOrEmpty(region) && 
-                    string.IsNullOrEmpty(assignedTo) && !urgent)
+                return new
                 {
-                    contextMessage = "Active tickets requiring attention (Open/In Progress status). ";
-                }
-                else
-                {
-                    var urgentText = urgent ? " urgent" : "";
-                    contextMessage = $"Filtered{urgentText} tickets. ";
-                }
-                
-                return $"{contextMessage}Found {totalCount ?? "unknown"} total support tickets. Page {page} results:\n{tickets}";
+                    content = new object[]
+                    {
+                        new
+                        {
+                            type = "resource",
+                            resource = new
+                            {
+                                uri = $"{baseUrl}/api/supporttickets{queryString}",
+                                name = "Support Tickets",
+                                description = GetTicketFilterDescription(status, priority, category, region, assignedTo, urgent),
+                                mimeType = "application/json"
+                            }
+                        },
+                        new
+                        {
+                            type = "text",
+                            text = FormatTicketListText(tickets, totalCount, page, status, priority, urgent)
+                        }
+                    },
+                    ticketsData = tickets,
+                    pagination = new
+                    {
+                        page = page,
+                        pageSize = pageSize,
+                        totalCount = totalCount
+                    },
+                    outputSchema = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            summary = new { type = "object", description = "Support ticket summary metrics" },
+                            byPriority = new { type = "array", description = "Tickets grouped by priority" },
+                            byCategory = new { type = "array", description = "Tickets grouped by category" },
+                            recentTickets = new { type = "array", description = "Recent ticket details" }
+                        }
+                    }
+                };
             }
             
-            return $"Error retrieving support tickets: {response.StatusCode} - {response.ReasonPhrase}";
+            return new
+            {
+                error = new
+                {
+                    code = (int)response.StatusCode,
+                    message = $"Error retrieving support tickets: {response.StatusCode} - {response.ReasonPhrase}"
+                }
+            };
         }
         catch (Exception ex)
         {
-            return $"Error retrieving support tickets: {ex.Message}";
+            return new
+            {
+                error = new
+                {
+                    code = 500,
+                    message = $"Error retrieving support tickets: {ex.Message}"
+                }
+            };
         }
     }
 
@@ -215,5 +314,171 @@ public class FabrikamCustomerServiceTools
         {
             return $"Error updating ticket {ticketId}: {ex.Message}";
         }
+    }
+
+    private static string FormatTicketDetailText(SupportTicketDetailDto? ticket)
+    {
+        if (ticket == null) return "Ticket details not available.";
+
+        return $"""
+            🎫 SUPPORT TICKET DETAILS
+            
+            🆔 Ticket Information
+            • ID: {ticket.Id}
+            • Status: {GetTicketStatusEmoji(ticket.Status)} {ticket.Status}
+            • Priority: {GetPriorityEmoji(ticket.Priority)} {ticket.Priority}
+            • Category: {ticket.Category}
+            • Created: {ticket.CreatedDate:MMM dd, yyyy HH:mm}
+            {(ticket.LastUpdated.HasValue ? $"• Last Updated: {ticket.LastUpdated:MMM dd, yyyy HH:mm}" : "")}
+            {(ticket.ResolvedDate.HasValue ? $"• Resolved: {ticket.ResolvedDate:MMM dd, yyyy HH:mm}" : "")}
+            
+            👤 Customer
+            • Name: {ticket.Customer.Name}
+            • Email: {ticket.Customer.Email}
+            {(!string.IsNullOrEmpty(ticket.Customer.Phone) ? $"• Phone: {ticket.Customer.Phone}" : "")}
+            
+            📋 Issue Details
+            • Title: {ticket.Title}
+            • Description: {ticket.Description}
+            
+            {(ticket.AssignedAgent != null ? $"""
+            👨‍💼 Assigned Agent
+            • Name: {ticket.AssignedAgent.Name}
+            • Email: {ticket.AssignedAgent.Email}
+            • Department: {ticket.AssignedAgent.Department ?? "General"}
+            
+            """ : "👨‍💼 Assigned Agent: Unassigned\n\n")}
+            
+            {(ticket.Resolution != null ? $"""
+            ✅ Resolution
+            • Resolution: {ticket.Resolution.Resolution}
+            • Resolved By: {ticket.Resolution.ResolvedBy.Name}
+            • Resolved Date: {ticket.Resolution.ResolvedDate:MMM dd, yyyy HH:mm}
+            {(ticket.Resolution.SatisfactionRating.HasValue ? $"• Satisfaction: {ticket.Resolution.SatisfactionRating}/5 ⭐" : "")}
+            {(!string.IsNullOrEmpty(ticket.Resolution.CustomerFeedback) ? $"• Feedback: {ticket.Resolution.CustomerFeedback}" : "")}
+            
+            """ : "")}
+            
+            {(ticket.RelatedInfo.ProductId.HasValue ? $"""
+            🔗 Related Information
+            • Product: {ticket.RelatedInfo.ProductName} (ID: {ticket.RelatedInfo.ProductId})
+            {(ticket.RelatedInfo.OrderId.HasValue ? $"• Order ID: {ticket.RelatedInfo.OrderId}" : "")}
+            
+            """ : "")}
+            """;
+    }
+
+    private static string FormatTicketListText(SupportTicketInfoDto? tickets, string? totalCount, int page, string? status, string? priority, bool urgent)
+    {
+        if (tickets == null) return "No support tickets found.";
+
+        var text = $"""
+            🎫 FABRIKAM SUPPORT TICKETS
+            
+            📊 Summary
+            • Total Tickets: {totalCount ?? "N/A"}
+            • Page: {page}
+            • Open: {tickets.Summary.OpenTickets}
+            • In Progress: {tickets.Summary.InProgressTickets}
+            • Resolved: {tickets.Summary.ResolvedTickets}
+            """;
+
+        // Add filter info if applied
+        var filters = GetAppliedTicketFilters(status, priority, urgent);
+        if (!string.IsNullOrEmpty(filters))
+        {
+            text += $"\n\n🔍 Applied Filters:\n{filters}";
+        }
+
+        // Show tickets by priority
+        if (tickets.Summary.ByPriority?.Any() == true)
+        {
+            text += "\n\n⚡ By Priority:";
+            foreach (var priorityGroup in tickets.Summary.ByPriority)
+            {
+                var emoji = GetPriorityEmoji(priorityGroup.Priority);
+                text += $"\n• {emoji} {priorityGroup.Priority}: {priorityGroup.Count} tickets";
+            }
+        }
+
+        // Show tickets by category
+        if (tickets.Summary.ByCategory?.Any() == true)
+        {
+            text += "\n\n📂 By Category:";
+            foreach (var categoryGroup in tickets.Summary.ByCategory.Take(5))
+            {
+                text += $"\n• {categoryGroup.Category}: {categoryGroup.Count} tickets";
+            }
+        }
+
+        // Show recent tickets if available
+        if (tickets.Tickets?.Any() == true)
+        {
+            text += "\n\n🕒 Recent Tickets:";
+            foreach (var ticket in tickets.Tickets.Take(8))
+            {
+                var statusEmoji = GetTicketStatusEmoji(ticket.Status);
+                var priorityEmoji = GetPriorityEmoji(ticket.Priority);
+                text += $"\n• #{ticket.Id}: {ticket.Title} {statusEmoji} {priorityEmoji}";
+            }
+            if (tickets.Tickets.Count > 8)
+            {
+                text += $"\n... and {tickets.Tickets.Count - 8} more tickets";
+            }
+        }
+
+        return text;
+    }
+
+    private static string GetTicketFilterDescription(string? status, string? priority, string? category, string? region, string? assignedTo, bool urgent)
+    {
+        var filters = new List<string>();
+        
+        if (!string.IsNullOrEmpty(status)) filters.Add($"Status: {status}");
+        if (!string.IsNullOrEmpty(priority)) filters.Add($"Priority: {priority}");
+        if (!string.IsNullOrEmpty(category)) filters.Add($"Category: {category}");
+        if (!string.IsNullOrEmpty(region)) filters.Add($"Region: {region}");
+        if (!string.IsNullOrEmpty(assignedTo)) filters.Add($"Assigned: {assignedTo}");
+        if (urgent) filters.Add("Urgent only");
+
+        return filters.Any() ? $"Filtered support tickets ({string.Join(", ", filters)})" : "All support tickets";
+    }
+
+    private static string GetAppliedTicketFilters(string? status, string? priority, bool urgent)
+    {
+        var filters = new List<string>();
+        
+        if (!string.IsNullOrEmpty(status)) filters.Add($"• Status: {status}");
+        if (!string.IsNullOrEmpty(priority)) filters.Add($"• Priority: {priority}");
+        if (urgent) filters.Add("• Urgent tickets only");
+
+        return filters.Any() ? string.Join("\n", filters) : "";
+    }
+
+    private static string GetTicketStatusEmoji(string status)
+    {
+        return status.ToLower() switch
+        {
+            "open" => "🔓",
+            "in progress" => "⚙️",
+            "inprogress" => "⚙️",
+            "resolved" => "✅",
+            "closed" => "🔒",
+            "on hold" => "⏸️",
+            "onhold" => "⏸️",
+            _ => "🎫"
+        };
+    }
+
+    private static string GetPriorityEmoji(string priority)
+    {
+        return priority.ToLower() switch
+        {
+            "critical" => "🔥",
+            "high" => "🔴",
+            "medium" => "🟡",
+            "low" => "🟢",
+            _ => "⚪"
+        };
     }
 }

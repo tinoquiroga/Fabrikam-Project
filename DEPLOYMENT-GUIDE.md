@@ -1099,3 +1099,45 @@ These secrets contain the authentication information needed to deploy to your sp
 This approach is actually **easier and more secure** than manual setup, and gives you full control over the deployment process! 🎉
 
 ---
+
+## 🔗 **Service Integration Configuration**
+
+### **MCP-API Connection Setup**
+
+The FabrikamMcp server consumes REST APIs from FabrikamApi. Configure this connection:
+
+#### **Environment Variable Configuration**
+The MCP server uses `FabrikamApi__BaseUrl` (note the double underscore for .NET configuration):
+
+**Azure Portal Configuration:**
+1. Navigate to MCP App Service → Configuration → Application Settings
+2. Add setting: `FabrikamApi__BaseUrl` = `https://fabrikam-api-dev-{suffix}.azurewebsites.net`
+3. Save and restart the app
+
+**Local Development:**
+```json
+// FabrikamMcp/src/appsettings.Development.json
+{
+  "FabrikamApi": {
+    "BaseUrl": "http://localhost:5000"
+  }
+}
+```
+
+#### **Deployment Sequence Best Practices**
+1. **Deploy FabrikamApi first** (dependency)
+2. **Configure MCP with API URL** (via App Settings)
+3. **Deploy FabrikamMcp** with proper configuration
+4. **Verify integration** with health checks
+
+#### **Validation Steps**
+```powershell
+# Check MCP can reach API
+$mcpStatus = Invoke-RestMethod "https://fabrikam-mcp-dev.azurewebsites.net/status"
+Write-Host "MCP connected to API: $($mcpStatus.ApiConnected)"
+
+# Test end-to-end integration
+curl https://fabrikam-mcp-dev.azurewebsites.net/mcp
+```
+
+---

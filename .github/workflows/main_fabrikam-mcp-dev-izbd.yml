@@ -7,6 +7,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'FabrikamMcp/**'
+      - '.github/workflows/main_fabrikam-mcp-dev-izbd.yml'
   workflow_dispatch:
 
 jobs:
@@ -24,15 +27,22 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+      - name: Verify build output
+        run: |
+          echo "Build output contents:"
+          ls -la ${{env.DOTNET_ROOT}}/myapp/
+          echo "Looking for .runtimeconfig.json files:"
+          find ${{env.DOTNET_ROOT}}/myapp/ -name "*.runtimeconfig.json"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
+          name: .net-app-mcp
           path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
@@ -46,7 +56,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: .net-app-mcp
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -62,4 +72,31 @@ jobs:
           app-name: 'fabrikam-mcp-dev-izbD'
           slot-name: 'Production'
           package: .
+          startup-command: 'dotnet FabrikamMcp.dll'
+          
+      - name: Health Check
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 30
+          
+          echo "Testing MCP status endpoint..."
+          echo "Trying to reach: https://fabrikam-mcp-dev-izbd.azurewebsites.net/status"
+          
+          # First, check if the app is responding at all
+          echo "Checking basic connectivity..."
+          curl -I https://fabrikam-mcp-dev-izbd.azurewebsites.net/ || echo "App not responding at root"
+          
+          # Try the status endpoint
+          echo "Testing status endpoint..."
+          curl -v https://fabrikam-mcp-dev-izbd.azurewebsites.net/status || {
+            echo "Status endpoint failed - trying again in 30 seconds..."
+            sleep 30
+            curl -v https://fabrikam-mcp-dev-izbd.azurewebsites.net/status || {
+              echo "Status endpoint still failing - checking app logs..."
+              echo "Please check Azure App Service logs for startup errors"
+              exit 1
+            }
+          }
+          
+          echo "MCP deployment completed successfully!"
           

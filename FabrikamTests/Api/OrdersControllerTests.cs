@@ -6,6 +6,7 @@ using FabrikamApi.DTOs;
 
 namespace FabrikamTests.Api;
 
+[Trait("Category", "Api")]
 public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;

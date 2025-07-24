@@ -10,6 +10,7 @@ using FabrikamApi.DTOs;
 
 namespace FabrikamTests.Mcp;
 
+[Trait("Category", "Mcp")]
 public class FabrikamSalesToolsTests
 {
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;

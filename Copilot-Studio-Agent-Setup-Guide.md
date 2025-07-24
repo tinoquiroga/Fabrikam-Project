@@ -223,11 +223,15 @@ Create specific topics for common business scenarios:
 - **IMPORTANT**: Set Base URL to `/mcp` (standard MCP protocol endpoint)
 - Test the connector connection from Power Apps
 
-**"RequestFailure" or "notFound" Errors**
-- This typically indicates an incorrect Base URL configuration
-- Ensure Base URL is set to `/mcp` for proper MCP protocol compliance
-- Verify the MCP server is responding at: `https://fabrikam-mcp-dev.levelupcsp.com/status`
-- Test MCP endpoint directly: `https://fabrikam-mcp-dev.levelupcsp.com/mcp`
+**"LimitTools" or "Limiting number of tools to 15" Errors**
+- Copilot Studio has a maximum limit of 15 tools per custom connector
+- The Fabrikam MCP server has been optimized to provide 10 consolidated tools (well under the limit)
+- **Consolidated tools include**:
+  - **Sales**: GetOrders (includes order details by ID), GetCustomers (includes customer details by ID), GetSalesAnalytics
+  - **Inventory**: GetProducts (includes product details, low stock filtering), GetInventory (summary and availability checks)
+  - **Customer Service**: GetSupportTickets (includes ticket details, urgent filtering), AddTicketNote, UpdateTicketStatus, GetCustomerServiceAnalytics
+- If you still see the error, ensure you're using the latest version of the custom connector
+- Delete and recreate the custom connector if the tool count hasn't updated
 
 **No Data Returned**
 - The Fabrikam API simulates realistic business data

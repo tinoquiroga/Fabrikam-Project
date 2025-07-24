@@ -16,7 +16,7 @@ public class FabrikamSalesTools
         _configuration = configuration;
     }
 
-    [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists.")]
+    [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists. When called without parameters, returns recent orders.")]
     public async Task<string> GetOrders(
         int? orderId = null,
         string? status = null,
@@ -56,10 +56,20 @@ public class FabrikamSalesTools
             if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
             if (!string.IsNullOrEmpty(fromDate)) queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate)}");
             if (!string.IsNullOrEmpty(toDate)) queryParams.Add($"toDate={Uri.EscapeDataString(toDate)}");
+            
+            // If no filters provided, default to recent orders (last 30 days) to give meaningful results
+            if (string.IsNullOrEmpty(status) && string.IsNullOrEmpty(region) && 
+                string.IsNullOrEmpty(fromDate) && string.IsNullOrEmpty(toDate))
+            {
+                var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30).ToString("yyyy-MM-dd");
+                queryParams.Add($"fromDate={thirtyDaysAgo}");
+                fromDate = thirtyDaysAgo; // Set for response message
+            }
+            
             queryParams.Add($"page={page}");
             queryParams.Add($"pageSize={pageSize}");
 
-            var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+            var queryString = "?" + string.Join("&", queryParams);
             var response = await _httpClient.GetAsync($"{baseUrl}/api/orders{queryString}");
             
             if (response.IsSuccessStatusCode)
@@ -67,7 +77,13 @@ public class FabrikamSalesTools
                 var orders = await response.Content.ReadAsStringAsync();
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
-                return $"Found {totalCount ?? "unknown"} total orders. Page {page} results:\n{orders}";
+                var contextMessage = "";
+                if (!string.IsNullOrEmpty(fromDate) && string.IsNullOrEmpty(status) && string.IsNullOrEmpty(region))
+                {
+                    contextMessage = " (showing recent orders from last 30 days)";
+                }
+                
+                return $"Found {totalCount ?? "unknown"} total orders{contextMessage}. Page {page} results:\n{orders}";
             }
             
             return $"Error retrieving orders: {response.StatusCode} - {response.ReasonPhrase}";
@@ -106,7 +122,7 @@ public class FabrikamSalesTools
         }
     }
 
-    [McpServerTool, Description("Get customers with optional filtering by region or specific customer ID. Use customerId for detailed customer info including order history and support tickets, or use region filter for customer lists.")]
+    [McpServerTool, Description("Get customers with optional filtering by region or specific customer ID. Use customerId for detailed customer info including order history and support tickets, or use region filter for customer lists. When called without parameters, returns all customers with pagination.")]
     public async Task<string> GetCustomers(int? customerId = null, string? region = null, int page = 1, int pageSize = 20)
     {
         try
@@ -136,6 +152,8 @@ public class FabrikamSalesTools
             var queryParams = new List<string>();
             
             if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
+            
+            // Always include pagination parameters for predictable results
             queryParams.Add($"page={page}");
             queryParams.Add($"pageSize={pageSize}");
 
@@ -147,7 +165,8 @@ public class FabrikamSalesTools
                 var customers = await response.Content.ReadAsStringAsync();
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
-                return $"Found {totalCount ?? "unknown"} total customers. Page {page} results:\n{customers}";
+                var regionText = !string.IsNullOrEmpty(region) ? $" in {region} region" : "";
+                return $"Found {totalCount ?? "unknown"} total customers{regionText}. Page {page} results:\n{customers}";
             }
             
             return $"Error retrieving customers: {response.StatusCode} - {response.ReasonPhrase}";

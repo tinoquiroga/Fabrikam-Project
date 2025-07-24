@@ -16,7 +16,7 @@ public class FabrikamCustomerServiceTools
         _configuration = configuration;
     }
 
-    [McpServerTool, Description("Get support tickets with optional filtering by status, priority, category, region, assigned agent, or specific ticket ID. Use ticketId for detailed ticket info, or use filters for ticket lists. Set urgent=true for high/critical priority tickets.")]
+    [McpServerTool, Description("Get support tickets with optional filtering by status, priority, category, region, assigned agent, or specific ticket ID. Use ticketId for detailed ticket info, or use filters for ticket lists. Set urgent=true for high/critical priority tickets. When called without parameters, returns active tickets requiring attention.")]
     public async Task<string> GetSupportTickets(
         int? ticketId = null,
         string? status = null,
@@ -54,16 +54,27 @@ public class FabrikamCustomerServiceTools
             // Build query parameters for ticket list
             var queryParams = new List<string>();
             
-            if (!string.IsNullOrEmpty(status)) queryParams.Add($"status={Uri.EscapeDataString(status)}");
-            if (!string.IsNullOrEmpty(priority)) queryParams.Add($"priority={Uri.EscapeDataString(priority)}");
-            if (!string.IsNullOrEmpty(category)) queryParams.Add($"category={Uri.EscapeDataString(category)}");
-            if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
-            if (!string.IsNullOrEmpty(assignedTo)) queryParams.Add($"assignedTo={Uri.EscapeDataString(assignedTo)}");
-            
-            // Handle urgent tickets filter
-            if (urgent)
+            // If no filters provided, default to active tickets requiring attention
+            if (string.IsNullOrEmpty(status) && string.IsNullOrEmpty(priority) && 
+                string.IsNullOrEmpty(category) && string.IsNullOrEmpty(region) && 
+                string.IsNullOrEmpty(assignedTo) && !urgent)
             {
-                queryParams.Add("urgent=true");
+                // Default to open/in-progress tickets that need attention
+                queryParams.Add("status=Open,InProgress");
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(status)) queryParams.Add($"status={Uri.EscapeDataString(status)}");
+                if (!string.IsNullOrEmpty(priority)) queryParams.Add($"priority={Uri.EscapeDataString(priority)}");
+                if (!string.IsNullOrEmpty(category)) queryParams.Add($"category={Uri.EscapeDataString(category)}");
+                if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
+                if (!string.IsNullOrEmpty(assignedTo)) queryParams.Add($"assignedTo={Uri.EscapeDataString(assignedTo)}");
+                
+                // Handle urgent tickets filter
+                if (urgent)
+                {
+                    queryParams.Add("urgent=true");
+                }
             }
             
             queryParams.Add($"page={page}");
@@ -77,8 +88,21 @@ public class FabrikamCustomerServiceTools
                 var tickets = await response.Content.ReadAsStringAsync();
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
-                var urgentText = urgent ? " urgent" : "";
-                return $"Found {totalCount ?? "unknown"} total{urgentText} support tickets. Page {page} results:\n{tickets}";
+                // Build context-aware response message
+                var contextMessage = "";
+                if (string.IsNullOrEmpty(status) && string.IsNullOrEmpty(priority) && 
+                    string.IsNullOrEmpty(category) && string.IsNullOrEmpty(region) && 
+                    string.IsNullOrEmpty(assignedTo) && !urgent)
+                {
+                    contextMessage = "Active tickets requiring attention (Open/In Progress status). ";
+                }
+                else
+                {
+                    var urgentText = urgent ? " urgent" : "";
+                    contextMessage = $"Filtered{urgentText} tickets. ";
+                }
+                
+                return $"{contextMessage}Found {totalCount ?? "unknown"} total support tickets. Page {page} results:\n{tickets}";
             }
             
             return $"Error retrieving support tickets: {response.StatusCode} - {response.ReasonPhrase}";

@@ -39,8 +39,8 @@ if (app.Environment.IsDevelopment())
 // Enable CORS
 app.UseCors();
 
-// Map MCP endpoints
-app.MapMcp();
+// Map MCP endpoints to the standard /mcp path
+app.MapMcp("/mcp");
 
 // Add status and info endpoints
 app.MapGet("/status", () => new
@@ -60,6 +60,7 @@ app.MapGet("/status", () => new
     Environment = app.Environment.EnvironmentName
 });
 
+// Redirect root path to status for convenience
 app.MapGet("/", () => Results.Redirect("/status"));
 
 app.Run();

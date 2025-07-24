@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using FluentAssertions;
 using FabrikamApi.DTOs;
+using Xunit;
 
 namespace FabrikamTests.Api;
 
@@ -39,8 +40,19 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         var result = JsonDocument.Parse(content);
 
         // Assert
-        result.RootElement.TryGetProperty("data", out _).Should().BeTrue();
-        result.RootElement.TryGetProperty("pagination", out _).Should().BeTrue();
+        response.IsSuccessStatusCode.Should().BeTrue();
+        result.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
+        response.Headers.Contains("X-Total-Count").Should().BeTrue();
+        
+        // Validate order structure if orders exist
+        if (result.RootElement.GetArrayLength() > 0)
+        {
+            var firstOrder = result.RootElement[0];
+            firstOrder.TryGetProperty("id", out _).Should().BeTrue();
+            firstOrder.TryGetProperty("orderNumber", out _).Should().BeTrue();
+            firstOrder.TryGetProperty("status", out _).Should().BeTrue();
+            firstOrder.TryGetProperty("customer", out _).Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -63,7 +75,7 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         analytics!.Summary.Should().NotBeNull();
         analytics.ByStatus.Should().NotBeNull();
         analytics.ByRegion.Should().NotBeNull();
-        analytics.RecentTrends.Should().NotBeNull();
+        analytics.DailyTrends.Should().NotBeNull();
         
         analytics.Summary.TotalOrders.Should().BeGreaterOrEqualTo(0);
         analytics.Summary.TotalRevenue.Should().BeGreaterOrEqualTo(0);
@@ -98,7 +110,7 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
     [InlineData("/api/orders/analytics")]
     [InlineData("/api/customers")]
     [InlineData("/api/products")]
-    [InlineData("/api/support-tickets")]
+    [InlineData("/api/supporttickets")]
     [InlineData("/api/info")]
     public async Task AllEndpoints_ReturnSuccess(string endpoint)
     {
@@ -117,10 +129,10 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         var ordersContent = await ordersResponse.Content.ReadAsStringAsync();
         var ordersResult = JsonDocument.Parse(ordersContent);
         
-        if (ordersResult.RootElement.TryGetProperty("data", out var dataElement) && 
-            dataElement.GetArrayLength() > 0)
+        if (ordersResult.RootElement.ValueKind == JsonValueKind.Array && 
+            ordersResult.RootElement.GetArrayLength() > 0)
         {
-            var firstOrder = dataElement[0];
+            var firstOrder = ordersResult.RootElement[0];
             if (firstOrder.TryGetProperty("id", out var idElement))
             {
                 var orderId = idElement.GetInt32();

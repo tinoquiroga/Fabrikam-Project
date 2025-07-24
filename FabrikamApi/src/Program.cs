@@ -66,3 +66,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Make the implicit Program class public for testing
+public partial class Program { }

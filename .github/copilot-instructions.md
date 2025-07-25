@@ -7,7 +7,7 @@
 - **ALWAYS** work from workspace root: `c:\Users\davidb\1Repositories\Fabrikam-Project`
 - **NEVER** navigate into individual project folders
 - **USE** `--project` flag: `dotnet run --project FabrikamApi\src\FabrikamApi.csproj`
-- **TWO** separate servers: API (port 7241) + MCP (port 5000)
+- **TWO** separate servers: API (port 7297) + MCP (port 5000)
 
 ```powershell
 # ✅ CORRECT: Start both servers from workspace root

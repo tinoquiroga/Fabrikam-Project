@@ -2,7 +2,7 @@
 ### Use this file with REST Client extension or similar tools
 
 # Variables
-@baseUrl = http://localhost:5235
+@baseUrl = http://localhost:7296
 @prodBaseUrl = https://your-production-api.azurewebsites.net
 
 ### Health Check

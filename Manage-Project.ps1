@@ -75,7 +75,7 @@ function Show-Status {
     Write-Host ""
     
     if ($status.ApiRunning) {
-        Write-Success "🌐 API Server: Running (PID: $($status.ApiProcess.Id)) → https://localhost:7241"
+        Write-Success "🌐 API Server: Running (PID: $($status.ApiProcess.Id)) → https://localhost:7297"
     } else {
         Write-Warning "🌐 API Server: Not running"
     }
@@ -102,7 +102,7 @@ function Start-Projects {
         } else {
             Write-Info "🌐 Starting API Server..."
             Write-Host "Command: dotnet run --project $ApiProject" -ForegroundColor Gray
-            Write-Info "🚀 API will be available at: https://localhost:7241"
+            Write-Info "🚀 API will be available at: https://localhost:7297"
             Write-Warning "⚠️ This will start in the current terminal. Use Ctrl+C to stop."
             Write-Host ""
             Start-Process powershell -ArgumentList "-NoExit", "-Command", "dotnet run --project $ApiProject"
@@ -216,7 +216,7 @@ function Show-Help {
     .\Manage-Project.ps1 status              # Check status
 
 🌐 ENDPOINTS:
-    API:  https://localhost:7241 (HTTPS)
+    API:  https://localhost:7297 (HTTPS)
     MCP:  http://localhost:5000  (HTTP)
 
 📁 WORKSPACE ROOT:

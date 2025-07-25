@@ -13,7 +13,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$ApiBaseUrl = "https://localhost:7241"
+$ApiBaseUrl = "http://localhost:7296"
 $McpBaseUrl = "http://localhost:5000"  # Adjust based on MCP server port
 
 # Color functions

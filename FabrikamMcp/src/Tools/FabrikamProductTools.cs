@@ -29,7 +29,7 @@ public class FabrikamProductTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7241";
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
             
             // If productId is provided, get specific product details
             if (productId.HasValue)
@@ -228,7 +228,7 @@ public class FabrikamProductTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7241";
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
             
             // Get all products for analytics
             var queryParams = new List<string> { "pageSize=1000" }; // Get all products

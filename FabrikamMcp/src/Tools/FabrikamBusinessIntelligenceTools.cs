@@ -24,7 +24,7 @@ public class FabrikamBusinessIntelligenceTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7241";
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
             
             // Calculate date range based on timeframe
             var (fromDate, toDate) = GetDateRange(timeframe);
@@ -128,18 +128,19 @@ public class FabrikamBusinessIntelligenceTools
                 }
             }
             
+            // Initialize inventory variables
+            var totalProducts = 0;
+            var inStock = 0;
+            var lowStock = 0;
+            var outOfStock = 0;
+            var totalInventoryValue = 0m;
+            
             // Inventory Status
             if (productsTask.Result.IsSuccessStatusCode)
             {
                 var productsJson = await productsTask.Result.Content.ReadAsStringAsync();
                 using var productsDoc = JsonDocument.Parse(productsJson);
                 var productsArray = productsDoc.RootElement;
-                
-                var totalProducts = 0;
-                var inStock = 0;
-                var lowStock = 0;
-                var outOfStock = 0;
-                var totalInventoryValue = 0m;
                 
                 foreach (var product in productsArray.EnumerateArray())
                 {
@@ -157,7 +158,11 @@ public class FabrikamBusinessIntelligenceTools
                         case "Out of Stock": outOfStock++; break;
                     }
                 }
-                
+            }
+            
+            // Display inventory status if we have data
+            if (totalProducts > 0)
+            {
                 dashboardText += "\n## 📦 **Inventory Status**\n";
                 dashboardText += $"- **Total Products:** {totalProducts}\n";
                 dashboardText += $"- **In Stock:** {inStock} ({(double)inStock / totalProducts * 100:F1}%)\n";
@@ -291,7 +296,7 @@ public class FabrikamBusinessIntelligenceTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7241";
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
             
             // Fetch current data to analyze for alerts
             var productsTask = _httpClient.GetAsync($"{baseUrl}/api/products?pageSize=1000");

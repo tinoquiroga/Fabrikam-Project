@@ -1,5 +1,7 @@
 # 🏗️ Fabrikam Modular Homes - Business AI Demonstration Platform
 
+> **🚨 MONOREPO STRUCTURE**: This is a multi-project .NET solution. See `.github/MONOREPO-GUIDE.md` for complete development guidance.
+
 > **🤖 GitHub Copilot Notice**: This project uses **automated CI/CD** with GitHub Actions. Every code change triggers testing and deployment. See `.github/copilot-cicd-context.md` for full pipeline details.
 
 A comprehensive .NET-based business simulation platform designed for **Microsoft Copilot demonstrations**, **partner training**, and **AI business value showcases**. This project simulates Fabrikam, a fictional modular home builder, with realistic business operations and AI-powered tools.
@@ -12,6 +14,18 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 - **Showcase Model Context Protocol (MCP)** integration patterns
 
 ## ⚡ Quick Start
+
+### **Local Development** (Monorepo Structure)
+```powershell
+# 🚀 Start both servers from workspace root
+.\Manage-Project.ps1 start
+
+# 🧪 Test everything  
+.\Test-Development.ps1 -Quick
+
+# 📊 Check status
+.\Manage-Project.ps1 status
+```
 
 ### **Option 1: Use Deployed Services** (Recommended)
 - **API**: https://fabrikam-api-dev-izbd.azurewebsites.net

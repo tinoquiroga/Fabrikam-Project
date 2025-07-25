@@ -1,6 +1,25 @@
 # 🏗️ Fabrikam Project - Copilot Development Instructions
 
-## 📋 Project Overview
+## � **CRITICAL: Monorepo Structure Awareness**
+**This is a MONOREPO with multiple .NET projects. See `.github/MONOREPO-GUIDE.md` for complete details.**
+
+### 🎯 **Quick Monorepo Rules**
+- **ALWAYS** work from workspace root: `c:\Users\davidb\1Repositories\Fabrikam-Project`
+- **NEVER** navigate into individual project folders
+- **USE** `--project` flag: `dotnet run --project FabrikamApi\src\FabrikamApi.csproj`
+- **TWO** separate servers: API (port 7241) + MCP (port 5000)
+
+```powershell
+# ✅ CORRECT: Start both servers from workspace root
+dotnet run --project FabrikamApi\src\FabrikamApi.csproj  # Terminal 1
+dotnet run --project FabrikamMcp\src\FabrikamMcp.csproj  # Terminal 2
+
+# ❌ WRONG: Don't navigate into folders
+cd FabrikamApi\src
+dotnet run  # This breaks monorepo context
+```
+
+## �📋 Project Overview
 This is a .NET 9.0 business simulation platform with two main components:
 - **FabrikamApi**: ASP.NET Core Web API for modular homes business operations
 - **FabrikamMcp**: Model Context Protocol server enabling AI integration

@@ -553,18 +553,18 @@ function Test-ApiDataStructure {
 
 function Test-McpServerHealth {
     if ($Production) {
-        # In production mode, test MCP endpoint connectivity instead of local process
+        # In production mode, test MCP status endpoint instead of the protocol endpoint
         try {
             Write-Debug "Testing production MCP server connectivity..."
-            $mcpHealthUrl = "$McpBaseUrl/mcp"
+            $mcpStatusUrl = "$McpBaseUrl/status"
             
-            $response = Invoke-WebRequest -Uri $mcpHealthUrl -Method Head -TimeoutSec $TimeoutSeconds -ErrorAction SilentlyContinue
-            if ($response.StatusCode -eq 200) {
-                Add-TestResult "McpTests" "MCP Server Connectivity" $true "Production MCP server responding (Status: $($response.StatusCode))"
-                Write-Debug "Production MCP server is responding"
+            $response = Invoke-RestMethod -Uri $mcpStatusUrl -Method Get -TimeoutSec $TimeoutSeconds -ErrorAction SilentlyContinue
+            if ($response -and $response.status -eq "Ready") {
+                Add-TestResult "McpTests" "MCP Server Connectivity" $true "Production MCP server ready - Version: $($response.version), Environment: $($response.environment)"
+                Write-Debug "Production MCP server is ready and responding"
             }
             else {
-                Add-TestResult "McpTests" "MCP Server Connectivity" $false "Production MCP server returned status: $($response.StatusCode)"
+                Add-TestResult "McpTests" "MCP Server Connectivity" $false "Production MCP server status check failed - unexpected response"
             }
         }
         catch {

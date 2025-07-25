@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
+using FabrikamContracts.DTOs.Support;
 
 namespace FabrikamApi.Controllers;
 
@@ -22,7 +23,7 @@ public class SupportTicketsController : ControllerBase
     /// Get all support tickets with optional filtering
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetSupportTickets(
+    public async Task<ActionResult<IEnumerable<SupportTicketListItemDto>>> GetSupportTickets(
         string? status = null,
         string? priority = null,
         string? category = null,
@@ -44,7 +45,7 @@ public class SupportTicketsController : ControllerBase
                 // Handle multiple statuses separated by comma
                 var statuses = status.Split(',');
                 var statusEnums = new List<TicketStatus>();
-                
+
                 foreach (var s in statuses)
                 {
                     if (Enum.TryParse<TicketStatus>(s.Trim(), true, out var statusEnum))
@@ -52,7 +53,7 @@ public class SupportTicketsController : ControllerBase
                         statusEnums.Add(statusEnum);
                     }
                 }
-                
+
                 if (statusEnums.Any())
                 {
                     query = query.Where(t => statusEnums.Contains(t.Status));
@@ -98,24 +99,24 @@ public class SupportTicketsController : ControllerBase
                 .OrderByDescending(t => t.CreatedDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(t => new
+                .Select(t => new SupportTicketListItemDto
                 {
-                    t.Id,
-                    t.TicketNumber,
-                    t.Subject,
+                    Id = t.Id,
+                    TicketNumber = t.TicketNumber,
+                    Subject = t.Subject,
                     Status = t.Status.ToString(),
                     Priority = t.Priority.ToString(),
                     Category = t.Category.ToString(),
-                    Customer = new
+                    Customer = new SupportCustomerDto
                     {
-                        t.Customer.Id,
+                        Id = t.Customer.Id,
                         Name = $"{t.Customer.FirstName} {t.Customer.LastName}",
-                        t.Customer.Region
+                        Region = t.Customer.Region
                     },
-                    t.AssignedTo,
-                    t.CreatedDate,
-                    t.ResolvedDate,
-                    t.Region
+                    AssignedTo = t.AssignedTo,
+                    CreatedDate = t.CreatedDate,
+                    ResolvedDate = t.ResolvedDate,
+                    Region = t.Region
                 })
                 .ToListAsync();
 

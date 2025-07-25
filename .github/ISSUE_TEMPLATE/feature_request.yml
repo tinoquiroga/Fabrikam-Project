@@ -1,0 +1,116 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for the Fabrikam Project
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please fill out the sections below to help us understand your request.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component would this feature affect?
+      options:
+        - FabrikamApi (ASP.NET Core Web API)
+        - FabrikamMcp (Model Context Protocol Server)
+        - Infrastructure/Deployment
+        - Documentation
+        - Testing
+        - Developer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - New API Endpoint
+        - New MCP Tool
+        - Business Logic Enhancement
+        - Performance Improvement
+        - Security Enhancement
+        - Developer Tool/Script
+        - Documentation Improvement
+        - Testing Enhancement
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What use case does it address?
+      placeholder: Describe the problem or use case...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+      placeholder: Describe your proposed solution...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Describe any alternative solutions or features you've considered.
+
+  - type: textarea
+    id: business-value
+    attributes:
+      label: Business Value
+      description: |
+        How would this feature benefit the Fabrikam business simulation?
+        - What business scenarios would it enable?
+        - How would it improve the user experience?
+        - What learning opportunities would it create?
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Ideas
+      description: |
+        If you have ideas about how this could be implemented, please share them:
+        - API design considerations
+        - Database changes needed
+        - MCP tool integration
+        - Testing approach
+        - Documentation updates
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would be helpful
+        - High - Important for my use case
+        - Critical - Blocking my workflow
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: This feature aligns with the Fabrikam Project goals
+          required: true
+        - label: I would be willing to help implement this feature
+          required: false

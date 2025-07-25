@@ -1,35 +1,34 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace FabrikamApi.DTOs;
+namespace FabrikamContracts.DTOs.Orders;
 
 /// <summary>
-/// Sales analytics response with comprehensive business metrics
+/// Sales analytics response structure
+/// This DTO aligns exactly with OrdersController.GetSalesAnalytics() API response
 /// </summary>
 public class SalesAnalyticsDto
 {
     /// <summary>
-    /// Summary metrics for the requested period
+    /// Summary statistics - matches API property 'summary'
     /// </summary>
     public SalesSummaryDto Summary { get; set; } = new();
-    
+
     /// <summary>
-    /// Revenue and order breakdown by status
+    /// Status breakdown - matches API property 'byStatus'
     /// </summary>
     public List<SalesByStatusDto> ByStatus { get; set; } = new();
-    
+
     /// <summary>
-    /// Revenue and order breakdown by region
+    /// Region breakdown - matches API property 'byRegion'
     /// </summary>
     public List<SalesByRegionDto> ByRegion { get; set; } = new();
-    
+
     /// <summary>
-    /// Daily sales trends over the period - matches API property 'recentTrends'
+    /// Daily trends - matches API property 'recentTrends'
     /// </summary>
-    public List<DailySalesDto> RecentTrends { get; set; } = new();
+    public List<SalesTrendDto> RecentTrends { get; set; } = new();
 }
 
 /// <summary>
-/// Summary metrics for sales analytics
+/// Sales summary statistics
 /// </summary>
 public class SalesSummaryDto
 {
@@ -37,113 +36,98 @@ public class SalesSummaryDto
     /// Total number of orders in the period
     /// </summary>
     public int TotalOrders { get; set; }
-    
+
     /// <summary>
-    /// Total revenue amount
+    /// Total revenue for the period
     /// </summary>
     public decimal TotalRevenue { get; set; }
-    
+
     /// <summary>
     /// Average order value
     /// </summary>
     public decimal AverageOrderValue { get; set; }
-    
+
     /// <summary>
-    /// Date range for the analytics period
+    /// Period information
     /// </summary>
-    public PeriodDto Period { get; set; } = new();
+    public SalesPeriodDto Period { get; set; } = new();
 }
 
 /// <summary>
-/// Date period information
+/// Sales period definition
 /// </summary>
-public class PeriodDto
+public class SalesPeriodDto
 {
     /// <summary>
-    /// Start date of the period (ISO 8601 format)
+    /// Start date of the period (YYYY-MM-DD format)
     /// </summary>
-    [Required]
     public string FromDate { get; set; } = string.Empty;
-    
+
     /// <summary>
-    /// End date of the period (ISO 8601 format)
+    /// End date of the period (YYYY-MM-DD format)
     /// </summary>
-    [Required]
     public string ToDate { get; set; } = string.Empty;
 }
 
 /// <summary>
-/// Sales breakdown by order status
+/// Sales data grouped by order status
 /// </summary>
 public class SalesByStatusDto
 {
     /// <summary>
-    /// Order status (e.g., "Confirmed", "Delivered", "Cancelled")
+    /// Order status name
     /// </summary>
-    [Required]
     public string Status { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Number of orders with this status
     /// </summary>
     public int Count { get; set; }
-    
+
     /// <summary>
-    /// Total revenue for orders with this status
+    /// Total revenue from orders with this status
     /// </summary>
     public decimal Revenue { get; set; }
-    
-    /// <summary>
-    /// Percentage of total orders
-    /// </summary>
-    public decimal Percentage { get; set; }
 }
 
 /// <summary>
-/// Sales breakdown by region
+/// Sales data grouped by customer region
 /// </summary>
 public class SalesByRegionDto
 {
     /// <summary>
-    /// Region name (e.g., "West", "East", "South")
+    /// Region name
     /// </summary>
-    [Required]
     public string Region { get; set; } = string.Empty;
-    
+
     /// <summary>
-    /// Number of orders in this region
+    /// Number of orders from this region
     /// </summary>
     public int Count { get; set; }
-    
+
     /// <summary>
     /// Total revenue from this region
     /// </summary>
     public decimal Revenue { get; set; }
-    
-    /// <summary>
-    /// Percentage of total revenue
-    /// </summary>
-    public decimal Percentage { get; set; }
 }
 
 /// <summary>
 /// Daily sales trend data
 /// </summary>
-public class DailySalesDto
+public class SalesTrendDto
 {
     /// <summary>
-    /// Date for the sales data (ISO 8601 format)
+    /// Date in YYYY-MM-DD format
     /// </summary>
-    [Required]
     public string Date { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Number of orders on this date
     /// </summary>
-    public int OrderCount { get; set; }
-    
+    public int Orders { get; set; }
+
     /// <summary>
-    /// Revenue amount for this date
+    /// Total revenue on this date
     /// </summary>
     public decimal Revenue { get; set; }
 }

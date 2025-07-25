@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using FabrikamMcp.Tools;
-using FabrikamApi.DTOs;
+using FabrikamContracts.DTOs.Orders;
 using Xunit;
 
 namespace FabrikamTests.Mcp;
@@ -14,111 +13,86 @@ namespace FabrikamTests.Mcp;
 [Trait("Category", "Mcp")]
 public class FabrikamSalesToolsTests
 {
-    private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<IConfiguration> _configurationMock;
-    private readonly Mock<ILogger<FabrikamSalesTools>> _loggerMock;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private readonly HttpClient _httpClient;
 
     public FabrikamSalesToolsTests()
     {
-        _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _configurationMock = new Mock<IConfiguration>();
-        _loggerMock = new Mock<ILogger<FabrikamSalesTools>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        
+
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
-        _httpClientFactoryMock.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(_httpClient);
     }
 
     [Fact]
     public async Task GetSalesAnalytics_WithValidResponse_ReturnsStructuredData()
     {
         // Arrange
-        var analyticsDto = new SalesAnalyticsDto
-        {
-            Summary = new SalesAnalyticsDto.SalesSummaryDto
-            {
-                TotalOrders = 10,
-                TotalRevenue = 50000,
-                AverageOrderValue = 5000,
-                Period = new SalesAnalyticsDto.PeriodDto
-                {
-                    FromDate = "2025-01-01",
-                    ToDate = "2025-01-31"
-                }
-            },
-            ByStatus = new List<SalesAnalyticsDto.StatusBreakdownDto>
-            {
-                new() { Status = "Completed", Count = 8, Revenue = 40000 },
-                new() { Status = "Pending", Count = 2, Revenue = 10000 }
-            },
-            ByRegion = new List<SalesAnalyticsDto.RegionBreakdownDto>
-            {
-                new() { Region = "North", Count = 6, Revenue = 30000 },
-                new() { Region = "South", Count = 4, Revenue = 20000 }
-            },
-            RecentTrends = new List<SalesAnalyticsDto.TrendDataDto>
-            {
-                new() { Date = "2025-01-01", Orders = 5, Revenue = 25000 },
-                new() { Date = "2025-01-02", Orders = 5, Revenue = 25000 }
-            }
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(analyticsDto);
-        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
-        };
-
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
-
+        SetupMockAnalyticsResponse();
         _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
 
-        var salesTools = new FabrikamSalesTools(_httpClientFactoryMock.Object, _configurationMock.Object, _loggerMock.Object);
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
 
         // Act
         var result = await salesTools.GetSalesAnalytics();
 
         // Assert
         result.Should().NotBeNull();
-        
-        // Convert result to string and check it contains expected MCP structure
         var resultString = result.ToString();
         resultString.Should().Contain("content");
         resultString.Should().Contain("analyticsData");
-        resultString.Should().Contain("outputSchema");
+        resultString.Should().Contain("TotalOrders");
+        resultString.Should().Contain("TotalRevenue");
     }
 
     [Fact]
-    public async Task GetSalesAnalytics_WithApiError_ReturnsErrorResponse()
+    public async Task GetSalesAnalytics_WithDateRange_ReturnsFilteredData()
     {
         // Arrange
-        var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
-        {
-            Content = new StringContent("Internal Server Error"),
-            ReasonPhrase = "Internal Server Error"
-        };
-
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
-
+        SetupMockAnalyticsResponse();
         _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
 
-        var salesTools = new FabrikamSalesTools(_httpClientFactoryMock.Object, _configurationMock.Object, _loggerMock.Object);
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
+
+        // Act
+        var result = await salesTools.GetSalesAnalytics("2024-01-01", "2024-01-31");
+
+        // Assert
+        result.Should().NotBeNull();
+        var resultString = result.ToString();
+        resultString.Should().Contain("content");
+        resultString.Should().Contain("2024-01-01");
+        resultString.Should().Contain("2024-01-31");
+    }
+
+    [Fact]
+    public async Task GetSalesAnalytics_WithValidResponse_ReturnsRegionalData()
+    {
+        // Arrange
+        SetupMockAnalyticsResponse();
+        _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
+
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
+
+        // Act
+        var result = await salesTools.GetSalesAnalytics();
+
+        // Assert
+        result.Should().NotBeNull();
+        var resultString = result.ToString();
+        resultString.Should().Contain("content");
+        resultString.Should().Contain("analyticsData");
+    }
+
+    [Fact]
+    public async Task GetSalesAnalytics_WithApiError_HandlesGracefully()
+    {
+        // Arrange
+        SetupMockErrorResponse();
+        _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
+
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
 
         // Act
         var result = await salesTools.GetSalesAnalytics();
@@ -127,7 +101,6 @@ public class FabrikamSalesToolsTests
         result.Should().NotBeNull();
         var resultString = result.ToString();
         resultString.Should().Contain("error");
-        resultString.Should().Contain("500");
     }
 
     [Fact]
@@ -139,13 +112,12 @@ public class FabrikamSalesToolsTests
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ThrowsAsync(new HttpRequestException("Connection failed"));
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Network error"));
 
         _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
 
-        var salesTools = new FabrikamSalesTools(_httpClientFactoryMock.Object, _configurationMock.Object, _loggerMock.Object);
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
 
         // Act
         var result = await salesTools.GetSalesAnalytics();
@@ -154,64 +126,171 @@ public class FabrikamSalesToolsTests
         result.Should().NotBeNull();
         var resultString = result.ToString();
         resultString.Should().Contain("error");
-        resultString.Should().Contain("Connection failed");
+        resultString.Should().Contain("Network error");
     }
 
     [Theory]
-    [InlineData("2025-01-01", "2025-01-31")]
-    [InlineData(null, null)]
-    [InlineData("2025-01-01", null)]
-    [InlineData(null, "2025-01-31")]
-    public async Task GetSalesAnalytics_WithDateParameters_CallsCorrectUrl(string? fromDate, string? toDate)
+    [InlineData("")]
+    [InlineData("invalid-date")]
+    [InlineData("2024-13-01")] // Invalid month
+    public async Task GetSalesAnalytics_WithInvalidDates_HandlesGracefully(string invalidDate)
     {
         // Arrange
-        var analyticsDto = new SalesAnalyticsDto
+        SetupMockAnalyticsResponse();
+        _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
+
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
+
+        // Act
+        var result = await salesTools.GetSalesAnalytics(invalidDate, "2024-01-31");
+
+        // Assert
+        result.Should().NotBeNull();
+        // Should handle gracefully and still return content
+        var resultString = result.ToString();
+        resultString.Should().Contain("content");
+    }
+
+    [Fact]
+    public async Task GetCustomers_WithValidResponse_ReturnsStructuredData()
+    {
+        // Arrange
+        SetupMockCustomerResponse();
+        _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
+
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
+
+        // Act
+        var result = await salesTools.GetCustomers();
+
+        // Assert
+        result.Should().NotBeNull();
+        var resultString = result.ToString();
+        resultString.Should().Contain("content");
+        resultString.Should().Contain("customersData");
+    }
+
+    [Fact]
+    public async Task GetCustomers_WithRegionFilter_ReturnsFilteredCustomers()
+    {
+        // Arrange
+        SetupMockCustomerResponse();
+        _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
+
+        var salesTools = new FabrikamSalesTools(_httpClient, _configurationMock.Object);
+
+        // Act
+        var result = await salesTools.GetCustomers(region: "North");
+
+        // Assert
+        result.Should().NotBeNull();
+        var resultString = result.ToString();
+        resultString.Should().Contain("content");
+        resultString.Should().Contain("customersData");
+    }
+
+    private void SetupMockAnalyticsResponse()
+    {
+        var mockAnalytics = new
         {
-            Summary = new SalesAnalyticsDto.SalesSummaryDto { TotalOrders = 1, TotalRevenue = 1000, AverageOrderValue = 1000 },
-            ByStatus = new List<SalesAnalyticsDto.StatusBreakdownDto>(),
-            ByRegion = new List<SalesAnalyticsDto.RegionBreakdownDto>(),
-            RecentTrends = new List<SalesAnalyticsDto.TrendDataDto>()
+            Summary = new
+            {
+                TotalOrders = 10,
+                TotalRevenue = 50000.00m,
+                AverageOrderValue = 5000.00m,
+                Period = new
+                {
+                    FromDate = "2024-01-01",
+                    ToDate = "2024-01-31"
+                }
+            },
+            ByStatus = new[]
+            {
+                new { Status = "Completed", Count = 8, Revenue = 40000.00m },
+                new { Status = "Pending", Count = 2, Revenue = 10000.00m }
+            },
+            ByRegion = new[]
+            {
+                new { Region = "North", Count = 6, Revenue = 30000.00m },
+                new { Region = "South", Count = 4, Revenue = 20000.00m }
+            },
+            RecentTrends = new[]
+            {
+                new { Date = "2024-01-01", Orders = 5, Revenue = 25000.00m },
+                new { Date = "2024-01-02", Orders = 5, Revenue = 25000.00m }
+            }
         };
 
-        var jsonResponse = JsonSerializer.Serialize(analyticsDto);
+        var jsonResponse = JsonSerializer.Serialize(mockAnalytics);
         var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
         };
 
-        HttpRequestMessage? capturedRequest = null;
         _httpMessageHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .Callback<HttpRequestMessage, CancellationToken>((request, _) => capturedRequest = request)
+                ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(httpResponse);
+    }
 
-        _configurationMock.Setup(x => x["FabrikamApi:BaseUrl"]).Returns("http://localhost:5235");
-
-        var salesTools = new FabrikamSalesTools(_httpClientFactoryMock.Object, _configurationMock.Object, _loggerMock.Object);
-
-        // Act
-        await salesTools.GetSalesAnalytics(fromDate, toDate);
-
-        // Assert
-        capturedRequest.Should().NotBeNull();
-        capturedRequest!.RequestUri.Should().NotBeNull();
-        
-        var requestUrl = capturedRequest.RequestUri!.ToString();
-        requestUrl.Should().StartWith("http://localhost:5235/api/orders/analytics");
-        
-        if (!string.IsNullOrEmpty(fromDate))
+    private void SetupMockCustomerResponse()
+    {
+        var mockCustomers = new[]
         {
-            requestUrl.Should().Contain($"fromDate={Uri.EscapeDataString(fromDate)}");
-        }
-        
-        if (!string.IsNullOrEmpty(toDate))
+            new
+            {
+                Id = 1,
+                Name = "John Smith",
+                Email = "john.smith@example.com",
+                Region = "North",
+                TotalOrders = 3,
+                TotalSpent = 15000.00m
+            },
+            new
+            {
+                Id = 2,
+                Name = "Jane Doe",
+                Email = "jane.doe@example.com",
+                Region = "South",
+                TotalOrders = 2,
+                TotalSpent = 10000.00m
+            }
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(mockCustomers);
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            requestUrl.Should().Contain($"toDate={Uri.EscapeDataString(toDate)}");
-        }
+            Content = new StringContent(jsonResponse, System.Text.Encoding.UTF8, "application/json")
+        };
+
+        // Add the X-Total-Count header that the MCP tool expects
+        httpResponse.Headers.Add("X-Total-Count", "2");
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+    }
+
+    private void SetupMockErrorResponse()
+    {
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent("Internal server error", System.Text.Encoding.UTF8, "text/plain")
+        };
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
     }
 }

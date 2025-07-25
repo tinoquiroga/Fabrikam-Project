@@ -1,0 +1,77 @@
+name: ❓ Question or Discussion
+description: Ask a question about the Fabrikam Project
+title: "[QUESTION] "
+labels: ["question", "needs-response"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about the Fabrikam Project? We're here to help!
+        
+        **Note:** For general discussions, consider using [GitHub Discussions](../../discussions) instead.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What is your question about?
+      options:
+        - Getting Started/Setup
+        - API Usage
+        - MCP Tool Integration
+        - Development Workflow
+        - Testing Procedures
+        - Deployment/Azure
+        - Architecture/Design
+        - Contributing Guidelines
+        - Business Logic/Features
+        - Performance/Troubleshooting
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: Please ask your question clearly and provide as much context as possible.
+      placeholder: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: |
+        Please provide any additional context that might help us answer your question:
+        - What are you trying to achieve?
+        - What have you already tried?
+        - Any error messages or unexpected behavior?
+        - Links to relevant code or documentation
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      description: |
+        If your question is technical, please provide environment details:
+      value: |
+        - OS: [e.g. Windows 11, macOS 14, Ubuntu 22.04]
+        - .NET Version: [e.g. .NET 9.0]
+        - Development Environment: [e.g. VS Code, Visual Studio]
+        - Other relevant tools/versions
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: I have checked the project documentation
+          required: true
+        - label: This is a specific question (not a general discussion topic)
+          required: true

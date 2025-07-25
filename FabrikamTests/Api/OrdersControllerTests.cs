@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using FluentAssertions;
-using FabrikamApi.DTOs;
+using FabrikamContracts.DTOs.Orders;
 using Xunit;
 
 namespace FabrikamTests.Api;
@@ -43,7 +43,7 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         response.IsSuccessStatusCode.Should().BeTrue();
         result.RootElement.ValueKind.Should().Be(JsonValueKind.Array);
         response.Headers.Contains("X-Total-Count").Should().BeTrue();
-        
+
         // Validate order structure if orders exist
         if (result.RootElement.GetArrayLength() > 0)
         {
@@ -60,14 +60,14 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
     {
         // Act
         var response = await _client.GetAsync("/api/orders/analytics");
-        
+
         // Assert
         response.EnsureSuccessStatusCode();
-        
+
         var content = await response.Content.ReadAsStringAsync();
-        var analytics = JsonSerializer.Deserialize<SalesAnalyticsDto>(content, new JsonSerializerOptions 
-        { 
-            PropertyNameCaseInsensitive = true 
+        var analytics = JsonSerializer.Deserialize<SalesAnalyticsDto>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
         });
 
         // Validate structure matches what MCP tools expect
@@ -75,8 +75,8 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         analytics!.Summary.Should().NotBeNull();
         analytics.ByStatus.Should().NotBeNull();
         analytics.ByRegion.Should().NotBeNull();
-        analytics.DailyTrends.Should().NotBeNull();
-        
+        analytics.RecentTrends.Should().NotBeNull();
+
         analytics.Summary.TotalOrders.Should().BeGreaterOrEqualTo(0);
         analytics.Summary.TotalRevenue.Should().BeGreaterOrEqualTo(0);
         analytics.Summary.AverageOrderValue.Should().BeGreaterOrEqualTo(0);
@@ -91,14 +91,14 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
 
         // Act
         var response = await _client.GetAsync($"/api/orders/analytics?fromDate={fromDate}&toDate={toDate}");
-        
+
         // Assert
         response.EnsureSuccessStatusCode();
-        
+
         var content = await response.Content.ReadAsStringAsync();
-        var analytics = JsonSerializer.Deserialize<SalesAnalyticsDto>(content, new JsonSerializerOptions 
-        { 
-            PropertyNameCaseInsensitive = true 
+        var analytics = JsonSerializer.Deserialize<SalesAnalyticsDto>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
         });
 
         analytics.Should().NotBeNull();
@@ -128,8 +128,8 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
         var ordersResponse = await _client.GetAsync("/api/orders");
         var ordersContent = await ordersResponse.Content.ReadAsStringAsync();
         var ordersResult = JsonDocument.Parse(ordersContent);
-        
-        if (ordersResult.RootElement.ValueKind == JsonValueKind.Array && 
+
+        if (ordersResult.RootElement.ValueKind == JsonValueKind.Array &&
             ordersResult.RootElement.GetArrayLength() > 0)
         {
             var firstOrder = ordersResult.RootElement[0];
@@ -142,7 +142,7 @@ public class OrdersControllerTests : IClassFixture<WebApplicationFactory<Program
 
                 // Assert
                 response.EnsureSuccessStatusCode();
-                
+
                 var content = await response.Content.ReadAsStringAsync();
                 var order = JsonDocument.Parse(content);
                 order.RootElement.TryGetProperty("id", out _).Should().BeTrue();

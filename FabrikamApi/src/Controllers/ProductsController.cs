@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
+using FabrikamContracts.DTOs.Products;
 
 namespace FabrikamApi.Controllers;
 
@@ -22,7 +23,7 @@ public class ProductsController : ControllerBase
     /// Get all products with optional filtering
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetProducts(
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts(
         string? category = null,
         bool? inStock = null,
         decimal? minPrice = null,
@@ -45,8 +46,8 @@ public class ProductsController : ControllerBase
 
             if (inStock.HasValue)
             {
-                query = inStock.Value 
-                    ? query.Where(p => p.StockQuantity > 0) 
+                query = inStock.Value
+                    ? query.Where(p => p.StockQuantity > 0)
                     : query.Where(p => p.StockQuantity == 0);
             }
 
@@ -72,22 +73,22 @@ public class ProductsController : ControllerBase
                 .ThenBy(p => p.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new
+                .Select(p => new ProductDto
                 {
-                    p.Id,
-                    p.Name,
-                    p.ModelNumber,
+                    Id = p.Id,
+                    Name = p.Name,
+                    ModelNumber = p.ModelNumber,
                     Category = p.Category.ToString(),
-                    p.Price,
-                    p.StockQuantity,
-                    p.ReorderLevel,
-                    StockStatus = p.StockQuantity > p.ReorderLevel ? "In Stock" : 
+                    Price = p.Price,
+                    StockQuantity = p.StockQuantity,
+                    ReorderLevel = p.ReorderLevel,
+                    StockStatus = p.StockQuantity > p.ReorderLevel ? "In Stock" :
                                  p.StockQuantity > 0 ? "Low Stock" : "Out of Stock",
-                    p.Dimensions,
-                    p.SquareFeet,
-                    p.Bedrooms,
-                    p.Bathrooms,
-                    p.DeliveryDaysEstimate
+                    Dimensions = p.Dimensions,
+                    SquareFeet = p.SquareFeet.HasValue ? (int?)p.SquareFeet.Value : null,
+                    Bedrooms = p.Bedrooms.HasValue ? (int?)p.Bedrooms.Value : null,
+                    Bathrooms = p.Bathrooms.HasValue ? (int?)p.Bathrooms.Value : null,
+                    DeliveryDaysEstimate = p.DeliveryDaysEstimate
                 })
                 .ToListAsync();
 
@@ -129,7 +130,7 @@ public class ProductsController : ControllerBase
                 product.Price,
                 product.StockQuantity,
                 product.ReorderLevel,
-                StockStatus = product.StockQuantity > product.ReorderLevel ? "In Stock" : 
+                StockStatus = product.StockQuantity > product.ReorderLevel ? "In Stock" :
                              product.StockQuantity > 0 ? "Low Stock" : "Out of Stock",
                 product.Dimensions,
                 product.SquareFeet,

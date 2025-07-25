@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
+using FabrikamContracts.DTOs.Orders;
 
 namespace FabrikamApi.Controllers;
 
@@ -164,7 +165,7 @@ public class OrdersController : ControllerBase
     /// Get sales analytics and summary data
     /// </summary>
     [HttpGet("analytics")]
-    public async Task<ActionResult<object>> GetSalesAnalytics(
+    public async Task<ActionResult<SalesAnalyticsDto>> GetSalesAnalytics(
         DateTime? fromDate = null,
         DateTime? toDate = null)
     {
@@ -191,14 +192,14 @@ public class OrdersController : ControllerBase
 
             var orders = await query.ToListAsync();
 
-            var analytics = new
+            var analytics = new SalesAnalyticsDto
             {
-                Summary = new
+                Summary = new SalesSummaryDto
                 {
                     TotalOrders = orders.Count,
                     TotalRevenue = orders.Sum(o => o.Total),
                     AverageOrderValue = orders.Any() ? orders.Average(o => o.Total) : 0,
-                    Period = new
+                    Period = new SalesPeriodDto
                     {
                         FromDate = fromDate!.Value.ToString("yyyy-MM-dd"),
                         ToDate = toDate!.Value.ToString("yyyy-MM-dd")
@@ -206,31 +207,34 @@ public class OrdersController : ControllerBase
                 },
                 ByStatus = orders
                     .GroupBy(o => o.Status)
-                    .Select(g => new
+                    .Select(g => new SalesByStatusDto
                     {
                         Status = g.Key.ToString(),
                         Count = g.Count(),
                         Revenue = g.Sum(o => o.Total)
                     })
-                    .OrderByDescending(x => x.Count),
+                    .OrderByDescending(x => x.Count)
+                    .ToList(),
                 ByRegion = orders
                     .GroupBy(o => o.Customer.Region)
-                    .Select(g => new
+                    .Select(g => new SalesByRegionDto
                     {
                         Region = g.Key ?? "Unknown",
                         Count = g.Count(),
                         Revenue = g.Sum(o => o.Total)
                     })
-                    .OrderByDescending(x => x.Revenue),
+                    .OrderByDescending(x => x.Revenue)
+                    .ToList(),
                 RecentTrends = orders
                     .GroupBy(o => o.OrderDate.Date)
-                    .Select(g => new
+                    .Select(g => new SalesTrendDto
                     {
                         Date = g.Key.ToString("yyyy-MM-dd"),
                         Orders = g.Count(),
                         Revenue = g.Sum(o => o.Total)
                     })
                     .OrderBy(x => x.Date)
+                    .ToList()
             };
 
             return Ok(analytics);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
+using FabrikamContracts.DTOs.Customers;
 
 namespace FabrikamApi.Controllers;
 
@@ -22,7 +23,7 @@ public class CustomersController : ControllerBase
     /// Get all customers with optional filtering
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetCustomers(
+    public async Task<ActionResult<IEnumerable<CustomerListItemDto>>> GetCustomers(
         string? region = null,
         int page = 1,
         int pageSize = 20)
@@ -46,16 +47,16 @@ public class CustomersController : ControllerBase
                 .ThenBy(c => c.FirstName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(c => new
+                .Select(c => new CustomerListItemDto
                 {
-                    c.Id,
+                    Id = c.Id,
                     Name = $"{c.FirstName} {c.LastName}",
-                    c.Email,
-                    c.Phone,
-                    c.City,
-                    c.State,
-                    c.Region,
-                    c.CreatedDate,
+                    Email = c.Email,
+                    Phone = c.Phone,
+                    City = c.City,
+                    State = c.State,
+                    Region = c.Region,
+                    CreatedDate = c.CreatedDate,
                     OrderCount = c.Orders.Count(),
                     TotalSpent = c.Orders.Sum(o => o.Total)
                 })

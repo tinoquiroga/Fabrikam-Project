@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FabrikamApi.Services;
 
-public class DataSeedService
+public class DataSeedService : ISeedService
 {
     private readonly FabrikamDbContext _context;
     private readonly ILogger<DataSeedService> _logger;
@@ -304,7 +304,7 @@ public class DataSeedService
         {
             var customer = customers[random.Next(customers.Count)];
             var orderDate = DateTime.UtcNow.AddDays(-random.Next(1, 90));
-            
+
             var order = new Order
             {
                 CustomerId = customer.Id,
@@ -328,7 +328,7 @@ public class DataSeedService
             {
                 var product = products[random.Next(products.Count)];
                 var quantity = random.Next(1, 3);
-                
+
                 var orderItem = new OrderItem
                 {
                     ProductId = product.Id,
@@ -370,7 +370,7 @@ public class DataSeedService
 
         var customers = await _context.Customers.ToListAsync();
         var orders = await _context.Orders.ToListAsync();
-        
+
         var tickets = new List<SupportTicket>();
         var random = new Random();
 
@@ -390,7 +390,7 @@ public class DataSeedService
             var customer = customers[random.Next(customers.Count)];
             var createdDate = DateTime.UtcNow.AddDays(-random.Next(1, 60));
             var issue = sampleIssues[random.Next(sampleIssues.Length)];
-            
+
             var ticket = new SupportTicket
             {
                 TicketNumber = $"TKT{createdDate:yyyyMMdd}{(i + 1):D4}",
@@ -428,7 +428,7 @@ public class DataSeedService
 
         // Add some sample notes to tickets
         await _context.SaveChangesAsync(); // Save tickets first
-        
+
         var ticketNotes = new List<TicketNote>();
         foreach (var ticket in tickets.Take(10)) // Add notes to first 10 tickets
         {
@@ -437,7 +437,7 @@ public class DataSeedService
             {
                 var noteDate = ticket.CreatedDate.AddHours(random.Next(1, 48));
                 var isInternal = random.Next(0, 2) == 0;
-                
+
                 var note = new TicketNote
                 {
                     TicketId = ticket.Id,

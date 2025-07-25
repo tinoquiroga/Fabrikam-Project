@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "💬 GitHub Discussions"
+    url: "https://github.com/davebirr/Fabrikam-Project/discussions"
+    about: "For general questions, ideas, and community discussions"
+  - name: "📖 Project Documentation"
+    url: "https://github.com/davebirr/Fabrikam-Project#readme"
+    about: "Check our comprehensive documentation first"
+  - name: "🚀 Development Guide"
+    url: "https://github.com/davebirr/Fabrikam-Project/blob/main/DEVELOPMENT-WORKFLOW.md"
+    about: "Getting started with development"

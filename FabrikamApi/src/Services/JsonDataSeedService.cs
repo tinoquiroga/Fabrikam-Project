@@ -37,6 +37,7 @@ public class JsonDataSeedService : ISeedService
             await SeedProductsFromJson();
             await SeedCustomersFromJson();
             await SeedOrdersFromJson();
+            await SeedSupportTicketsFromJson();
 
             await _context.SaveChangesAsync();
             _logger.LogInformation("JSON-based database seeding completed successfully");
@@ -55,6 +56,7 @@ public class JsonDataSeedService : ISeedService
             _logger.LogInformation("Starting force re-seed of database...");
 
             // Clear existing data
+            _context.SupportTickets.RemoveRange(_context.SupportTickets);
             _context.Orders.RemoveRange(_context.Orders);
             _context.Customers.RemoveRange(_context.Customers);
             _context.Products.RemoveRange(_context.Products);
@@ -65,6 +67,7 @@ public class JsonDataSeedService : ISeedService
             await SeedProductsFromJson();
             await SeedCustomersFromJson();
             await SeedOrdersFromJson();
+            await SeedSupportTicketsFromJson();
 
             await _context.SaveChangesAsync();
             _logger.LogInformation("Force re-seed completed successfully");
@@ -232,6 +235,54 @@ public class JsonDataSeedService : ISeedService
         _context.OrderItems.AddRange(orderItems);
         _logger.LogInformation("Added {OrderCount} orders with {ItemCount} items from JSON seed data", orders.Count, orderItems.Count);
     }
+
+    private async Task SeedSupportTicketsFromJson()
+    {
+        var jsonPath = Path.Combine(_environment.ContentRootPath, "Data", "SeedData", "supporttickets.json");
+
+        if (!File.Exists(jsonPath))
+        {
+            _logger.LogWarning($"Support tickets JSON file not found at {jsonPath}");
+            return;
+        }
+
+        var json = await File.ReadAllTextAsync(jsonPath);
+        var supportTickets = JsonSerializer.Deserialize<List<SupportTicketSeedData>>(json, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+
+        if (supportTickets == null || !supportTickets.Any())
+        {
+            _logger.LogWarning("No support tickets found in JSON file");
+            return;
+        }
+
+        foreach (var ticketData in supportTickets)
+        {
+            var supportTicket = new SupportTicket
+            {
+                Id = ticketData.Id,
+                TicketNumber = ticketData.TicketNumber,
+                CustomerId = ticketData.CustomerId,
+                OrderId = ticketData.OrderId,
+                Subject = ticketData.Subject,
+                Description = ticketData.Description,
+                Status = (TicketStatus)ticketData.Status,
+                Priority = (TicketPriority)ticketData.Priority,
+                Category = (TicketCategory)ticketData.Category,
+                AssignedTo = ticketData.AssignedTo,
+                CreatedDate = DateTime.Parse(ticketData.CreatedDate),
+                ResolvedDate = !string.IsNullOrEmpty(ticketData.ResolvedDate) ? DateTime.Parse(ticketData.ResolvedDate) : null,
+                LastUpdated = DateTime.Parse(ticketData.LastUpdated),
+                Region = ticketData.Region
+            };
+
+            _context.SupportTickets.Add(supportTicket);
+        }
+
+        _logger.LogInformation($"Seeded {supportTickets.Count} support tickets");
+    }
 }
 
 // Data transfer objects for JSON deserialization
@@ -287,4 +338,22 @@ public class OrderItemSeedData
     public int ProductId { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+}
+
+public class SupportTicketSeedData
+{
+    public int Id { get; set; }
+    public string TicketNumber { get; set; } = "";
+    public int CustomerId { get; set; }
+    public int? OrderId { get; set; }
+    public string Subject { get; set; } = "";
+    public string Description { get; set; } = "";
+    public int Status { get; set; }
+    public int Priority { get; set; }
+    public int Category { get; set; }
+    public string? AssignedTo { get; set; }
+    public string CreatedDate { get; set; } = "";
+    public string? ResolvedDate { get; set; }
+    public string LastUpdated { get; set; } = "";
+    public string? Region { get; set; }
 }

@@ -407,14 +407,18 @@ function Wait-ForServerStartup {
     $elapsed = 0
     while ($elapsed -lt $MaxWaitSeconds) {
         try {
-            $response = Invoke-WebRequest -Uri $Url -Method Head -TimeoutSec 5 -ErrorAction SilentlyContinue
+            # Use GET instead of HEAD for better compatibility
+            # MCP status endpoint and API info endpoint both work with GET
+            $response = Invoke-WebRequest -Uri $Url -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue
             if ($response.StatusCode -eq 200) {
                 Write-Success "✅ $ServerName is ready"
+                Write-Debug "$ServerName responded successfully to $Url"
                 return $true
             }
         }
         catch {
-            # Expected during startup
+            # Expected during startup - log for debugging
+            Write-Debug "$ServerName startup attempt failed: $($_.Exception.Message)"
         }
         
         Start-Sleep -Seconds 2
@@ -423,6 +427,7 @@ function Wait-ForServerStartup {
     }
     
     Write-Warning "⚠️ $ServerName did not respond within $MaxWaitSeconds seconds"
+    Write-Warning "⚠️ $ServerName may not be fully ready"
     return $false
 }
 
@@ -439,7 +444,7 @@ function Start-ServersForTesting {
             } -ArgumentList $McpProject, $PWD.Path
             
             # Wait for MCP server to be ready
-            if (Wait-ForServerStartup "$McpBaseUrl/mcp" "MCP Server" 15) {
+            if (Wait-ForServerStartup "$McpBaseUrl/status" "MCP Server" 15) {
                 Write-Success "✅ MCP Server started (Job ID: $($mcpJob.Id))"
             }
             else {
@@ -512,13 +517,19 @@ function Test-ApiEndpoint {
         Write-Debug "Testing $ApiBaseUrl$Endpoint"
         $response = Invoke-RestMethod -Uri "$ApiBaseUrl$Endpoint" -Method Get -TimeoutSec $TimeoutSeconds
         
-        # Basic validation - endpoint responds
-        if ($response) {
-            Add-TestResult "ApiTests" $TestName $true "Status OK, got response"
+        # PowerShell treats empty arrays as falsy, so check for array type or Count property
+        if (($response -is [Array]) -or ($response.PSObject.Properties.Name -contains 'Count') -or ($response -ne $null -and $response -ne '')) {
+            if ($response -is [Array] -or ($response.PSObject.Properties.Name -contains 'Count')) {
+                $count = if ($response.Count -ne $null) { $response.Count } else { 1 }
+                Add-TestResult "ApiTests" $TestName $true "Status OK, got array with $count items"
+            }
+            else {
+                Add-TestResult "ApiTests" $TestName $true "Status OK, got response"
+            }
             return $response
         }
         else {
-            Add-TestResult "ApiTests" $TestName $false "No response data"
+            Add-TestResult "ApiTests" $TestName $false "No response data (null)"
             return $null
         }
     }

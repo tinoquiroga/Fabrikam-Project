@@ -30,7 +30,7 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 ### **Option 1: Use Deployed Services** (Recommended)
 - **API**: https://fabrikam-api-dev-izbd.azurewebsites.net
 - **MCP**: https://fabrikam-mcp-dev.levelupcsp.com/mcp
-- **Copilot Studio**: See [Setup Guide](Copilot-Studio-Agent-Setup-Guide.md)
+- **Copilot Studio**: See [Setup Guide](docs/demos/Copilot-Studio-Agent-Setup-Guide.md)
 
 ### **Option 2: Local Development**
 ```powershell
@@ -97,7 +97,31 @@ curl https://fabrikam-mcp-dev.levelupcsp.com/mcp
 - [**Copilot Studio Setup**](Copilot-Studio-Agent-Setup-Guide.md) - Create your business AI assistant
 - [**Asset Management**](FabrikamApi/ASSET-MANAGEMENT-GUIDE.md) - Add images, blueprints, and files
 - [**Deployment Guide**](DEPLOYMENT-GUIDE.md) - Azure deployment instructions
-- [**Future Enhancements**](TODO-FUTURE-ENHANCEMENTS.md) - Planned features and TODO items
+## 📚 Documentation
+
+Comprehensive documentation is organized in the [`docs/`](docs/) directory:
+
+### 🎬 **Demos & Showcases**
+- [**Demo Ready Summary**](docs/demos/DEMO-READY-SUMMARY.md) - Complete 3-minute demo guide
+- [**Copilot Demo Prompts**](docs/demos/COPILOT-DEMO-PROMPTS.md) - Business intelligence scenarios
+- [**Quick Demo Prompts**](docs/demos/QUICK-DEMO-PROMPTS.md) - Copy-paste ready prompts
+
+### 🚀 **Deployment & Production**  
+- [**Deployment Guide**](docs/deployment/DEPLOYMENT-GUIDE.md) - Azure deployment instructions
+- [**Release Guide**](docs/deployment/RELEASE-GUIDE.md) - Release process and versioning
+- [**Production Testing**](docs/deployment/PRODUCTION-TESTING-GUIDE.md) - Production validation
+
+### 🛠️ **Development**
+- [**Development Workflow**](docs/development/DEVELOPMENT-WORKFLOW.md) - Daily development process
+- [**Testing Strategy**](docs/development/TESTING-STRATEGY.md) - Comprehensive testing approach
+- [**Commit Checklist**](docs/development/COMMIT-CHECKLIST.md) - Pre-commit validation
+- [**Utility Scripts**](scripts/README.md) - Development and testing utilities
+
+### 🏗️ **Architecture & Planning**
+- [**Future Enhancements**](docs/architecture/TODO-FUTURE-ENHANCEMENTS.md) - Planned features and roadmap
+- [**Visual Assets**](docs/assets/README.md) - Branding and Copilot Studio assets
+
+> **📖 Full Navigation**: See [`docs/README.md`](docs/README.md) for complete documentation index
 
 ### **Implementation Status**
 - ✅ **API Controllers**: All business endpoints implemented and tested
@@ -119,9 +143,12 @@ Perfect for demonstrating AI value in:
 This project is designed for demonstrations and training. To extend functionality:
 
 1. **Fork the repository** for your own customizations
-2. **Follow the asset naming conventions** in the Asset Management Guide
+2. **Follow our [Development Workflow](docs/development/DEVELOPMENT-WORKFLOW.md)** for daily development
 3. **Add your business scenarios** by extending the sample data
-4. **Test with Copilot Studio** to ensure AI agent compatibility
+4. **Test with our comprehensive tools** - see [Testing Strategy](docs/development/TESTING-STRATEGY.md)
+5. **Follow deployment best practices** - see [Deployment Guide](docs/deployment/DEPLOYMENT-GUIDE.md)
+
+For detailed contributing guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 *Fabrikam Modular Homes - Showcasing AI-powered business operations*

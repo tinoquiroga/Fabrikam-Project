@@ -5,7 +5,7 @@ Thank you for your interest in contributing to the Fabrikam Project! This guide 
 ## 🚀 Quick Start
 
 1. **Fork the repository** and clone your fork
-2. **Set up your development environment** (see [Development Workflow](DEVELOPMENT-WORKFLOW.md))
+2. **Set up your development environment** (see [Development Workflow](docs/development/DEVELOPMENT-WORKFLOW.md))
 3. **Create a new branch** for your feature/fix
 4. **Make your changes** following our coding standards
 5. **Test thoroughly** using our testing tools
@@ -242,8 +242,8 @@ Contributors will be recognized in:
 - 📖 [Documentation](README.md) - Project overview and guides
 
 ### Development Help
-- 🚀 [Development Workflow](DEVELOPMENT-WORKFLOW.md) - Daily development process
-- 🧪 [Testing Strategy](TESTING-STRATEGY.md) - Comprehensive testing guide
+- 🚀 [Development Workflow](docs/development/DEVELOPMENT-WORKFLOW.md) - Daily development process
+- 🧪 [Testing Strategy](docs/development/TESTING-STRATEGY.md) - Comprehensive testing guide
 - 🏗️ [Monorepo Guide](.github/MONOREPO-GUIDE.md) - Project structure details
 
 ### Quick References

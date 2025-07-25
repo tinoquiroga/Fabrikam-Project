@@ -551,6 +551,192 @@ function Test-ApiDataStructure {
     }
 }
 
+function Test-McpProtocol {
+    param(
+        [string]$McpBaseUrl
+    )
+    
+    Write-Debug "Testing MCP JSON-RPC protocol functionality..."
+    
+    # Test 1: List available tools
+    try {
+        $listToolsRequest = @{
+            jsonrpc = "2.0"
+            id = "test-list-tools"
+            method = "tools/list"
+            params = @{}
+        } | ConvertTo-Json -Depth 3
+        
+        Write-Debug "Sending tools/list request to $McpBaseUrl/mcp"
+        
+        # MCP server uses Server-Sent Events format, so we need to handle the response differently
+        $headers = @{
+            'Content-Type' = 'application/json'
+            'Accept' = 'text/event-stream'
+        }
+        
+        $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $listToolsRequest -Headers $headers -TimeoutSec $TimeoutSeconds
+        
+        if ($response.Content) {
+            # Parse SSE format response (event: message\ndata: {...})
+            $lines = $response.Content -split "`n"
+            $dataLine = $lines | Where-Object { $_ -match "^data: " } | Select-Object -First 1
+            
+            if ($dataLine) {
+                $jsonData = $dataLine -replace "^data: ", ""
+                $mcpResponse = $jsonData | ConvertFrom-Json
+                
+                if ($mcpResponse.result -and $mcpResponse.result.tools) {
+                    $toolCount = $mcpResponse.result.tools.Count
+                    $toolNames = $mcpResponse.result.tools | ForEach-Object { $_.name }
+                    Add-TestResult "McpTests" "MCP Tools List" $true "Found $toolCount tools: $($toolNames -join ', ')"
+                    Write-Debug "MCP tools list successful: $toolCount tools found"
+                    return $mcpResponse.result.tools
+                } else {
+                    Add-TestResult "McpTests" "MCP Tools List" $false "Invalid response structure from tools/list"
+                    return $null
+                }
+            } else {
+                Add-TestResult "McpTests" "MCP Tools List" $false "No data line found in SSE response"
+                return $null
+            }
+        } else {
+            Add-TestResult "McpTests" "MCP Tools List" $false "Empty response from tools/list"
+            return $null
+        }
+    } catch {
+        Add-TestResult "McpTests" "MCP Tools List" $false "Failed to get tools list: $($_.Exception.Message)"
+        Write-Debug "MCP tools list failed: $($_.Exception.Message)"
+        return $null
+    }
+}
+
+function Test-McpToolExecution {
+    param(
+        [string]$McpBaseUrl,
+        [array]$AvailableTools
+    )
+    
+    if (-not $AvailableTools) {
+        Add-TestResult "McpTests" "MCP Tool Execution" $false "No tools available for testing"
+        return
+    }
+    
+    # Test a simple tool that should work - look for GetBusinessDashboard or GetSalesAnalytics
+    $testTool = $AvailableTools | Where-Object { $_.name -in @("GetBusinessDashboard", "GetSalesAnalytics", "GetCustomers") } | Select-Object -First 1
+    
+    if (-not $testTool) {
+        Add-TestResult "McpTests" "MCP Tool Execution" $false "No suitable test tool found in available tools"
+        return
+    }
+    
+    try {
+        Write-Debug "Testing tool execution: $($testTool.name)"
+        
+        $toolCallRequest = @{
+            jsonrpc = "2.0"
+            id = "test-tool-call"
+            method = "tools/call"
+            params = @{
+                name = $testTool.name
+                arguments = @{}
+            }
+        } | ConvertTo-Json -Depth 4
+        
+        $headers = @{
+            'Content-Type' = 'application/json'
+            'Accept' = 'text/event-stream'
+        }
+        
+        $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $toolCallRequest -Headers $headers -TimeoutSec $TimeoutSeconds
+        
+        if ($response.Content) {
+            # Parse SSE format response
+            $lines = $response.Content -split "`n"
+            $dataLine = $lines | Where-Object { $_ -match "^data: " } | Select-Object -First 1
+            
+            if ($dataLine) {
+                $jsonData = $dataLine -replace "^data: ", ""
+                $mcpResponse = $jsonData | ConvertFrom-Json
+                
+                if ($mcpResponse.result) {
+                    Add-TestResult "McpTests" "MCP Tool Execution" $true "Successfully executed tool '$($testTool.name)'"
+                    Write-Debug "MCP tool execution successful for: $($testTool.name)"
+                } else {
+                    Add-TestResult "McpTests" "MCP Tool Execution" $false "Tool execution returned no result for '$($testTool.name)'"
+                }
+            } else {
+                Add-TestResult "McpTests" "MCP Tool Execution" $false "No data line found in tool execution response"
+            }
+        } else {
+            Add-TestResult "McpTests" "MCP Tool Execution" $false "Empty response from tool execution"
+        }
+    } catch {
+        Add-TestResult "McpTests" "MCP Tool Execution" $false "Failed to execute tool '$($testTool.name)': $($_.Exception.Message)"
+        Write-Debug "MCP tool execution failed: $($_.Exception.Message)"
+    }
+}
+
+function Test-McpServerCapabilities {
+    param(
+        [string]$McpBaseUrl
+    )
+    
+    Write-Debug "Testing MCP server capabilities..."
+    
+    try {
+        $initRequest = @{
+            jsonrpc = "2.0"
+            id = "test-capabilities"
+            method = "initialize"
+            params = @{
+                protocolVersion = "2024-11-05"
+                capabilities = @{
+                    tools = @{}
+                }
+                clientInfo = @{
+                    name = "Fabrikam Test Client"
+                    version = "1.0.0"
+                }
+            }
+        } | ConvertTo-Json -Depth 4
+        
+        $headers = @{
+            'Content-Type' = 'application/json'
+            'Accept' = 'text/event-stream'
+        }
+        
+        $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $initRequest -Headers $headers -TimeoutSec $TimeoutSeconds
+        
+        if ($response.Content) {
+            # Parse SSE format response
+            $lines = $response.Content -split "`n"
+            $dataLine = $lines | Where-Object { $_ -match "^data: " } | Select-Object -First 1
+            
+            if ($dataLine) {
+                $jsonData = $dataLine -replace "^data: ", ""
+                $mcpResponse = $jsonData | ConvertFrom-Json
+                
+                if ($mcpResponse.result -and $mcpResponse.result.capabilities) {
+                    $capabilities = $mcpResponse.result.capabilities
+                    $serverInfo = $mcpResponse.result.serverInfo
+                    Add-TestResult "McpTests" "MCP Server Capabilities" $true "Server: $($serverInfo.name) v$($serverInfo.version), Tools: $($capabilities.tools -ne $null)"
+                    Write-Debug "MCP capabilities test successful"
+                } else {
+                    Add-TestResult "McpTests" "MCP Server Capabilities" $false "Invalid capabilities response structure"
+                }
+            } else {
+                Add-TestResult "McpTests" "MCP Server Capabilities" $false "No data line found in capabilities response"
+            }
+        } else {
+            Add-TestResult "McpTests" "MCP Server Capabilities" $false "Empty response from capabilities test"
+        }
+    } catch {
+        Add-TestResult "McpTests" "MCP Server Capabilities" $false "Failed to get server capabilities: $($_.Exception.Message)"
+        Write-Debug "MCP capabilities test failed: $($_.Exception.Message)"
+    }
+}
+
 function Test-McpServerHealth {
     if ($Production) {
         # In production mode, test MCP status endpoint instead of the protocol endpoint
@@ -777,10 +963,35 @@ try {
         Write-Host "`n🔧 MCP SERVER TESTS" -ForegroundColor Cyan
         Write-Host "="*30 -ForegroundColor Cyan
     
+        # Basic connectivity and health check
         Test-McpServerHealth
-    
-        # Additional MCP tests would go here
-        # These would test MCP protocol compliance, tool availability, etc.
+        
+        # MCP Protocol Tests (only if not in Quick mode or if specifically testing MCP)
+        # Note: MCP protocol tests are complex due to Server-Sent Events format
+        # For now, we focus on connectivity and health checks
+        if (-not $Quick -or $McpOnly) {
+            Write-Debug "Advanced MCP protocol tests skipped in this version"
+            Write-Debug "Future enhancement: Full JSON-RPC protocol testing with SSE handling"
+            
+            # Add basic tool availability check without full protocol testing
+            try {
+                Write-Debug "Testing basic MCP endpoint availability..."
+                $mcpResponse = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Head -TimeoutSec 5 -ErrorAction SilentlyContinue
+                if ($mcpResponse.StatusCode -eq 405) {
+                    # 405 Method Not Allowed is expected for HEAD request to MCP endpoint
+                    Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (expects POST requests)"
+                } else {
+                    Add-TestResult "McpTests" "MCP Endpoint Availability" $false "Unexpected response from MCP endpoint: $($mcpResponse.StatusCode)"
+                }
+            } catch {
+                # Check if the exception is due to 405 Method Not Allowed
+                if ($_.Exception.Message -like "*405*" -or $_.Exception.Message -like "*Method Not Allowed*") {
+                    Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (405 Method Not Allowed is expected for HEAD requests)"
+                } else {
+                    Add-TestResult "McpTests" "MCP Endpoint Availability" $false "MCP endpoint not accessible: $($_.Exception.Message)"
+                }
+            }
+        }
     }
 
     if (-not $ApiOnly -and -not $McpOnly) {

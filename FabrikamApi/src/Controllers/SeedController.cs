@@ -50,6 +50,34 @@ public class SeedController : ControllerBase
     }
 
     /// <summary>
+    /// Force re-seed the database using JSON seed data, clearing existing data first
+    /// </summary>
+    [HttpPost("json/force")]
+    public async Task<ActionResult> ForceReseedFromJson()
+    {
+        try
+        {
+            _logger.LogInformation("Manual force JSON re-seed requested");
+            await _jsonSeedService.ForceReseedAsync();
+            return Ok(new
+            {
+                Message = "Database force re-seeded successfully from JSON files",
+                Method = "Json Force",
+                Timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during JSON force re-seed operation");
+            return StatusCode(500, new
+            {
+                Error = "Failed to force re-seed database from JSON files",
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
     /// Re-seed the database using hardcoded seed data
     /// </summary>
     [HttpPost("hardcoded")]

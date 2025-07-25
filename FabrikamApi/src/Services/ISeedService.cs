@@ -9,4 +9,9 @@ public interface ISeedService
     /// Seeds the database with initial data
     /// </summary>
     Task SeedDataAsync();
+
+    /// <summary>
+    /// Force re-seeds the database, clearing existing data first
+    /// </summary>
+    Task ForceReseedAsync();
 }

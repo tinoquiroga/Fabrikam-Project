@@ -46,6 +46,36 @@ public class DataSeedService : ISeedService
         }
     }
 
+    public async Task ForceReseedAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Starting force re-seed of database...");
+
+            // Clear existing data
+            _context.Orders.RemoveRange(_context.Orders);
+            _context.Customers.RemoveRange(_context.Customers);
+            _context.Products.RemoveRange(_context.Products);
+            _context.SupportTickets.RemoveRange(_context.SupportTickets);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Cleared existing data, now re-seeding...");
+
+            SeedProducts();
+            SeedCustomers();
+            await SeedOrders();
+            await SeedSupportTickets();
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Force re-seed completed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred during force re-seed");
+            throw;
+        }
+    }
+
     private void SeedProducts()
     {
         var products = new List<Product>

@@ -36,23 +36,30 @@ Your Fabrikam agent will enable business users to:
    ```
    You are a helpful AI assistant for Fabrikam Modular Homes, a company that designs and sells modular homes online. You have access to real-time business data and can help with:
 
+   📊 EXECUTIVE DASHBOARD:
+   - Provide comprehensive business overview with key performance indicators
+   - Show revenue trends, order metrics, and operational alerts
+   - Deliver executive-level insights for strategic decision making
+
    🏢 SALES OPERATIONS:
    - View and filter orders by status (Pending, Processing, Shipped, Delivered, Cancelled)
    - Analyze sales by region (Northeast, Southeast, Southwest, Northwest, Central)
-   - Track customer order history and details
+   - Track customer order history and detailed customer profiles
+   - Provide sales analytics with performance trends and revenue breakdowns
 
    📦 INVENTORY MANAGEMENT:
-   - Check product availability and stock levels
+   - Check product availability and stock levels across all categories
    - Browse products by category (Studio, One-Bedroom, Two-Bedroom, Three-Bedroom, Accessories)
-   - Monitor pricing and product details
+   - Monitor pricing, product analytics, and inventory performance
+   - Identify stock issues and provide inventory recommendations
 
    🎧 CUSTOMER SERVICE:
-   - View and manage support tickets
-   - Filter tickets by status (Open, In Progress, Resolved, Closed)
-   - Track ticket priority (Low, Medium, High, Critical)
-   - View ticket categories (Technical, Billing, Delivery, General)
+   - View and manage support tickets with comprehensive filtering
+   - Track ticket priorities (Low, Medium, High, Critical) and categories (Quality, Delivery, Technical, Billing)
+   - Analyze historical issue patterns and customer satisfaction trends
+   - Update ticket status and add internal/external notes
 
-   Always be helpful, professional, and provide actionable insights. When displaying data, format it clearly and highlight key information that would be valuable for business decision-making.
+   Always be helpful, professional, and provide actionable business insights. Focus on strategic value and highlight patterns that support executive decision-making. When displaying data, format it clearly and emphasize key metrics that drive business performance.
    ```
 
 ### Step 2: Add MCP Server Connection
@@ -88,22 +95,27 @@ Your Fabrikam agent will enable business users to:
 
 ### Step 3: Configure Available Tools
 
-Your MCP server provides these business tools:
+Your MCP server provides these optimized business tools:
 
-#### 🏢 Sales Tools
-- **GetOrders**: Retrieve orders with filtering options
-- **GetCustomers**: View customer information and history
-- **GetSalesAnalytics**: Access sales trends and performance data
+#### 📊 Executive Intelligence
+- **GetBusinessDashboard**: Comprehensive business overview with KPIs and performance metrics
+- **GetBusinessAlerts**: Performance alerts and actionable recommendations for operations
 
-#### 📦 Inventory Tools  
-- **GetProducts**: Browse product catalog with filtering
-- **CheckStock**: Verify product availability
-- **GetLowStockItems**: Identify inventory that needs attention
+#### 🏢 Sales & Customer Analytics
+- **GetOrders**: Retrieve and filter orders with detailed information and status tracking
+- **GetSalesAnalytics**: Access comprehensive sales performance, trends, and regional analysis
+- **GetCustomers**: View customer profiles with order history and support ticket summaries
 
-#### 🎧 Customer Service Tools
-- **GetSupportTickets**: View and filter support tickets
-- **GetTicketDetails**: Access detailed ticket information
-- **UpdateTicketStatus**: Manage ticket resolution workflow
+#### 📦 Product & Inventory Management
+- **GetProducts**: Browse product catalog with advanced filtering and detailed specifications
+- **GetProductAnalytics**: Analyze product performance, inventory levels, and category insights
+- **GetInventoryOperations**: Comprehensive inventory management including availability checks
+
+#### 🎧 Customer Service Operations
+- **GetSupportTickets**: View and filter support tickets with comprehensive status tracking
+- **GetCustomerServiceAnalytics**: Analyze support trends, resolution times, and performance metrics
+- **AddTicketNote**: Add internal or customer-facing notes to support tickets
+- **UpdateTicketStatus**: Manage ticket workflow including status, priority, and assignment changes
 
 ### Step 4: Test Your Agent
 
@@ -111,37 +123,46 @@ Your MCP server provides these business tools:
    - Click "**Test**" in the top-right corner
    - Try these sample conversations:
 
-#### Sales Scenarios
+#### Executive Dashboard Scenarios
+```
+"Show me the current business dashboard for Fabrikam Modular Homes. I need to understand our overall performance, key metrics, and any areas that need attention."
+
+"Based on our current data trends, what recommendations would you make for our business strategy? Where should we focus our attention in the next quarter?"
+
+"What performance alerts do we have? Are there any business issues that need immediate attention?"
+```
+
+#### Sales Intelligence Scenarios
 ```
 "Show me all pending orders from the Northeast region"
 
-"What are our top-selling products this month?"
+"I'm preparing for our quarterly board meeting. Can you analyze our sales performance by region and identify our top-performing products?"
 
-"Find orders placed in the last 7 days"
+"Find orders placed in the last 7 days with order values over $50,000"
 
-"Show me all orders over $50,000"
+"What are our revenue trends and which customer segments are performing best?"
 ```
 
-#### Inventory Scenarios
+#### Customer Service Intelligence Scenarios
 ```
-"Do we have any Two-Bedroom models in stock?"
+"We're having a leadership meeting about customer satisfaction. Show me our current support ticket situation - what are the major issues customers are facing?"
 
-"Show me products under $30,000"
+"I heard we have some ongoing HVAC issues with certain models. Can you investigate this for me - which customers are affected and what's the business impact?"
 
-"What accessories are available?"
+"Show me all critical priority tickets that haven't been resolved"
 
-"Check stock levels for all Studio models"
+"Can you analyze our customer complaints from 2020-2021 versus recent years? Has our quality improved?"
 ```
 
-#### Customer Service Scenarios
+#### Inventory & Product Scenarios
 ```
-"Show me all open support tickets"
+"Do we have any Two-Bedroom models in stock for immediate delivery?"
 
-"Find high priority tickets that need attention"
+"Show me products under $30,000 that are currently available"
 
-"What technical issues are customers reporting?"
+"What's our inventory status and which products need restocking attention?"
 
-"Show me tickets assigned to Sarah Johnson"
+"Analyze our product performance - which categories are selling best and what's the profit margin?"
 ```
 
 ### Step 5: Advanced Configuration
@@ -149,29 +170,34 @@ Your MCP server provides these business tools:
 #### Custom Greeting
 Update your agent's greeting:
 ```
-Hello! I'm your Fabrikam Business Assistant. I can help you with:
+Hello! I'm your Fabrikam Business Assistant, powered by real-time business intelligence. I can help you with:
 
-🏢 **Sales**: View orders, track performance, analyze customer data
-📦 **Inventory**: Check product availability and stock levels  
-🎧 **Customer Service**: Manage support tickets and customer issues
+📊 **Executive Dashboard**: Get comprehensive business overviews and strategic insights
+🏢 **Sales Intelligence**: Analyze orders, revenue trends, and customer performance  
+📦 **Inventory Operations**: Check product availability and analyze inventory performance
+🎧 **Customer Service**: Manage support tickets and track customer satisfaction trends
 
-What would you like to explore today?
+What business insights can I provide for you today?
 ```
 
 #### Topic Triggers
 Create specific topics for common business scenarios:
 
-1. **Sales Dashboard Topic**
-   - Trigger phrases: "sales report", "order status", "revenue analysis"
-   - Automatically show recent orders and key metrics
+1. **Executive Dashboard Topic**
+   - Trigger phrases: "business dashboard", "business overview", "performance metrics", "key indicators"
+   - Automatically shows comprehensive business metrics and strategic alerts
 
-2. **Inventory Check Topic**
-   - Trigger phrases: "check stock", "product availability", "inventory levels"
-   - Guide users through product category selection
+2. **Sales Intelligence Topic**
+   - Trigger phrases: "sales report", "order analysis", "revenue trends", "customer performance"
+   - Guides users through sales analytics and performance insights
 
-3. **Support Ticket Topic**
-   - Trigger phrases: "customer issues", "support tickets", "help desk"
-   - Display open tickets and resolution workflow
+3. **Customer Service Intelligence Topic**
+   - Trigger phrases: "customer issues", "support tickets", "satisfaction trends", "service analytics"
+   - Displays comprehensive customer service insights and historical analysis
+
+4. **Inventory Operations Topic**
+   - Trigger phrases: "inventory status", "product availability", "stock levels", "product analytics"
+   - Provides complete inventory management and product performance insights
 
 ### Step 6: Publish Your Agent
 
@@ -187,21 +213,25 @@ Create specific topics for common business scenarios:
 
 ## 💡 Business Use Cases & Example Conversations
 
-### 🎯 CEO Dashboard
-**User**: "Give me a business overview for this week"
-**Agent Response**: *Retrieves recent orders, shows revenue trends, highlights any critical support issues*
+### 🎯 Executive Dashboard
+**User**: "Show me the current business dashboard for Fabrikam Modular Homes"
+**Agent Response**: *Displays comprehensive KPIs, revenue trends, operational alerts, and strategic insights for executive decision-making*
 
-### 👩‍💼 Sales Manager
-**User**: "Which regions are performing best this quarter?"
-**Agent Response**: *Analyzes orders by region, shows top-performing areas, identifies opportunities*
+### 👩‍💼 Sales Intelligence
+**User**: "I'm preparing for our quarterly board meeting. Can you analyze our sales performance by region and identify our top-performing products?"
+**Agent Response**: *Provides detailed sales analytics, regional performance comparison, product rankings, and trend analysis*
 
-### 📦 Inventory Manager
-**User**: "What products are running low on stock?"
-**Agent Response**: *Checks inventory levels, identifies items needing reorder, suggests restocking priorities*
+### 📦 Inventory Operations
+**User**: "What's our inventory status and which products need restocking attention?"
+**Agent Response**: *Shows comprehensive inventory overview, stock levels, reorder alerts, and product performance insights*
 
-### 🎧 Customer Service Lead
-**User**: "Show me all critical support tickets that haven't been resolved"
-**Agent Response**: *Filters tickets by priority and status, displays actionable list with customer details*
+### 🎧 Customer Service Analytics
+**User**: "We're having a leadership meeting about customer satisfaction. Show me our current support ticket situation and any patterns I should be concerned about"
+**Agent Response**: *Analyzes support trends, issue categorization, resolution performance, and identifies areas needing attention*
+
+### 🔍 Strategic Business Intelligence
+**User**: "Based on our current data trends, what recommendations would you make for our business strategy?"
+**Agent Response**: *Provides data-driven strategic recommendations, identifies growth opportunities, and highlights risk areas*
 
 ## 🔧 Troubleshooting
 
@@ -225,11 +255,12 @@ Create specific topics for common business scenarios:
 
 **"LimitTools" or "Limiting number of tools to 15" Errors**
 - Copilot Studio has a maximum limit of 15 tools per custom connector
-- The Fabrikam MCP server has been optimized to provide 10 consolidated tools (well under the limit)
+- The Fabrikam MCP server has been optimized to provide 11 consolidated business tools (well under the limit)
 - **Consolidated tools include**:
-  - **Sales**: GetOrders (includes order details by ID), GetCustomers (includes customer details by ID), GetSalesAnalytics
-  - **Inventory**: GetProducts (includes product details, low stock filtering), GetInventory (summary and availability checks)
-  - **Customer Service**: GetSupportTickets (includes ticket details, urgent filtering), AddTicketNote, UpdateTicketStatus, GetCustomerServiceAnalytics
+  - **Executive**: GetBusinessDashboard, GetBusinessAlerts
+  - **Sales**: GetOrders, GetSalesAnalytics, GetCustomers  
+  - **Products**: GetProducts, GetProductAnalytics, GetInventoryOperations
+  - **Support**: GetSupportTickets, GetCustomerServiceAnalytics, AddTicketNote, UpdateTicketStatus
 - If you still see the error, ensure you're using the latest version of the custom connector
 - Delete and recreate the custom connector if the tool count hasn't updated
 
@@ -266,7 +297,9 @@ Create specific topics for common business scenarios:
 
 - **MCP Server Status**: https://fabrikam-mcp-dev.levelupcsp.com/status
 - **API Health Check**: https://fabrikam-api-dev.levelupcsp.com/health
-- **Fabrikam Business Documentation**: See `FabrikamApi/Docs/images/Fabrikam Modular Homes API.md`
+- **Fabrikam Demo Prompts**: See [`docs/demos/QUICK-DEMO-PROMPTS.md`](../QUICK-DEMO-PROMPTS.md) for 3-minute demo scenarios
+- **Comprehensive Demo Guide**: See [`docs/demos/COPILOT-DEMO-PROMPTS.md`](../COPILOT-DEMO-PROMPTS.md) for detailed demo strategies
+- **API Architecture**: See [`docs/architecture/API-ARCHITECTURE.md`](../architecture/API-ARCHITECTURE.md) for complete business context
 
 ---
 

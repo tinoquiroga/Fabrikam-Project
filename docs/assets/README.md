@@ -18,6 +18,18 @@ This directory contains visual assets and media files used for Copilot Studio ag
 - **Usage**: Documentation, presentations, transparent overlays
 - **Benefits**: Transparent background for flexible placement
 
+#### **`FabrikamLogo.png`**
+- **Purpose**: Alternative Fabrikam logo design
+- **Format**: PNG image
+- **Usage**: Documentation headers, alternative branding
+- **Source**: Originally from FabrikamApi documentation
+
+#### **`FabrikamArchitecture.png`**
+- **Purpose**: System architecture diagram
+- **Format**: PNG image
+- **Usage**: Technical documentation, architecture presentations
+- **Content**: Visual representation of the Fabrikam system components
+
 ## 🤖 **Copilot Studio Integration**
 
 These assets are specifically designed for use with **Copilot Studio Agent Builder**:
@@ -52,6 +64,8 @@ docs/assets/
 ├── README.md                    # This documentation
 ├── fabrikam.jpg                 # Primary company logo (JPEG)
 ├── Fabrikam.png                 # Company logo with transparency (PNG)
+├── FabrikamLogo.png            # Alternative logo design (PNG)
+├── FabrikamArchitecture.png    # System architecture diagram (PNG)
 └── [future assets]              # Additional branding materials
 ```
 

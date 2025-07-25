@@ -26,14 +26,18 @@ Welcome to the Fabrikam Project documentation! This directory contains comprehen
 - [**Testing Strategy**](development/TESTING-STRATEGY.md) - Comprehensive testing approach
 - [**Project Testing Summary**](development/PROJECT-TESTING-SUMMARY.md) - Testing tools overview
 - [**Commit Checklist**](development/COMMIT-CHECKLIST.md) - Pre-commit validation steps
+- [**Asset Management Guide**](development/ASSET-MANAGEMENT-GUIDE.md) - Product asset organization and naming
 
 ### 🏗️ Architecture & Planning
+- [**API Architecture**](architecture/API-ARCHITECTURE.md) - Comprehensive API documentation and business context
 - [**Future Enhancements**](architecture/TODO-FUTURE-ENHANCEMENTS.md) - Roadmap and planned features
 
 ### 🎨 Visual Assets & Branding
 - [**Assets Documentation**](assets/README.md) - Visual assets and branding guidelines
 - [**Fabrikam Logo (JPG)**](assets/fabrikam.jpg) - Primary company logo for Copilot Studio
 - [**Fabrikam Logo (PNG)**](assets/Fabrikam.png) - Logo with transparency support
+- [**Alternative Logo (PNG)**](assets/FabrikamLogo.png) - Alternative logo design
+- [**Architecture Diagram**](assets/FabrikamArchitecture.png) - System architecture visualization
 
 ## 📁 Directory Structure
 
@@ -43,7 +47,9 @@ docs/
 ├── assets/                      # Visual assets and branding materials
 │   ├── README.md
 │   ├── fabrikam.jpg
-│   └── Fabrikam.png
+│   ├── Fabrikam.png
+│   ├── FabrikamLogo.png
+│   └── FabrikamArchitecture.png
 ├── demos/                       # Demo guides and prompts
 │   ├── COPILOT-DEMO-PROMPTS.md
 │   ├── QUICK-DEMO-PROMPTS.md
@@ -58,8 +64,10 @@ docs/
 │   ├── DEVELOPMENT-WORKFLOW.md
 │   ├── TESTING-STRATEGY.md
 │   ├── PROJECT-TESTING-SUMMARY.md
-│   └── COMMIT-CHECKLIST.md
+│   ├── COMMIT-CHECKLIST.md
+│   └── ASSET-MANAGEMENT-GUIDE.md
 └── architecture/               # Technical architecture and planning
+    ├── API-ARCHITECTURE.md
     └── TODO-FUTURE-ENHANCEMENTS.md
 ```
 

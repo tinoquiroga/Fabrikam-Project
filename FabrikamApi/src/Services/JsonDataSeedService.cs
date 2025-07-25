@@ -188,6 +188,12 @@ public class JsonDataSeedService : ISeedService
 
         foreach (var orderData in ordersData)
         {
+            // Calculate subtotal from items
+            var subtotal = orderData.Items.Sum(item => item.UnitPrice * item.Quantity);
+            var tax = subtotal * 0.085m; // 8.5% tax
+            var shipping = subtotal > 100000 ? 0 : 1000; // Free shipping over $100k
+            var total = subtotal + tax + shipping;
+
             var order = new Order
             {
                 Id = orderData.Id,
@@ -198,7 +204,11 @@ public class JsonDataSeedService : ISeedService
                 ShippingAddress = orderData.ShippingAddress,
                 ShippingCity = orderData.ShippingCity,
                 ShippingState = orderData.ShippingState,
-                ShippingZipCode = orderData.ShippingZip
+                ShippingZipCode = orderData.ShippingZip,
+                Subtotal = subtotal,
+                Tax = tax,
+                Shipping = shipping,
+                Total = total
             };
 
             orders.Add(order);
@@ -211,7 +221,8 @@ public class JsonDataSeedService : ISeedService
                     OrderId = orderData.Id,
                     ProductId = itemData.ProductId,
                     Quantity = itemData.Quantity,
-                    UnitPrice = itemData.UnitPrice
+                    UnitPrice = itemData.UnitPrice,
+                    LineTotal = itemData.UnitPrice * itemData.Quantity
                 };
                 orderItems.Add(orderItem);
             }

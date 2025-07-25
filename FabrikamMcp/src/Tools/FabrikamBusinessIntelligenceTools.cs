@@ -69,8 +69,8 @@ public class FabrikamBusinessIntelligenceTools
                     foreach (var region in regions.EnumerateArray().Take(3))
                     {
                         var regionName = GetJsonValue(region, "region", "Unknown");
-                        var revenue = GetJsonValue(region, "totalRevenue", "0");
-                        var orders = GetJsonValue(region, "orderCount", "0");
+                        var revenue = GetJsonValue(region, "revenue", "0");
+                        var orders = GetJsonValue(region, "count", "0");
                         dashboardText += $"• {regionName}: ${(decimal.TryParse(revenue, out var regionRevenue) ? regionRevenue : 0):N0} ({orders} orders)\n";
                     }
                 }

@@ -562,9 +562,9 @@ function Test-McpProtocol {
     try {
         $listToolsRequest = @{
             jsonrpc = "2.0"
-            id = "test-list-tools"
-            method = "tools/list"
-            params = @{}
+            id      = "test-list-tools"
+            method  = "tools/list"
+            params  = @{}
         } | ConvertTo-Json -Depth 3
         
         Write-Debug "Sending tools/list request to $McpBaseUrl/mcp"
@@ -572,7 +572,7 @@ function Test-McpProtocol {
         # MCP server uses Server-Sent Events format, so we need to handle the response differently
         $headers = @{
             'Content-Type' = 'application/json'
-            'Accept' = 'text/event-stream'
+            'Accept'       = 'text/event-stream'
         }
         
         $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $listToolsRequest -Headers $headers -TimeoutSec $TimeoutSeconds
@@ -592,19 +592,23 @@ function Test-McpProtocol {
                     Add-TestResult "McpTests" "MCP Tools List" $true "Found $toolCount tools: $($toolNames -join ', ')"
                     Write-Debug "MCP tools list successful: $toolCount tools found"
                     return $mcpResponse.result.tools
-                } else {
+                }
+                else {
                     Add-TestResult "McpTests" "MCP Tools List" $false "Invalid response structure from tools/list"
                     return $null
                 }
-            } else {
+            }
+            else {
                 Add-TestResult "McpTests" "MCP Tools List" $false "No data line found in SSE response"
                 return $null
             }
-        } else {
+        }
+        else {
             Add-TestResult "McpTests" "MCP Tools List" $false "Empty response from tools/list"
             return $null
         }
-    } catch {
+    }
+    catch {
         Add-TestResult "McpTests" "MCP Tools List" $false "Failed to get tools list: $($_.Exception.Message)"
         Write-Debug "MCP tools list failed: $($_.Exception.Message)"
         return $null
@@ -635,17 +639,17 @@ function Test-McpToolExecution {
         
         $toolCallRequest = @{
             jsonrpc = "2.0"
-            id = "test-tool-call"
-            method = "tools/call"
-            params = @{
-                name = $testTool.name
+            id      = "test-tool-call"
+            method  = "tools/call"
+            params  = @{
+                name      = $testTool.name
                 arguments = @{}
             }
         } | ConvertTo-Json -Depth 4
         
         $headers = @{
             'Content-Type' = 'application/json'
-            'Accept' = 'text/event-stream'
+            'Accept'       = 'text/event-stream'
         }
         
         $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $toolCallRequest -Headers $headers -TimeoutSec $TimeoutSeconds
@@ -662,16 +666,20 @@ function Test-McpToolExecution {
                 if ($mcpResponse.result) {
                     Add-TestResult "McpTests" "MCP Tool Execution" $true "Successfully executed tool '$($testTool.name)'"
                     Write-Debug "MCP tool execution successful for: $($testTool.name)"
-                } else {
+                }
+                else {
                     Add-TestResult "McpTests" "MCP Tool Execution" $false "Tool execution returned no result for '$($testTool.name)'"
                 }
-            } else {
+            }
+            else {
                 Add-TestResult "McpTests" "MCP Tool Execution" $false "No data line found in tool execution response"
             }
-        } else {
+        }
+        else {
             Add-TestResult "McpTests" "MCP Tool Execution" $false "Empty response from tool execution"
         }
-    } catch {
+    }
+    catch {
         Add-TestResult "McpTests" "MCP Tool Execution" $false "Failed to execute tool '$($testTool.name)': $($_.Exception.Message)"
         Write-Debug "MCP tool execution failed: $($_.Exception.Message)"
     }
@@ -687,15 +695,15 @@ function Test-McpServerCapabilities {
     try {
         $initRequest = @{
             jsonrpc = "2.0"
-            id = "test-capabilities"
-            method = "initialize"
-            params = @{
+            id      = "test-capabilities"
+            method  = "initialize"
+            params  = @{
                 protocolVersion = "2024-11-05"
-                capabilities = @{
+                capabilities    = @{
                     tools = @{}
                 }
-                clientInfo = @{
-                    name = "Fabrikam Test Client"
+                clientInfo      = @{
+                    name    = "Fabrikam Test Client"
                     version = "1.0.0"
                 }
             }
@@ -703,7 +711,7 @@ function Test-McpServerCapabilities {
         
         $headers = @{
             'Content-Type' = 'application/json'
-            'Accept' = 'text/event-stream'
+            'Accept'       = 'text/event-stream'
         }
         
         $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $initRequest -Headers $headers -TimeoutSec $TimeoutSeconds
@@ -722,16 +730,20 @@ function Test-McpServerCapabilities {
                     $serverInfo = $mcpResponse.result.serverInfo
                     Add-TestResult "McpTests" "MCP Server Capabilities" $true "Server: $($serverInfo.name) v$($serverInfo.version), Tools: $($capabilities.tools -ne $null)"
                     Write-Debug "MCP capabilities test successful"
-                } else {
+                }
+                else {
                     Add-TestResult "McpTests" "MCP Server Capabilities" $false "Invalid capabilities response structure"
                 }
-            } else {
+            }
+            else {
                 Add-TestResult "McpTests" "MCP Server Capabilities" $false "No data line found in capabilities response"
             }
-        } else {
+        }
+        else {
             Add-TestResult "McpTests" "MCP Server Capabilities" $false "Empty response from capabilities test"
         }
-    } catch {
+    }
+    catch {
         Add-TestResult "McpTests" "MCP Server Capabilities" $false "Failed to get server capabilities: $($_.Exception.Message)"
         Write-Debug "MCP capabilities test failed: $($_.Exception.Message)"
     }
@@ -980,14 +992,17 @@ try {
                 if ($mcpResponse.StatusCode -eq 405) {
                     # 405 Method Not Allowed is expected for HEAD request to MCP endpoint
                     Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (expects POST requests)"
-                } else {
+                }
+                else {
                     Add-TestResult "McpTests" "MCP Endpoint Availability" $false "Unexpected response from MCP endpoint: $($mcpResponse.StatusCode)"
                 }
-            } catch {
+            }
+            catch {
                 # Check if the exception is due to 405 Method Not Allowed
                 if ($_.Exception.Message -like "*405*" -or $_.Exception.Message -like "*Method Not Allowed*") {
                     Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (405 Method Not Allowed is expected for HEAD requests)"
-                } else {
+                }
+                else {
                     Add-TestResult "McpTests" "MCP Endpoint Availability" $false "MCP endpoint not accessible: $($_.Exception.Message)"
                 }
             }

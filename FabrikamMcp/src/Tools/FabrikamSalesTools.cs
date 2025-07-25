@@ -17,7 +17,7 @@ public class FabrikamSalesTools
         _configuration = configuration;
     }
 
-    [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists. When called without parameters, returns recent orders.")]
+    [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists. When called without parameters, returns recent orders. For date filters, use YYYY-MM-DD format. If no results found with date filter, will show recent orders.")]
     public async Task<object> GetOrders(
         int? orderId = null,
         string? status = null,
@@ -30,12 +30,12 @@ public class FabrikamSalesTools
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            
+
             // If orderId is provided, get specific order details
             if (orderId.HasValue)
             {
                 var orderResponse = await _httpClient.GetAsync($"{baseUrl}/api/orders/{orderId.Value}");
-                
+
                 if (orderResponse.IsSuccessStatusCode)
                 {
                     var orderJson = await orderResponse.Content.ReadAsStringAsync();
@@ -80,7 +80,7 @@ public class FabrikamSalesTools
                         }
                     };
                 }
-                
+
                 if (orderResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     return new
@@ -92,7 +92,7 @@ public class FabrikamSalesTools
                         }
                     };
                 }
-                
+
                 return new
                 {
                     error = new
@@ -102,30 +102,35 @@ public class FabrikamSalesTools
                     }
                 };
             }
-            
+
             // Build query parameters for order list
             var queryParams = new List<string>();
-            
+
             if (!string.IsNullOrEmpty(status)) queryParams.Add($"status={Uri.EscapeDataString(status)}");
             if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
             if (!string.IsNullOrEmpty(fromDate)) queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate)}");
             if (!string.IsNullOrEmpty(toDate)) queryParams.Add($"toDate={Uri.EscapeDataString(toDate)}");
-            
+
+            // Smart date validation and fallback logic
+            var originalFromDate = fromDate;
+            var originalToDate = toDate;
+            bool dateFiltersProvided = !string.IsNullOrEmpty(fromDate) || !string.IsNullOrEmpty(toDate);
+
             // If no filters provided, default to recent orders (last 30 days) to give meaningful results
-            if (string.IsNullOrEmpty(status) && string.IsNullOrEmpty(region) && 
+            if (string.IsNullOrEmpty(status) && string.IsNullOrEmpty(region) &&
                 string.IsNullOrEmpty(fromDate) && string.IsNullOrEmpty(toDate))
             {
                 var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30).ToString("yyyy-MM-dd");
                 queryParams.Add($"fromDate={thirtyDaysAgo}");
                 fromDate = thirtyDaysAgo; // Set for response message
             }
-            
+
             queryParams.Add($"page={page}");
             queryParams.Add($"pageSize={pageSize}");
 
             var queryString = "?" + string.Join("&", queryParams);
             var response = await _httpClient.GetAsync($"{baseUrl}/api/orders{queryString}");
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var ordersJson = await response.Content.ReadAsStringAsync();
@@ -133,7 +138,82 @@ public class FabrikamSalesTools
                 using var document = JsonDocument.Parse(ordersJson);
                 var ordersArray = document.RootElement;
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
-                
+
+                // If date filters were provided but no results found, try without date filters
+                bool hasResults = ordersArray.GetArrayLength() > 0;
+                if (!hasResults && dateFiltersProvided)
+                {
+                    // Try again without date filters to show available data
+                    var fallbackParams = new List<string>();
+
+                    if (!string.IsNullOrEmpty(status)) fallbackParams.Add($"status={Uri.EscapeDataString(status)}");
+                    if (!string.IsNullOrEmpty(region)) fallbackParams.Add($"region={Uri.EscapeDataString(region)}");
+                    fallbackParams.Add($"page={page}");
+                    fallbackParams.Add($"pageSize={pageSize}");
+
+                    var fallbackQueryString = "?" + string.Join("&", fallbackParams);
+                    var fallbackResponse = await _httpClient.GetAsync($"{baseUrl}/api/orders{fallbackQueryString}");
+
+                    if (fallbackResponse.IsSuccessStatusCode)
+                    {
+                        var fallbackOrdersJson = await fallbackResponse.Content.ReadAsStringAsync();
+                        using var fallbackDocument = JsonDocument.Parse(fallbackOrdersJson);
+                        var fallbackOrdersArray = fallbackDocument.RootElement;
+                        var fallbackTotalCount = fallbackResponse.Headers.GetValues("X-Total-Count").FirstOrDefault();
+
+                        if (fallbackOrdersArray.GetArrayLength() > 0)
+                        {
+                            // Return fallback results with explanation
+                            return new
+                            {
+                                content = new object[]
+                                {
+                                    new
+                                    {
+                                        type = "resource",
+                                        resource = new
+                                        {
+                                            uri = $"{baseUrl}/api/orders{fallbackQueryString}",
+                                            name = "Order List (Date Filter Adjusted)",
+                                            description = $"No orders found for {originalFromDate} to {originalToDate}. Showing available orders instead.",
+                                            mimeType = "application/json"
+                                        }
+                                    },
+                                    new
+                                    {
+                                        type = "text",
+                                        text = FormatOrderListText(fallbackOrdersArray, fallbackTotalCount, page, status, region, null, null)
+                                    }
+                                },
+                                ordersData = JsonSerializer.Deserialize<object[]>(fallbackOrdersJson),
+                                pagination = new
+                                {
+                                    page = page,
+                                    pageSize = pageSize,
+                                    totalCount = fallbackTotalCount ?? "0"
+                                },
+                                outputSchema = new
+                                {
+                                    type = "array",
+                                    description = "List of orders",
+                                    items = new
+                                    {
+                                        type = "object",
+                                        properties = new
+                                        {
+                                            id = new { type = "integer", description = "Order ID" },
+                                            orderNumber = new { type = "string", description = "Order number" },
+                                            status = new { type = "string", description = "Order status" },
+                                            total = new { type = "number", description = "Order total" },
+                                            customer = new { type = "object", description = "Customer info" }
+                                        }
+                                    }
+                                }
+                            };
+                        }
+                    }
+                }
+
                 return new
                 {
                     content = new object[]
@@ -181,7 +261,7 @@ public class FabrikamSalesTools
                     }
                 };
             }
-            
+
             return new
             {
                 error = new
@@ -211,13 +291,13 @@ public class FabrikamSalesTools
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
             var queryParams = new List<string>();
-            
+
             if (!string.IsNullOrEmpty(fromDate)) queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate)}");
             if (!string.IsNullOrEmpty(toDate)) queryParams.Add($"toDate={Uri.EscapeDataString(toDate)}");
 
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
             var response = await _httpClient.GetAsync($"{baseUrl}/api/orders/analytics{queryString}");
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var analyticsJson = await response.Content.ReadAsStringAsync();
@@ -262,10 +342,10 @@ public class FabrikamSalesTools
                         }
                     }
                 };
-                
+
                 return result;
             }
-            
+
             return new
             {
                 error = new
@@ -290,7 +370,7 @@ public class FabrikamSalesTools
 
     private static string FormatSalesAnalyticsText(JsonElement analytics)
     {
-        if (analytics.ValueKind == JsonValueKind.Null || analytics.ValueKind == JsonValueKind.Undefined) 
+        if (analytics.ValueKind == JsonValueKind.Null || analytics.ValueKind == JsonValueKind.Undefined)
             return "No sales analytics data available.";
 
         // Extract summary information
@@ -308,7 +388,7 @@ public class FabrikamSalesTools
                 totalRevenue = totalRevenueProp.GetDecimal();
             if (summaryProp.TryGetProperty("averageOrderValue", out var avgProp))
                 averageOrderValue = avgProp.GetDecimal();
-            
+
             if (summaryProp.TryGetProperty("period", out var periodProp))
             {
                 if (periodProp.TryGetProperty("fromDate", out var fromDateProp))
@@ -365,7 +445,7 @@ public class FabrikamSalesTools
                 var date = daily.TryGetProperty("date", out var dateProp) ? dateProp.GetString() : "N/A";
                 var orders = daily.TryGetProperty("orders", out var ordersProp) ? ordersProp.GetInt32() : 0;
                 var revenue = daily.TryGetProperty("revenue", out var revenueProp) ? revenueProp.GetDecimal() : 0;
-                
+
                 // Parse date for better formatting if possible
                 if (DateTime.TryParse(date, out var parsedDate))
                     text += $"\n• {parsedDate:MM/dd}: {orders:N0} orders (${revenue:N2})";
@@ -384,12 +464,12 @@ public class FabrikamSalesTools
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
-            
+
             // If customerId is provided, get specific customer details
             if (customerId.HasValue)
             {
                 var customerResponse = await _httpClient.GetAsync($"{baseUrl}/api/customers/{customerId.Value}");
-                
+
                 if (customerResponse.IsSuccessStatusCode)
                 {
                     var customerJson = await customerResponse.Content.ReadAsStringAsync();
@@ -437,7 +517,7 @@ public class FabrikamSalesTools
                         }
                     };
                 }
-                
+
                 if (customerResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     return new
@@ -449,7 +529,7 @@ public class FabrikamSalesTools
                         }
                     };
                 }
-                
+
                 return new
                 {
                     error = new
@@ -459,26 +539,26 @@ public class FabrikamSalesTools
                     }
                 };
             }
-            
+
             // Build query parameters for customer list
             var queryParams = new List<string>();
-            
+
             if (!string.IsNullOrEmpty(region)) queryParams.Add($"region={Uri.EscapeDataString(region)}");
-            
+
             // Always include pagination parameters for predictable results
             queryParams.Add($"page={page}");
             queryParams.Add($"pageSize={pageSize}");
 
             var queryString = "?" + string.Join("&", queryParams);
             var response = await _httpClient.GetAsync($"{baseUrl}/api/customers{queryString}");
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var customersJson = await response.Content.ReadAsStringAsync();
                 using var document = JsonDocument.Parse(customersJson);
                 var customersArray = document.RootElement;
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
-                
+
                 return new
                 {
                     content = new object[]
@@ -527,7 +607,7 @@ public class FabrikamSalesTools
                     }
                 };
             }
-            
+
             return new
             {
                 error = new
@@ -552,7 +632,7 @@ public class FabrikamSalesTools
 
     private static string FormatCustomerDetailText(JsonElement customer)
     {
-        if (customer.ValueKind == JsonValueKind.Null || customer.ValueKind == JsonValueKind.Undefined) 
+        if (customer.ValueKind == JsonValueKind.Null || customer.ValueKind == JsonValueKind.Undefined)
             return "No customer data available.";
 
         // Extract basic customer information
@@ -571,7 +651,7 @@ public class FabrikamSalesTools
             var city = addressProp.TryGetProperty("city", out var cityProp) ? cityProp.GetString() : "";
             var state = addressProp.TryGetProperty("state", out var stateProp) ? stateProp.GetString() : "";
             var zipCode = addressProp.TryGetProperty("zipCode", out var zipProp) ? zipProp.GetString() : "";
-            
+
             if (!string.IsNullOrEmpty(street) && !string.IsNullOrEmpty(city))
                 addressText = $"{street}\n{city}, {state} {zipCode}";
         }
@@ -640,7 +720,7 @@ public class FabrikamSalesTools
 
     private static string FormatCustomerListText(JsonElement customersArray, string? totalCount, int page, string? region)
     {
-        if (customersArray.ValueKind != JsonValueKind.Array) 
+        if (customersArray.ValueKind != JsonValueKind.Array)
             return "No customer data available.";
 
         var customerCount = customersArray.GetArrayLength();
@@ -698,7 +778,7 @@ public class FabrikamSalesTools
 
     private static string FormatOrderDetailText(JsonElement order)
     {
-        if (order.ValueKind == JsonValueKind.Null || order.ValueKind == JsonValueKind.Undefined) 
+        if (order.ValueKind == JsonValueKind.Null || order.ValueKind == JsonValueKind.Undefined)
             return "Order details not available.";
 
         // Extract basic order information
@@ -707,7 +787,7 @@ public class FabrikamSalesTools
         var status = order.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : "Unknown";
         var orderDate = order.TryGetProperty("orderDate", out var orderDateProp) ? orderDateProp.GetDateTime() : DateTime.MinValue;
         var total = order.TryGetProperty("total", out var totalProp) ? totalProp.GetDecimal() : 0;
-        
+
         // Extract customer information
         var customerName = "N/A";
         var customerEmail = "N/A";
@@ -723,9 +803,9 @@ public class FabrikamSalesTools
         }
 
         // Extract optional dates
-        var shippedDate = order.TryGetProperty("shippedDate", out var shippedProp) && 
+        var shippedDate = order.TryGetProperty("shippedDate", out var shippedProp) &&
                           shippedProp.ValueKind != JsonValueKind.Null ? shippedProp.GetDateTime() : (DateTime?)null;
-        var deliveredDate = order.TryGetProperty("deliveredDate", out var deliveredProp) && 
+        var deliveredDate = order.TryGetProperty("deliveredDate", out var deliveredProp) &&
                             deliveredProp.ValueKind != JsonValueKind.Null ? deliveredProp.GetDateTime() : (DateTime?)null;
 
         // Count items if available
@@ -779,7 +859,7 @@ public class FabrikamSalesTools
 
     private static string FormatOrderListText(JsonElement ordersArray, string? totalCount, int page, string? status, string? region, string? fromDate, string? toDate)
     {
-        if (ordersArray.ValueKind != JsonValueKind.Array) 
+        if (ordersArray.ValueKind != JsonValueKind.Array)
             return "No orders found.";
 
         var orderCount = ordersArray.GetArrayLength();
@@ -791,14 +871,14 @@ public class FabrikamSalesTools
         foreach (var order in ordersArray.EnumerateArray())
         {
             if (count >= 8) break; // Limit display to 8 orders
-            
+
             var orderNumber = order.TryGetProperty("orderNumber", out var orderNumProp) ? orderNumProp.GetString() : "N/A";
             var orderStatus = order.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : "Unknown";
             var total = order.TryGetProperty("total", out var totalProp) ? totalProp.GetDecimal() : 0;
             totalRevenue += total;
 
             var customerName = "N/A";
-            if (order.TryGetProperty("customer", out var customerProp) && 
+            if (order.TryGetProperty("customer", out var customerProp) &&
                 customerProp.TryGetProperty("name", out var nameProp))
             {
                 customerName = nameProp.GetString() ?? "N/A";
@@ -845,7 +925,7 @@ public class FabrikamSalesTools
     private static string GetOrderFilterDescription(string? status, string? region, string? fromDate, string? toDate)
     {
         var filters = new List<string>();
-        
+
         if (!string.IsNullOrEmpty(status)) filters.Add($"Status: {status}");
         if (!string.IsNullOrEmpty(region)) filters.Add($"Region: {region}");
         if (!string.IsNullOrEmpty(fromDate)) filters.Add($"From: {fromDate}");
@@ -857,7 +937,7 @@ public class FabrikamSalesTools
     private static string GetAppliedFilters(string? status, string? region, string? fromDate, string? toDate)
     {
         var filters = new List<string>();
-        
+
         if (!string.IsNullOrEmpty(status)) filters.Add($"• Status: {status}");
         if (!string.IsNullOrEmpty(region)) filters.Add($"• Region: {region}");
         if (!string.IsNullOrEmpty(fromDate)) filters.Add($"• From Date: {fromDate}");

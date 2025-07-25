@@ -45,6 +45,8 @@ dotnet run
 
 ## 🏗️ Architecture
 
+![Fabrikam Architecture](docs/assets/FabrikamArchitecture.png)
+
 Two integrated services providing complete business functionality:
 
 ### **FabrikamApi** - Business Operations API

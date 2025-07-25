@@ -24,7 +24,7 @@ public class FabrikamBusinessIntelligenceTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev-izbd.azurewebsites.net";
             
             // Calculate date range based on timeframe
             var (fromDate, toDate) = GetDateRange(timeframe);
@@ -296,7 +296,7 @@ public class FabrikamBusinessIntelligenceTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev-izbd.azurewebsites.net";
             
             // Fetch current data to analyze for alerts
             var productsTask = _httpClient.GetAsync($"{baseUrl}/api/products?pageSize=1000");

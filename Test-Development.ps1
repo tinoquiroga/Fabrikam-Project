@@ -103,14 +103,31 @@ function Test-ApiDataStructure {
 
 function Test-McpServerHealth {
     try {
-        # Test if MCP server process is running
+        # Test if MCP server process is running by checking command line
+        Write-Debug "Checking for MCP server process..."
+        
         $mcpProcess = Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | 
-                     Where-Object { $_.MainModule.FileName -like "*FabrikamMcp*" }
+                     Where-Object { 
+                         try {
+                             $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($_.Id)" -ErrorAction SilentlyContinue).CommandLine
+                             $isMcpProcess = $cmdLine -like "*FabrikamMcp*"
+                             if ($Verbose -and $isMcpProcess) {
+                                 Write-Debug "Found MCP process: $cmdLine"
+                             }
+                             return $isMcpProcess
+                         } catch {
+                             Write-Debug "Error checking process $($_.Id): $($_.Exception.Message)"
+                             return $false
+                         }
+                     }
         
         if ($mcpProcess) {
-            Add-TestResult "McpTests" "MCP Server Process" $true "Process ID: $($mcpProcess.Id)"
+            $processDetails = "Process ID: $($mcpProcess.Id)"
+            Add-TestResult "McpTests" "MCP Server Process" $true $processDetails
+            Write-Debug "MCP server detected: $processDetails"
         } else {
-            Add-TestResult "McpTests" "MCP Server Process" $false "MCP server process not found"
+            Add-TestResult "McpTests" "MCP Server Process" $false "MCP server process not found. Run 'dotnet run --project FabrikamMcp\src\FabrikamMcp.csproj' to start it."
+            Write-Debug "No MCP server process found in running dotnet processes"
         }
     }
     catch {

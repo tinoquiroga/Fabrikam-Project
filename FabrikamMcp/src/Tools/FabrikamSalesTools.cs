@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ModelContextProtocol.Server;
-using FabrikamApi.DTOs;
 
 namespace FabrikamMcp.Tools;
 
@@ -40,10 +39,9 @@ public class FabrikamSalesTools
                 if (orderResponse.IsSuccessStatusCode)
                 {
                     var orderJson = await orderResponse.Content.ReadAsStringAsync();
-                    var order = JsonSerializer.Deserialize<OrderDetailDto>(orderJson, new JsonSerializerOptions 
-                    { 
-                        PropertyNameCaseInsensitive = true 
-                    });
+                    // Parse as dynamic object since API returns anonymous object
+                    using var document = JsonDocument.Parse(orderJson);
+                    var orderElement = document.RootElement;
 
                     return new
                     {
@@ -55,18 +53,18 @@ public class FabrikamSalesTools
                                 resource = new
                                 {
                                     uri = $"{baseUrl}/api/orders/{orderId.Value}",
-                                    name = $"Order {order?.OrderNumber ?? orderId.Value.ToString()}",
-                                    description = $"Order details for {order?.Customer.Name ?? "customer"}",
+                                    name = $"Order {orderElement.GetProperty("orderNumber").GetString()}",
+                                    description = $"Order details for {orderElement.GetProperty("customer").GetProperty("name").GetString()}",
                                     mimeType = "application/json"
                                 }
                             },
                             new
                             {
                                 type = "text",
-                                text = FormatOrderDetailText(order)
+                                text = FormatOrderDetailText(orderElement)
                             }
                         },
-                        orderData = order,
+                        orderData = JsonSerializer.Deserialize<object>(orderJson),
                         outputSchema = new
                         {
                             type = "object",
@@ -76,7 +74,7 @@ public class FabrikamSalesTools
                                 orderNumber = new { type = "string", description = "Order number" },
                                 customer = new { type = "object", description = "Customer information" },
                                 status = new { type = "string", description = "Current order status" },
-                                financials = new { type = "object", description = "Order financial breakdown" },
+                                total = new { type = "number", description = "Order total amount" },
                                 items = new { type = "array", description = "Order items and products" }
                             }
                         }
@@ -131,10 +129,9 @@ public class FabrikamSalesTools
             if (response.IsSuccessStatusCode)
             {
                 var ordersJson = await response.Content.ReadAsStringAsync();
-                var orders = JsonSerializer.Deserialize<OrderListDto>(ordersJson, new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true 
-                });
+                // Parse as array since API returns array of anonymous objects
+                using var document = JsonDocument.Parse(ordersJson);
+                var ordersArray = document.RootElement;
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
                 return new
@@ -155,10 +152,10 @@ public class FabrikamSalesTools
                         new
                         {
                             type = "text",
-                            text = FormatOrderListText(orders, totalCount, page, status, region, fromDate, toDate)
+                            text = FormatOrderListText(ordersArray, totalCount, page, status, region, fromDate, toDate)
                         }
                     },
-                    ordersData = orders,
+                    ordersData = JsonSerializer.Deserialize<object[]>(ordersJson),
                     pagination = new
                     {
                         page = page,
@@ -167,12 +164,19 @@ public class FabrikamSalesTools
                     },
                     outputSchema = new
                     {
-                        type = "object",
-                        properties = new
+                        type = "array",
+                        description = "List of orders",
+                        items = new
                         {
-                            summary = new { type = "object", description = "Order summary metrics" },
-                            byStatus = new { type = "array", description = "Orders grouped by status" },
-                            recentOrders = new { type = "array", description = "Recent order details" }
+                            type = "object",
+                            properties = new
+                            {
+                                id = new { type = "integer", description = "Order ID" },
+                                orderNumber = new { type = "string", description = "Order number" },
+                                status = new { type = "string", description = "Order status" },
+                                total = new { type = "number", description = "Order total" },
+                                customer = new { type = "object", description = "Customer info" }
+                            }
                         }
                     }
                 };
@@ -217,10 +221,8 @@ public class FabrikamSalesTools
             if (response.IsSuccessStatusCode)
             {
                 var analyticsJson = await response.Content.ReadAsStringAsync();
-                var analytics = JsonSerializer.Deserialize<SalesAnalyticsDto>(analyticsJson, new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true 
-                });
+                using var document = JsonDocument.Parse(analyticsJson);
+                var analyticsElement = document.RootElement;
 
                 // Return structured content with both typed data and text fallback for MCP protocol compliance
                 var result = new
@@ -242,11 +244,11 @@ public class FabrikamSalesTools
                         new
                         {
                             type = "text",
-                            text = FormatSalesAnalyticsText(analytics)
+                            text = FormatSalesAnalyticsText(analyticsElement)
                         }
                     },
                     // Structured data for programmatic access
-                    analyticsData = analytics,
+                    analyticsData = JsonSerializer.Deserialize<object>(analyticsJson),
                     // Schema information for validation
                     outputSchema = new
                     {
@@ -256,7 +258,7 @@ public class FabrikamSalesTools
                             summary = new { type = "object", description = "Overall sales summary metrics" },
                             byStatus = new { type = "array", description = "Sales breakdown by order status" },
                             byRegion = new { type = "array", description = "Sales breakdown by region" },
-                            dailyTrends = new { type = "array", description = "Daily sales trend data" }
+                            recentTrends = new { type = "array", description = "Recent sales trend data" }
                         }
                     }
                 };
@@ -286,38 +288,90 @@ public class FabrikamSalesTools
         }
     }
 
-    private static string FormatSalesAnalyticsText(SalesAnalyticsDto? analytics)
+    private static string FormatSalesAnalyticsText(JsonElement analytics)
     {
-        if (analytics == null) return "No sales analytics data available.";
+        if (analytics.ValueKind == JsonValueKind.Null || analytics.ValueKind == JsonValueKind.Undefined) 
+            return "No sales analytics data available.";
+
+        // Extract summary information
+        var totalOrders = 0;
+        var totalRevenue = 0m;
+        var averageOrderValue = 0m;
+        var fromDate = "N/A";
+        var toDate = "N/A";
+
+        if (analytics.TryGetProperty("summary", out var summaryProp))
+        {
+            if (summaryProp.TryGetProperty("totalOrders", out var totalOrdersProp))
+                totalOrders = totalOrdersProp.GetInt32();
+            if (summaryProp.TryGetProperty("totalRevenue", out var totalRevenueProp))
+                totalRevenue = totalRevenueProp.GetDecimal();
+            if (summaryProp.TryGetProperty("averageOrderValue", out var avgProp))
+                averageOrderValue = avgProp.GetDecimal();
+            
+            if (summaryProp.TryGetProperty("period", out var periodProp))
+            {
+                if (periodProp.TryGetProperty("fromDate", out var fromDateProp))
+                    fromDate = fromDateProp.GetString() ?? "N/A";
+                if (periodProp.TryGetProperty("toDate", out var toDateProp))
+                    toDate = toDateProp.GetString() ?? "N/A";
+            }
+        }
 
         var text = $"""
             📊 SALES ANALYTICS REPORT
             
-            📈 Summary ({analytics.Summary.Period.FromDate:yyyy-MM-dd} to {analytics.Summary.Period.ToDate:yyyy-MM-dd})
-            • Total Orders: {analytics.Summary.TotalOrders:N0}
-            • Total Revenue: ${analytics.Summary.TotalRevenue:N2}
-            • Average Order Value: ${analytics.Summary.AverageOrderValue:N2}
+            📈 Summary ({fromDate} to {toDate})
+            • Total Orders: {totalOrders:N0}
+            • Total Revenue: ${totalRevenue:N2}
+            • Average Order Value: ${averageOrderValue:N2}
             
             📋 By Status:
             """;
 
-        foreach (var status in analytics.ByStatus)
+        // Process byStatus array
+        if (analytics.TryGetProperty("byStatus", out var byStatusProp) && byStatusProp.ValueKind == JsonValueKind.Array)
         {
-            text += $"\n• {status.Status}: {status.Count:N0} orders (${status.Revenue:N2})";
+            foreach (var status in byStatusProp.EnumerateArray())
+            {
+                var statusName = status.TryGetProperty("status", out var statusNameProp) ? statusNameProp.GetString() : "Unknown";
+                var count = status.TryGetProperty("count", out var countProp) ? countProp.GetInt32() : 0;
+                var revenue = status.TryGetProperty("revenue", out var revenueProp) ? revenueProp.GetDecimal() : 0;
+                text += $"\n• {statusName}: {count:N0} orders (${revenue:N2})";
+            }
         }
 
         text += "\n\n🗺️ By Region:";
-        foreach (var region in analytics.ByRegion)
+        // Process byRegion array
+        if (analytics.TryGetProperty("byRegion", out var byRegionProp) && byRegionProp.ValueKind == JsonValueKind.Array)
         {
-            text += $"\n• {region.Region}: {region.Count:N0} orders (${region.Revenue:N2})";
+            foreach (var region in byRegionProp.EnumerateArray())
+            {
+                var regionName = region.TryGetProperty("region", out var regionNameProp) ? regionNameProp.GetString() : "Unknown";
+                var count = region.TryGetProperty("count", out var countProp) ? countProp.GetInt32() : 0;
+                var revenue = region.TryGetProperty("revenue", out var revenueProp) ? revenueProp.GetDecimal() : 0;
+                text += $"\n• {regionName}: {count:N0} orders (${revenue:N2})";
+            }
         }
 
-        if (analytics.DailyTrends.Any())
+        // Process recentTrends array (note: API returns "recentTrends", not "dailyTrends")
+        if (analytics.TryGetProperty("recentTrends", out var trendsProp) && trendsProp.ValueKind == JsonValueKind.Array)
         {
             text += "\n\n📅 Recent Daily Sales:";
-            foreach (var daily in analytics.DailyTrends.TakeLast(7))
+            var count = 0;
+            foreach (var daily in trendsProp.EnumerateArray())
             {
-                text += $"\n• {daily.Date:MM/dd}: {daily.OrderCount:N0} orders (${daily.Revenue:N2})";
+                if (count >= 7) break; // Limit to last 7 days
+                var date = daily.TryGetProperty("date", out var dateProp) ? dateProp.GetString() : "N/A";
+                var orders = daily.TryGetProperty("orders", out var ordersProp) ? ordersProp.GetInt32() : 0;
+                var revenue = daily.TryGetProperty("revenue", out var revenueProp) ? revenueProp.GetDecimal() : 0;
+                
+                // Parse date for better formatting if possible
+                if (DateTime.TryParse(date, out var parsedDate))
+                    text += $"\n• {parsedDate:MM/dd}: {orders:N0} orders (${revenue:N2})";
+                else
+                    text += $"\n• {date}: {orders:N0} orders (${revenue:N2})";
+                count++;
             }
         }
 
@@ -339,10 +393,11 @@ public class FabrikamSalesTools
                 if (customerResponse.IsSuccessStatusCode)
                 {
                     var customerJson = await customerResponse.Content.ReadAsStringAsync();
-                    var customer = JsonSerializer.Deserialize<CustomerDetailDto>(customerJson, new JsonSerializerOptions 
-                    { 
-                        PropertyNameCaseInsensitive = true 
-                    });
+                    using var document = JsonDocument.Parse(customerJson);
+                    var customerElement = document.RootElement;
+
+                    // Extract customer name for resource description
+                    var customerName = customerElement.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : "Unknown Customer";
 
                     return new
                     {
@@ -354,7 +409,7 @@ public class FabrikamSalesTools
                                 resource = new
                                 {
                                     uri = $"{baseUrl}/api/customers/{customerId.Value}",
-                                    name = $"Customer {customer?.FirstName} {customer?.LastName}",
+                                    name = $"Customer {customerName}",
                                     description = "Detailed customer information with order history",
                                     mimeType = "application/json"
                                 }
@@ -362,20 +417,22 @@ public class FabrikamSalesTools
                             new
                             {
                                 type = "text",
-                                text = FormatCustomerDetailText(customer)
+                                text = FormatCustomerDetailText(customerElement)
                             }
                         },
-                        customerData = customer,
+                        customerData = JsonSerializer.Deserialize<object>(customerJson),
                         outputSchema = new
                         {
                             type = "object",
                             properties = new
                             {
                                 id = new { type = "integer", description = "Customer ID" },
-                                firstName = new { type = "string", description = "Customer first name" },
-                                lastName = new { type = "string", description = "Customer last name" },
+                                name = new { type = "string", description = "Customer name" },
                                 email = new { type = "string", description = "Customer email address" },
-                                purchaseHistory = new { type = "object", description = "Customer purchase history summary" }
+                                address = new { type = "object", description = "Customer address information" },
+                                orderSummary = new { type = "object", description = "Customer purchase history summary" },
+                                recentOrders = new { type = "array", description = "Recent customer orders" },
+                                supportTicketSummary = new { type = "object", description = "Support ticket summary" }
                             }
                         }
                     };
@@ -418,10 +475,8 @@ public class FabrikamSalesTools
             if (response.IsSuccessStatusCode)
             {
                 var customersJson = await response.Content.ReadAsStringAsync();
-                var customers = JsonSerializer.Deserialize<CustomerInfoDto>(customersJson, new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true 
-                });
+                using var document = JsonDocument.Parse(customersJson);
+                var customersArray = document.RootElement;
                 var totalCount = response.Headers.GetValues("X-Total-Count").FirstOrDefault();
                 
                 return new
@@ -442,10 +497,10 @@ public class FabrikamSalesTools
                         new
                         {
                             type = "text",
-                            text = FormatCustomerListText(customers, totalCount, page, region)
+                            text = FormatCustomerListText(customersArray, totalCount, page, region)
                         }
                     },
-                    customersData = customers,
+                    customersData = JsonSerializer.Deserialize<object[]>(customersJson),
                     pagination = new
                     {
                         page = page,
@@ -454,12 +509,20 @@ public class FabrikamSalesTools
                     },
                     outputSchema = new
                     {
-                        type = "object",
-                        properties = new
+                        type = "array",
+                        description = "List of customers",
+                        items = new
                         {
-                            summary = new { type = "object", description = "Customer base summary statistics" },
-                            customers = new { type = "array", description = "Individual customer records" },
-                            segments = new { type = "array", description = "Customer segmentation analysis" }
+                            type = "object",
+                            properties = new
+                            {
+                                id = new { type = "integer", description = "Customer ID" },
+                                name = new { type = "string", description = "Customer name" },
+                                email = new { type = "string", description = "Customer email" },
+                                region = new { type = "string", description = "Customer region" },
+                                orderCount = new { type = "integer", description = "Number of orders" },
+                                totalSpent = new { type = "number", description = "Total amount spent" }
+                            }
                         }
                     }
                 };
@@ -487,126 +550,275 @@ public class FabrikamSalesTools
         }
     }
 
-    private static string FormatCustomerDetailText(CustomerDetailDto? customer)
+    private static string FormatCustomerDetailText(JsonElement customer)
     {
-        if (customer == null) return "No customer data available.";
+        if (customer.ValueKind == JsonValueKind.Null || customer.ValueKind == JsonValueKind.Undefined) 
+            return "No customer data available.";
+
+        // Extract basic customer information
+        var id = customer.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : 0;
+        var name = customer.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : "Unknown";
+        var email = customer.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : "N/A";
+        var phone = customer.TryGetProperty("phone", out var phoneProp) ? phoneProp.GetString() : "N/A";
+        var region = customer.TryGetProperty("region", out var regionProp) ? regionProp.GetString() : "N/A";
+        var createdDate = customer.TryGetProperty("createdDate", out var createdProp) ? createdProp.GetDateTime() : DateTime.MinValue;
+
+        // Extract address information
+        var addressText = "Address not available";
+        if (customer.TryGetProperty("address", out var addressProp))
+        {
+            var street = addressProp.TryGetProperty("address", out var streetProp) ? streetProp.GetString() : "";
+            var city = addressProp.TryGetProperty("city", out var cityProp) ? cityProp.GetString() : "";
+            var state = addressProp.TryGetProperty("state", out var stateProp) ? stateProp.GetString() : "";
+            var zipCode = addressProp.TryGetProperty("zipCode", out var zipProp) ? zipProp.GetString() : "";
+            
+            if (!string.IsNullOrEmpty(street) && !string.IsNullOrEmpty(city))
+                addressText = $"{street}\n{city}, {state} {zipCode}";
+        }
+
+        // Extract order summary
+        var totalOrders = 0;
+        var totalSpent = 0m;
+        var lastOrderDate = "None";
+        if (customer.TryGetProperty("orderSummary", out var orderSummaryProp))
+        {
+            if (orderSummaryProp.TryGetProperty("totalOrders", out var totalOrdersProp))
+                totalOrders = totalOrdersProp.GetInt32();
+            if (orderSummaryProp.TryGetProperty("totalSpent", out var totalSpentProp))
+                totalSpent = totalSpentProp.GetDecimal();
+            if (orderSummaryProp.TryGetProperty("lastOrderDate", out var lastOrderProp))
+                lastOrderDate = lastOrderProp.GetDateTime().ToString("yyyy-MM-dd");
+        }
+
+        // Extract recent orders
+        var recentOrdersText = "No recent orders";
+        if (customer.TryGetProperty("recentOrders", out var recentOrdersProp) && recentOrdersProp.ValueKind == JsonValueKind.Array)
+        {
+            var orders = new List<string>();
+            foreach (var order in recentOrdersProp.EnumerateArray().Take(3))
+            {
+                var orderNumber = order.TryGetProperty("orderNumber", out var orderNumProp) ? orderNumProp.GetString() : "N/A";
+                var status = order.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : "Unknown";
+                var total = order.TryGetProperty("total", out var totalProp) ? totalProp.GetDecimal() : 0;
+                orders.Add($"#{orderNumber}: {status} - ${total:F2}");
+            }
+            if (orders.Any())
+                recentOrdersText = string.Join("\n• ", orders);
+        }
+
+        // Extract support ticket summary
+        var supportText = "";
+        if (customer.TryGetProperty("supportTicketSummary", out var supportProp))
+        {
+            var totalTickets = supportProp.TryGetProperty("totalTickets", out var totalTicketsProp) ? totalTicketsProp.GetInt32() : 0;
+            var openTickets = supportProp.TryGetProperty("openTickets", out var openTicketsProp) ? openTicketsProp.GetInt32() : 0;
+            supportText = $"\n\n🎫 Support Summary\n• Total Tickets: {totalTickets}\n• Open Tickets: {openTickets}";
+        }
 
         return $"""
             👤 CUSTOMER PROFILE
             
             📝 Contact Information
-            • Name: {customer.FirstName} {customer.LastName}
-            • Email: {customer.Email}
-            • Phone: {customer.Phone}
-            • Status: {customer.Status}
-            • Registration Date: {customer.RegistrationDate:yyyy-MM-dd}
+            • Name: {name}
+            • Email: {email}
+            • Phone: {phone}
+            • Region: {region}
+            • Registration Date: {(createdDate != DateTime.MinValue ? createdDate.ToString("yyyy-MM-dd") : "N/A")}
             
             📍 Address
-            • {customer.Address.Street}
-            • {customer.Address.City}, {customer.Address.State} {customer.Address.PostalCode}
-            • {customer.Address.Country}
+            {addressText}
             
             🛒 Purchase History
-            • Total Orders: {customer.PurchaseHistory.TotalOrders:N0}
-            • Lifetime Value: ${customer.PurchaseHistory.TotalSpent:N2}
-            • Average Order: ${customer.PurchaseHistory.AverageOrderValue:N2}
-            • First Purchase: {customer.PurchaseHistory.FirstPurchase?.ToString("yyyy-MM-dd") ?? "None"}
-            • Last Purchase: {customer.PurchaseHistory.LastPurchase?.ToString("yyyy-MM-dd") ?? "None"}
+            • Total Orders: {totalOrders:N0}
+            • Lifetime Value: ${totalSpent:N2}
+            • Last Purchase: {lastOrderDate}
             
-            🏷️ Preferences
-            • Contact Method: {customer.Preferences.PreferredContact}
-            • Email Opt-in: {(customer.Preferences.EmailOptIn ? "Yes" : "No")}
-            • Loyalty Tier: {customer.Preferences.LoyaltyTier}
+            📦 Recent Orders
+            • {recentOrdersText}{supportText}
             """;
     }
 
-    private static string FormatCustomerListText(CustomerInfoDto? customers, string? totalCount, int page, string? region)
+    private static string FormatCustomerListText(JsonElement customersArray, string? totalCount, int page, string? region)
     {
-        if (customers == null) return "No customer data available.";
+        if (customersArray.ValueKind != JsonValueKind.Array) 
+            return "No customer data available.";
+
+        var customerCount = customersArray.GetArrayLength();
+        var totalSpent = 0m;
+        var activeCustomers = 0;
 
         var regionText = !string.IsNullOrEmpty(region) ? $" in {region} region" : "";
         var text = $"""
             👥 CUSTOMER DIRECTORY{regionText.ToUpper()}
             
             📊 Summary
-            • Total Customers: {customers.Summary.TotalCustomers:N0}
-            • Active Customers: {customers.Summary.ActiveCustomers:N0}
-            • New Customers: {customers.Summary.NewCustomers:N0}
-            • Retention Rate: {customers.Summary.RetentionRate:P1}
-            • Average Lifetime Value: ${customers.Summary.AverageLifetimeValue:N2}
-            
-            👤 Recent Customers (Page {page}):
+            • Total Customers: {totalCount ?? customerCount.ToString()}
+            • Page: {page}
             """;
 
-        foreach (var customer in customers.Customers.Take(10))
+        // Process customers and calculate summary
+        var customers = new List<string>();
+        foreach (var customer in customersArray.EnumerateArray().Take(10))
         {
-            text += $"\n• {customer.FirstName} {customer.LastName} ({customer.Email}) - {customer.Status}";
+            var name = customer.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : "Unknown";
+            var email = customer.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : "N/A";
+            var orderCount = customer.TryGetProperty("orderCount", out var orderCountProp) ? orderCountProp.GetInt32() : 0;
+            var spent = customer.TryGetProperty("totalSpent", out var spentProp) ? spentProp.GetDecimal() : 0;
+            var customerRegion = customer.TryGetProperty("region", out var regionProp) ? regionProp.GetString() : "Unknown";
+
+            totalSpent += spent;
+            if (orderCount > 0) activeCustomers++;
+
+            customers.Add($"• {name} ({email}) - {orderCount} orders, ${spent:N2} total, {customerRegion}");
         }
 
-        if (customers.Segments.Any())
+        if (customerCount > 0)
         {
-            text += "\n\n📈 Customer Segments:";
-            foreach (var segment in customers.Segments)
+            var avgSpent = totalSpent / customerCount;
+            text += $"\n• Active Customers: {activeCustomers}";
+            text += $"\n• Average Customer Value: ${avgSpent:N2}";
+        }
+
+        text += "\n\n👤 Customers (Page " + page + "):";
+        if (customers.Any())
+        {
+            text += "\n" + string.Join("\n", customers);
+            if (customerCount > 10)
             {
-                text += $"\n• {segment.SegmentName}: {segment.CustomerCount:N0} customers ({segment.Percentage:P1})";
+                text += $"\n... and {customerCount - 10} more customers";
             }
+        }
+        else
+        {
+            text += "\nNo customers found for the specified criteria.";
         }
 
         return text;
     }
 
-    private static string FormatOrderDetailText(OrderDetailDto? order)
+    private static string FormatOrderDetailText(JsonElement order)
     {
-        if (order == null) return "Order details not available.";
+        if (order.ValueKind == JsonValueKind.Null || order.ValueKind == JsonValueKind.Undefined) 
+            return "Order details not available.";
+
+        // Extract basic order information
+        var id = order.TryGetProperty("id", out var idProp) ? idProp.GetInt32() : 0;
+        var orderNumber = order.TryGetProperty("orderNumber", out var orderNumProp) ? orderNumProp.GetString() : "N/A";
+        var status = order.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : "Unknown";
+        var orderDate = order.TryGetProperty("orderDate", out var orderDateProp) ? orderDateProp.GetDateTime() : DateTime.MinValue;
+        var total = order.TryGetProperty("total", out var totalProp) ? totalProp.GetDecimal() : 0;
+        
+        // Extract customer information
+        var customerName = "N/A";
+        var customerEmail = "N/A";
+        var customerPhone = "";
+        if (order.TryGetProperty("customer", out var customerProp))
+        {
+            if (customerProp.TryGetProperty("name", out var nameProp))
+                customerName = nameProp.GetString() ?? "N/A";
+            if (customerProp.TryGetProperty("email", out var emailProp))
+                customerEmail = emailProp.GetString() ?? "N/A";
+            if (customerProp.TryGetProperty("phone", out var phoneProp))
+                customerPhone = phoneProp.GetString() ?? "";
+        }
+
+        // Extract optional dates
+        var shippedDate = order.TryGetProperty("shippedDate", out var shippedProp) && 
+                          shippedProp.ValueKind != JsonValueKind.Null ? shippedProp.GetDateTime() : (DateTime?)null;
+        var deliveredDate = order.TryGetProperty("deliveredDate", out var deliveredProp) && 
+                            deliveredProp.ValueKind != JsonValueKind.Null ? deliveredProp.GetDateTime() : (DateTime?)null;
+
+        // Count items if available
+        var itemCount = 0;
+        var itemsText = "Items not available";
+        if (order.TryGetProperty("items", out var itemsProp) && itemsProp.ValueKind == JsonValueKind.Array)
+        {
+            itemCount = itemsProp.GetArrayLength();
+            var itemsList = new List<string>();
+            var count = 0;
+            foreach (var item in itemsProp.EnumerateArray())
+            {
+                if (count >= 10) break;
+                var productName = item.TryGetProperty("productName", out var prodNameProp) ? prodNameProp.GetString() : "Unknown Product";
+                var quantity = item.TryGetProperty("quantity", out var qtyProp) ? qtyProp.GetInt32() : 0;
+                var unitPrice = item.TryGetProperty("unitPrice", out var priceProp) ? priceProp.GetDecimal() : 0;
+                var lineTotal = quantity * unitPrice;
+                itemsList.Add($"• {productName}: {quantity} × ${unitPrice:F2} = ${lineTotal:F2}");
+                count++;
+            }
+            itemsText = string.Join("\n", itemsList);
+            if (itemCount > 10)
+                itemsText += $"\n... and {itemCount - 10} more items";
+        }
 
         return $"""
             📋 ORDER DETAILS
             
             🆔 Order Information
-            • Order ID: {order.Id}
-            • Order Number: {order.OrderNumber}
-            • Status: {GetOrderStatusEmoji(order.Status)} {order.Status}
-            • Order Date: {order.OrderDate:MMM dd, yyyy}
-            {(order.ShippedDate.HasValue ? $"• Shipped: {order.ShippedDate:MMM dd, yyyy}" : "")}
-            {(order.DeliveredDate.HasValue ? $"• Delivered: {order.DeliveredDate:MMM dd, yyyy}" : "")}
+            • Order ID: {id}
+            • Order Number: {orderNumber}
+            • Status: {GetOrderStatusEmoji(status ?? "Unknown")} {status}
+            • Order Date: {(orderDate != DateTime.MinValue ? orderDate.ToString("MMM dd, yyyy") : "N/A")}
+            {(shippedDate.HasValue ? $"• Shipped: {shippedDate:MMM dd, yyyy}" : "")}
+            {(deliveredDate.HasValue ? $"• Delivered: {deliveredDate:MMM dd, yyyy}" : "")}
             
             👤 Customer
-            • Name: {order.Customer.Name}
-            • Email: {order.Customer.Email}
-            {(!string.IsNullOrEmpty(order.Customer.Phone) ? $"• Phone: {order.Customer.Phone}" : "")}
+            • Name: {customerName}
+            • Email: {customerEmail}
+            {(!string.IsNullOrEmpty(customerPhone) ? $"• Phone: {customerPhone}" : "")}
             
-            💰 Financial Details
-            • Subtotal: ${order.Financials.Subtotal:F2}
-            • Tax: ${order.Financials.Tax:F2}
-            • Shipping: ${order.Financials.Shipping:F2}
-            • Total: ${order.Financials.Total:F2}
+            � Financial Details
+            • Total: ${total:F2}
             
-            📦 Items ({order.Items.Count})
-            {string.Join("\n", order.Items.Take(10).Select(item => 
-                $"• {item.Product.Name}: {item.Quantity} × ${item.UnitPrice:F2} = ${item.LineTotal:F2}"
-            ))}
-            {(order.Items.Count > 10 ? $"\n... and {order.Items.Count - 10} more items" : "")}
+            📦 Items ({itemCount})
+            {itemsText}
             
-            📍 Shipping Address
-            {order.Shipping.FormattedAddress}
-            
-            {(!string.IsNullOrEmpty(order.Notes) ? $"📝 Notes\n{order.Notes}\n" : "")}
-            🕒 Last Updated: {order.LastUpdated:MMM dd, yyyy HH:mm}
+            🕒 Order Details Retrieved: {DateTime.Now:MMM dd, yyyy HH:mm}
             """;
     }
 
-    private static string FormatOrderListText(OrderListDto? orders, string? totalCount, int page, string? status, string? region, string? fromDate, string? toDate)
+    private static string FormatOrderListText(JsonElement ordersArray, string? totalCount, int page, string? status, string? region, string? fromDate, string? toDate)
     {
-        if (orders == null) return "No orders found.";
+        if (ordersArray.ValueKind != JsonValueKind.Array) 
+            return "No orders found.";
+
+        var orderCount = ordersArray.GetArrayLength();
+        var totalRevenue = 0m;
+        var ordersList = new List<string>();
+
+        // Process orders and calculate summary
+        var count = 0;
+        foreach (var order in ordersArray.EnumerateArray())
+        {
+            if (count >= 8) break; // Limit display to 8 orders
+            
+            var orderNumber = order.TryGetProperty("orderNumber", out var orderNumProp) ? orderNumProp.GetString() : "N/A";
+            var orderStatus = order.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : "Unknown";
+            var total = order.TryGetProperty("total", out var totalProp) ? totalProp.GetDecimal() : 0;
+            totalRevenue += total;
+
+            var customerName = "N/A";
+            if (order.TryGetProperty("customer", out var customerProp) && 
+                customerProp.TryGetProperty("name", out var nameProp))
+            {
+                customerName = nameProp.GetString() ?? "N/A";
+            }
+
+            var statusEmoji = GetOrderStatusEmoji(orderStatus ?? "Unknown");
+            ordersList.Add($"• #{orderNumber}: {customerName} - ${total:F2} {statusEmoji}");
+            count++;
+        }
+
+        var averageOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0;
 
         var text = $"""
             📋 FABRIKAM ORDERS
             
-            📊 Summary
-            • Total Orders: {totalCount ?? "N/A"}
+            � Summary
+            • Total Orders: {totalCount ?? orderCount.ToString()}
             • Page: {page}
-            • Total Revenue: ${orders.Summary.TotalRevenue:N2}
-            • Average Order Value: ${orders.Summary.AverageOrderValue:F2}
+            • Total Revenue: ${totalRevenue:N2}
+            • Average Order Value: ${averageOrderValue:F2}
             """;
 
         // Add filter info if applied
@@ -616,39 +828,14 @@ public class FabrikamSalesTools
             text += $"\n\n🔍 Applied Filters:\n{filters}";
         }
 
-        // Show orders by status
-        if (orders.ByStatus?.Any() == true)
-        {
-            text += "\n\n📈 By Status:";
-            foreach (var statusGroup in orders.ByStatus.Take(5))
-            {
-                var emoji = GetOrderStatusEmoji(statusGroup.Status);
-                text += $"\n• {emoji} {statusGroup.Status}: {statusGroup.OrderCount} orders (${statusGroup.Revenue:N2})";
-            }
-        }
-
         // Show recent orders
-        if (orders.RecentOrders?.Any() == true)
+        if (ordersList.Any())
         {
             text += "\n\n🕒 Recent Orders:";
-            foreach (var order in orders.RecentOrders.Take(8))
+            text += "\n" + string.Join("\n", ordersList);
+            if (orderCount > 8)
             {
-                var statusEmoji = GetOrderStatusEmoji(order.Status);
-                text += $"\n• #{order.OrderNumber}: {order.Customer.Name} - ${order.Financials.Total:F2} {statusEmoji}";
-            }
-            if (orders.RecentOrders.Count > 8)
-            {
-                text += $"\n... and {orders.RecentOrders.Count - 8} more orders";
-            }
-        }
-
-        // Show regional breakdown if available
-        if (orders.Summary.RegionalBreakdown?.Any() == true)
-        {
-            text += "\n\n🌍 By Region:";
-            foreach (var regionalData in orders.Summary.RegionalBreakdown.Take(5))
-            {
-                text += $"\n• {regionalData.Region}: {regionalData.OrderCount} orders (${regionalData.Revenue:N2})";
+                text += $"\n... and {orderCount - 8} more orders";
             }
         }
 

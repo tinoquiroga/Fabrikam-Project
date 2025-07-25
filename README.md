@@ -1,5 +1,7 @@
 # 🏗️ Fabrikam Modular Homes - Business AI Demonstration Platform
 
+> **🤖 GitHub Copilot Notice**: This project uses **automated CI/CD** with GitHub Actions. Every code change triggers testing and deployment. See `.github/copilot-cicd-context.md` for full pipeline details.
+
 A comprehensive .NET-based business simulation platform designed for **Microsoft Copilot demonstrations**, **partner training**, and **AI business value showcases**. This project simulates Fabrikam, a fictional modular home builder, with realistic business operations and AI-powered tools.
 
 ## 🎯 Purpose

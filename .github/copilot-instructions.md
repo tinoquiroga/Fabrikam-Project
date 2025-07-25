@@ -5,6 +5,19 @@ This is a .NET 9.0 business simulation platform with two main components:
 - **FabrikamApi**: ASP.NET Core Web API for modular homes business operations
 - **FabrikamMcp**: Model Context Protocol server enabling AI integration
 
+## 🔄 **CI/CD Integration Awareness**
+**This project uses GitHub Actions for automated testing and deployment.**
+- 📖 **Full CI/CD Documentation**: See `.github/copilot-cicd-context.md` for complete pipeline details
+- 🧪 **Testing**: All code changes trigger automated testing via `testing.yml`
+- 🚀 **Deployment**: Azure App Service deployment via `deploy-full-stack.yml`
+- ✅ **Quality Gates**: Code must pass build + tests before deployment
+
+**When suggesting code changes, always consider:**
+- Will this break the automated build pipeline?
+- Are tests included/updated for new functionality?
+- Does this follow patterns compatible with Azure deployment?
+- Are async/await patterns maintained for cloud scalability?
+
 ## 🎯 C# Best Practices & Coding Standards
 
 ### ⚡ Asynchronous Programming

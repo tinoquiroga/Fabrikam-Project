@@ -23,9 +23,9 @@ public class SalesAnalyticsDto
     public List<SalesByRegionDto> ByRegion { get; set; } = new();
     
     /// <summary>
-    /// Daily sales trends over the period
+    /// Daily sales trends over the period - matches API property 'recentTrends'
     /// </summary>
-    public List<DailySalesDto> DailyTrends { get; set; } = new();
+    public List<DailySalesDto> RecentTrends { get; set; } = new();
 }
 
 /// <summary>

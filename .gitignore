@@ -540,3 +540,93 @@ coverage/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# ===========================================
+# VS Code Extension Placeholder Files
+# ===========================================
+# These files are created by VS Code extensions when they encounter
+# broken references or missing files. They should be ignored to prevent
+# them from being committed as empty files.
+
+# Empty DTO files (moved to FabrikamContracts)
+FabrikamApi/src/DTOs/
+FabrikamApi/DTOs/
+
+# Empty duplicate contract files 
+FabrikamContracts/AlignedDTOs.cs
+FabrikamContracts/Class1.cs
+
+# Misplaced documentation files (should be in docs/ subdirectories)
+# These are created when markdown links reference files in docs/ but
+# VS Code creates them in root instead
+/AUTHENTICATION-IMPLEMENTATION-GUIDE.md
+/BUSINESS-DASHBOARD-FIX.md
+/COPILOT-DEMO-PROMPTS.md
+/COPILOT-REMINDER.md
+/DEMO-READY-SUMMARY.md
+/DEPLOYMENT-GUIDE.md
+/DEVELOPMENT-WORKFLOW.md
+/DOCUMENTATION-CLEANUP-SUMMARY.md
+/DTO-ARCHITECTURE-SCHEMA.md
+/ENHANCED-TESTING-COMPLETE.md
+/HYBRID-SEED-SERVICE-SUCCESS.md
+/JSON-SEED-DATA-SUCCESS.md
+/ORDER-TIMELINE-IMPLEMENTATION-COMPLETE.md
+/PRODUCTION-TESTING-GUIDE.md
+/PROJECT-TESTING-SUMMARY.md
+/QUICK-DEMO-PROMPTS.md
+/README-NEW.md
+/RELEASE-GUIDE.md
+/REPOSITORY-CLEANUP-ANALYSIS.md
+/REPOSITORY-CLEANUP-COMPLETE.md
+/REVENUE-CALCULATION-FIX-COMPLETE.md
+/TESTING-STRATEGY.md
+/TODO-FUTURE-ENHANCEMENTS.md
+
+# Misplaced script files (should be in scripts/ or docs/)
+/Check-RepoStatus.ps1
+/Deploy-Azure-Resources.ps1
+/Deploy-Integrated.ps1
+/Fix-Verification.ps1
+/Inject-Orders.ps1
+/Setup-BranchProtection.ps1
+/Test-BusinessDashboard.ps1
+/Test-GetSalesAnalytics.ps1
+/Test-Integration.ps1
+/Validate-Demo.ps1
+/test-mcp-smart-fallback.ps1
+
+# Misplaced asset and guide files
+/FabrikamApi/ASSET-MANAGEMENT-GUIDE.md
+/Copilot-Studio-Agent-Setup-Guide.md
+/azure-b2c-setup-issue.md
+/database-schema-issue.md
+/phase1-issue.md
+
+# VS Code extension artifacts (misplaced directories and empty files)
+FabrikamApi/Controllers/
+FabrikamApi/Properties/
+FabrikamMcp/Properties/
+
+# Empty test files recreated by VS Code extensions
+/test-*.json
+/Test*.cs
+
+# Archive empty files (VS Code recreation artifacts)
+archive/completed-tasks/*.md
+archive/duplicate-files/*.md
+archive/old-test-files/*.json
+archive/old-test-files/TestMcpTools/*.cs
+
+# Documentation empty files
+docs/*.md
+docs/development/*.md
+
+# Seed data empty files  
+FabrikamApi/src/Data/SeedData/*.json
+
+# Test project empty files
+FabrikamTests/**/*_New.cs
+
+# Script empty files
+scripts/test-*.ps1

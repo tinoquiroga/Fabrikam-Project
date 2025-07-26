@@ -200,7 +200,167 @@ Write-Host "Disk Response: $([math]::Round($diskTime, 1)) ms $diskStatus"
 Write-Host "Health check complete!" -ForegroundColor Green
 ```
 
-## 🚨 Emergency Performance Reset
+## � Real-Time Freeze Monitoring
+
+### Keyboard Buffer Freeze Detection
+For UI thread blocking (keystrokes queued during 5-second freezes):
+
+```powershell
+# Enhanced freeze monitor with process identification
+while ($true) {
+    $time = Get-Date -Format "HH:mm:ss"
+    $vscode = Get-Process Code -ErrorAction SilentlyContinue
+    if ($vscode) {
+        $sortedProcs = $vscode | Sort-Object WorkingSet64 -Descending
+        $maxProc = $sortedProcs[0]
+        $maxMem = [math]::Round($maxProc.WorkingSet64 / 1MB, 1)
+        $totalMem = [math]::Round(($vscode | Measure-Object WorkingSet64 -Sum).Sum / 1MB, 1)
+        
+        if ($maxMem -gt 800) {
+            Write-Host "$time - PID:$($maxProc.Id) ${maxMem}MB (Total:${totalMem}MB)" -ForegroundColor Red
+            
+            # If spike > 200MB from baseline, show all processes
+            if ($maxMem -gt 1000) {
+                Write-Host "  SPIKE DETECTED - All processes:" -ForegroundColor Yellow
+                $sortedProcs | ForEach-Object {
+                    $mem = [math]::Round($_.WorkingSet64 / 1MB, 1)
+                    Write-Host "    PID:$($_.Id) ${mem}MB" -ForegroundColor White
+                }
+            }
+        }
+    }
+    Start-Sleep -Milliseconds 500
+}
+```
+
+### Memory Spike Pattern Analysis
+**CRITICAL UPDATE**: Extensions are NOT the root cause. Freezes persist with all extensions disabled.
+
+**Confirmed Pattern**: 
+- **With Extensions**: 224MB spikes (994MB → 1218MB) during freezes
+- **WITHOUT Extensions**: 427MB spikes (815MB → 1242MB) during freezes - LARGER spikes!
+- **Root Cause**: Core VS Code renderer process issue, not extension-related
+- **Detection**: Monitor for >400MB sudden spikes in renderer process even with extensions disabled
+
+**🚨 UPDATED CULPRIT ANALYSIS:**
+- **Extensions Disabled Test**: PID 28968 (new renderer) still spikes 427MB during freezes
+- **Pattern Persists**: Same 15-20 second intervals, same UI thread blocking
+- **Conclusion**: This is a core VS Code or workspace-specific issue
+
+**🔧 ROOT CAUSE THEORIES (Updated):**
+1. **Workspace File Analysis**: Large files, complex project structure, or file watching issues
+2. **VS Code Core Bug**: Renderer process memory leak in core VS Code functionality  
+3. **File System Issues**: Problems with file monitoring, git operations, or workspace indexing
+4. **Hardware/Driver Issues**: Graphics drivers, memory allocation problems
+
+**Investigation Commands:**
+```powershell
+# Identify the new process without extensions
+Get-Process -Id 28968 -ErrorAction SilentlyContinue | ForEach-Object {
+    $memMB = [math]::Round($_.WorkingSet64 / 1MB, 1)
+    Write-Host "PID $($_.Id): $($_.ProcessName) - ${memMB}MB"
+    
+    # Get command line to verify it's still renderer process
+    $cmdLine = Get-CimInstance Win32_Process -Filter "ProcessId = $($_.Id)" | 
+        Select-Object -ExpandProperty CommandLine
+    Write-Host "  Command: $cmdLine"
+}
+```
+
+## 🧪 **SOLUTION FOUND - BUILD ARTIFACTS ISSUE**
+
+**🚨 ROOT CAUSE IDENTIFIED**: VS Code was monitoring **hundreds of build artifact files** in `bin` and `obj` directories throughout the Fabrikam project, causing massive memory spikes.
+
+### The Problem
+- **Entity Framework DLLs** (2.57MB each)
+- **Swashbuckle UI assets** (2.15MB each) 
+- **Hundreds of .NET runtime DLLs**
+- **Multiple copies** across Debug/Release builds  
+- **Test framework artifacts** in FabrikamTests/bin/
+
+Even with `files.exclude` configured, VS Code was still **watching and indexing** these files, causing:
+- **1520MB memory spikes** in renderer process
+- **5-second UI freezes** during indexing
+- **Keyboard input buffering** when memory allocation occurred
+
+### The Solution
+**Added comprehensive exclusions to `.vscode/settings.json`:**
+```json
+{
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true
+  },
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/obj/**": true,
+    "**/.vs/**": true,
+    "**/node_modules/**": true,
+    "**/.git/**": true
+  },
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/node_modules": true
+  }
+}
+```
+
+**Key Fix**: The `files.watcherExclude` setting prevents VS Code's file watcher from monitoring build artifacts, eliminating the memory spikes.
+
+### Clean Up Command
+```powershell
+# Remove existing build artifacts
+Get-ChildItem -Path "." -Recurse -Directory -Name "bin" | Remove-Item -Recurse -Force
+Get-ChildItem -Path "." -Recurse -Directory -Name "obj" | Remove-Item -Recurse -Force
+```
+
+**Result**: VS Code memory usage should drop significantly and freezes should stop immediately.
+
+### Targeted Process Monitoring
+Monitor specific suspects during freezes:
+
+```powershell
+# Windows Search and Indexing (even if disabled, check for remnants)
+Get-Process SearchIndexer, SearchProtocolHost, SearchFilterHost -ErrorAction SilentlyContinue | 
+    ForEach-Object {
+        $memMB = [math]::Round($_.WorkingSet64 / 1MB, 1)
+        Write-Host "Search Process: $($_.Name) - ${memMB}MB"
+    }
+
+# Windows Defender processes (despite exclusions)
+Get-Process MsMpEng, NisSrv, SecurityHealthService -ErrorAction SilentlyContinue | 
+    ForEach-Object {
+        $memMB = [math]::Round($_.WorkingSet64 / 1MB, 1)
+        $cpuTime = [math]::Round($_.TotalProcessorTime.TotalSeconds, 0)
+        Write-Host "Defender: $($_.Name) - ${memMB}MB, ${cpuTime}s CPU"
+    }
+
+# Git operations (auto-fetch, status checks)
+Get-Process git -ErrorAction SilentlyContinue | ForEach-Object {
+    Write-Host "Git process: PID $($_.Id) - $($_.StartTime) - $(if ($_.HasExited) {'Exited'} else {'Running'})"
+}
+```
+
+### Windows Search Service Control
+Since Windows Search auto-restarts, proper disable method:
+
+```powershell
+# Properly disable Windows Search (requires admin)
+Set-Service WSearch -StartupType Disabled
+Stop-Service WSearch -Force
+
+# Verify it stays disabled
+Get-Service WSearch | Select-Object Name, Status, StartType
+
+# To re-enable later:
+# Set-Service WSearch -StartupType Automatic
+# Start-Service WSearch
+```
+
+## �🚨 Emergency Performance Reset
 
 ### Nuclear Option: Complete Reset
 ```powershell

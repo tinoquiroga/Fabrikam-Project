@@ -53,6 +53,12 @@ test-*.json
 Test*.cs
 *test*.json
 
+# Prevent misplaced folders in project roots
+FabrikamApi/Controllers/
+FabrikamApi/Properties/
+FabrikamMcp/Properties/
+# Real Controllers and Properties should be in src/ folders only
+
 # NuGet Packages
 *.nupkg
 # NuGet Symbol Packages

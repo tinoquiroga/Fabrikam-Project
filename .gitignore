@@ -48,6 +48,11 @@ msbuild.wrn
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+# Temporary test files (should not be committed)
+test-*.json
+Test*.cs
+*test*.json
+
 # NuGet Packages
 *.nupkg
 # NuGet Symbol Packages

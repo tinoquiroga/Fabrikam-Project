@@ -13,6 +13,17 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 - **Support partner training** with ready-to-deploy environments
 - **Showcase Model Context Protocol (MCP)** integration patterns
 
+## 🎬 Demo Video
+
+Watch the complete Fabrikam Project demonstration showcasing:
+- Customer management and business analytics
+- Product catalog and inventory tracking  
+- Order processing and timeline management
+- MCP tool integration with AI assistants
+- Real-time business dashboard functionality
+
+**📹 [View Demo Video](docs/assets/fabrikamprojectdemo1.mp4)** *(11 minutes - comprehensive walkthrough)*
+
 ## ⚡ Quick Start
 
 ### **Local Development** (Monorepo Structure)

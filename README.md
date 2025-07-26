@@ -8,7 +8,7 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 
 ## 🎯 Purpose
 
-- **Accelerate Copilot adoption** with realistic SME business scenarios
+- **Accelerate Copilot adoption** with realistic SME&C business scenarios
 - **Enable hands-on AI labs** demonstrating tangible business value  
 - **Support partner training** with ready-to-deploy environments
 - **Showcase Model Context Protocol (MCP)** integration patterns
@@ -28,7 +28,7 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 ```
 
 ### **Option 1: Use Deployed Services** (Recommended)
-- **API**: https://fabrikam-api-dev-izbd.azurewebsites.net
+- **API**: https://fabrikam-api-dev.levelupcsp.com/mcp
 - **MCP**: https://fabrikam-mcp-dev.levelupcsp.com/mcp
 - **Copilot Studio**: See [Setup Guide](docs/demos/Copilot-Studio-Agent-Setup-Guide.md)
 

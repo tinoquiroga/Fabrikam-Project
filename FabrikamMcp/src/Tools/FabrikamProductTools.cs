@@ -29,13 +29,13 @@ public class FabrikamProductTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev-izbd.azurewebsites.net";
-            
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev.levelupcsp.com";
+
             // If productId is provided, get specific product details
             if (productId.HasValue)
             {
                 var productResponse = await _httpClient.GetAsync($"{baseUrl}/api/products/{productId.Value}");
-                
+
                 if (productResponse.IsSuccessStatusCode)
                 {
                     var productJson = await productResponse.Content.ReadAsStringAsync();
@@ -92,56 +92,56 @@ public class FabrikamProductTools
                     };
                 }
             }
-            
+
             // Build query parameters for filtering
             var queryParams = new List<string>();
-            
+
             if (!string.IsNullOrEmpty(category))
             {
                 queryParams.Add($"category={Uri.EscapeDataString(category)}");
             }
-            
+
             if (inStock.HasValue)
             {
                 queryParams.Add($"inStock={inStock.Value.ToString().ToLower()}");
             }
-            
+
             if (minPrice.HasValue)
             {
                 queryParams.Add($"minPrice={minPrice.Value}");
             }
-            
+
             if (maxPrice.HasValue)
             {
                 queryParams.Add($"maxPrice={maxPrice.Value}");
             }
-            
+
             queryParams.Add($"page={page}");
             queryParams.Add($"pageSize={pageSize}");
-            
+
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
             var response = await _httpClient.GetAsync($"{baseUrl}/api/products{queryString}");
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var jsonContent = await response.Content.ReadAsStringAsync();
                 using var document = JsonDocument.Parse(jsonContent);
                 var productsArray = document.RootElement;
-                
+
                 var productsText = "📦 **Product Catalog**\n\n";
-                
+
                 // Add filter information
                 var filters = new List<string>();
                 if (!string.IsNullOrEmpty(category)) filters.Add($"Category: {category}");
                 if (inStock.HasValue) filters.Add($"In Stock: {(inStock.Value ? "Yes" : "No")}");
                 if (minPrice.HasValue) filters.Add($"Min Price: ${minPrice.Value:N2}");
                 if (maxPrice.HasValue) filters.Add($"Max Price: ${maxPrice.Value:N2}");
-                
+
                 if (filters.Any())
                 {
                     productsText += $"🔍 **Filters Applied:** {string.Join(", ", filters)}\n\n";
                 }
-                
+
                 var productCount = 0;
                 foreach (var product in productsArray.EnumerateArray())
                 {
@@ -156,7 +156,7 @@ public class FabrikamProductTools
                     var bedrooms = GetJsonValue(product, "bedrooms");
                     var bathrooms = GetJsonValue(product, "bathrooms");
                     var deliveryDays = GetJsonValue(product, "deliveryDaysEstimate");
-                    
+
                     var stockIcon = stockStatus switch
                     {
                         "In Stock" => "✅",
@@ -164,7 +164,7 @@ public class FabrikamProductTools
                         "Out of Stock" => "❌",
                         _ => "📊"
                     };
-                    
+
                     productsText += $"""
                         **{name}** (#{modelNumber})
                         📍 {categoryStr} | 💰 ${price:N2} | 🏠 {squareFeet} sq ft | {bedrooms}bed/{bathrooms}bath
@@ -172,20 +172,20 @@ public class FabrikamProductTools
                         
                         """;
                 }
-                
+
                 // Add pagination info
                 var totalCountHeader = response.Headers.FirstOrDefault(h => h.Key == "X-Total-Count").Value?.FirstOrDefault();
                 if (!string.IsNullOrEmpty(totalCountHeader) && int.TryParse(totalCountHeader, out var totalCount))
                 {
                     var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
                     productsText += $"\n📄 **Page {page} of {totalPages}** | Total Products: {totalCount}";
-                    
+
                     if (page < totalPages)
                     {
                         productsText += $"\n💡 Use page={page + 1} to see more products";
                     }
                 }
-                
+
                 return new
                 {
                     content = new object[]
@@ -195,7 +195,7 @@ public class FabrikamProductTools
                     data = jsonContent
                 };
             }
-            
+
             return new
             {
                 error = new
@@ -228,32 +228,32 @@ public class FabrikamProductTools
     {
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev-izbd.azurewebsites.net";
-            
+            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev.levelupcsp.com";
+
             // Get all products for analytics
             var queryParams = new List<string> { "pageSize=1000" }; // Get all products
-            
+
             if (!string.IsNullOrEmpty(category))
             {
                 queryParams.Add($"category={Uri.EscapeDataString(category)}");
             }
-            
+
             if (!includeOutOfStock)
             {
                 queryParams.Add("inStock=true");
             }
-            
+
             var queryString = "?" + string.Join("&", queryParams);
             var response = await _httpClient.GetAsync($"{baseUrl}/api/products{queryString}");
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var jsonContent = await response.Content.ReadAsStringAsync();
                 using var document = JsonDocument.Parse(jsonContent);
                 var productsArray = document.RootElement;
-                
+
                 var products = new List<(string name, string category, decimal price, int stock, string status, int bedrooms)>();
-                
+
                 foreach (var product in productsArray.EnumerateArray())
                 {
                     products.Add((
@@ -265,14 +265,14 @@ public class FabrikamProductTools
                         int.TryParse(GetJsonValue(product, "bedrooms"), out var bedrooms) ? bedrooms : 0
                     ));
                 }
-                
+
                 var analyticsText = "📊 **Product Analytics Dashboard**\n\n";
-                
+
                 if (!string.IsNullOrEmpty(category))
                 {
                     analyticsText += $"🔍 **Category Filter:** {category}\n\n";
                 }
-                
+
                 // Summary metrics
                 var totalProducts = products.Count;
                 var inStock = products.Count(p => p.status == "In Stock");
@@ -280,7 +280,7 @@ public class FabrikamProductTools
                 var outOfStock = products.Count(p => p.status == "Out of Stock");
                 var averagePrice = products.Where(p => p.price > 0).Average(p => p.price);
                 var totalInventoryValue = products.Sum(p => p.price * p.stock);
-                
+
                 analyticsText += $"""
                     ## 📈 **Summary Metrics**
                     - **Total Products:** {totalProducts}
@@ -291,7 +291,7 @@ public class FabrikamProductTools
                     - **Total Inventory Value:** ${totalInventoryValue:N2}
                     
                     """;
-                
+
                 // Category breakdown
                 var categoryBreakdown = products
                     .GroupBy(p => p.category)
@@ -304,13 +304,13 @@ public class FabrikamProductTools
                         TotalValue = g.Sum(p => p.price * p.stock)
                     })
                     .OrderByDescending(x => x.Count);
-                
+
                 analyticsText += "## 📂 **By Category**\n";
                 foreach (var cat in categoryBreakdown)
                 {
                     analyticsText += $"**{cat.Category}:** {cat.Count} products | {cat.InStock} in stock | Avg: ${cat.AveragePrice:N2} | Value: ${cat.TotalValue:N2}\n";
                 }
-                
+
                 // Price ranges
                 analyticsText += "\n## 💰 **By Price Range**\n";
                 var priceRanges = new[]
@@ -320,17 +320,17 @@ public class FabrikamProductTools
                     ("$200K - $300K", products.Count(p => p.price >= 200000 && p.price < 300000)),
                     ("$300K+", products.Count(p => p.price >= 300000))
                 };
-                
+
                 foreach (var (range, count) in priceRanges)
                 {
                     analyticsText += $"**{range}:** {count} products ({(double)count / totalProducts * 100:F1}%)\n";
                 }
-                
+
                 // Stock alerts
                 if (lowStock > 0 || outOfStock > 0)
                 {
                     analyticsText += "\n## ⚠️ **Stock Alerts**\n";
-                    
+
                     if (outOfStock > 0)
                     {
                         analyticsText += $"❌ **{outOfStock} products are out of stock**\n";
@@ -341,7 +341,7 @@ public class FabrikamProductTools
                         }
                         if (outOfStock > 5) analyticsText += $"   • ... and {outOfStock - 5} more\n";
                     }
-                    
+
                     if (lowStock > 0)
                     {
                         analyticsText += $"⚠️ **{lowStock} products are low in stock**\n";
@@ -353,7 +353,7 @@ public class FabrikamProductTools
                         if (lowStock > 5) analyticsText += $"   • ... and {lowStock - 5} more\n";
                     }
                 }
-                
+
                 return new
                 {
                     content = new object[]
@@ -373,7 +373,7 @@ public class FabrikamProductTools
                     }
                 };
             }
-            
+
             return new
             {
                 error = new

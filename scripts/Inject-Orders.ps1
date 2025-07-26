@@ -12,7 +12,7 @@ param(
 
 # Set API URL based on environment
 if ($Production) {
-    $ApiBaseUrl = "https://fabrikam-api-dev-izbd.azurewebsites.net"
+    $ApiBaseUrl = "https://fabrikam-api-dev.levelupcsp.com"
     Write-Host "🌍 Using PRODUCTION environment: $ApiBaseUrl" -ForegroundColor Yellow
     Write-Host "⚠️  This will add orders to the production database!" -ForegroundColor Red
     

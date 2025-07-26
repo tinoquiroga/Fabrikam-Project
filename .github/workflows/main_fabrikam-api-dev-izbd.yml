@@ -8,8 +8,8 @@ on:
     branches:
       - main
     paths:
-      - 'FabrikamApi/**'
-      - '.github/workflows/main_fabrikam-api-dev-izbd.yml'
+      - "FabrikamApi/**"
+      - ".github/workflows/main_fabrikam-api-dev-izbd.yml"
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
+          dotnet-version: "9.x"
 
       - name: Build with dotnet
         run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
@@ -68,7 +68,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app-api
-          
+
       - name: Verify deployment package
         run: |
           echo "Contents of deployment package:"
@@ -79,7 +79,7 @@ jobs:
           find . -name "*.dll" -type f || echo "No DLL files found"
           echo "Main application DLL:"
           find . -name "FabrikamApi.dll" -type f || echo "FabrikamApi.dll not found"
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -91,29 +91,30 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fabrikam-api-dev-izbD'
-          slot-name: 'Production'
+          app-name: ${{ vars.AZURE_API_APP_NAME || 'fabrikam-api-dev-izbD' }}
+          slot-name: "Production"
           package: .
-          
+
       - name: Set startup command
         continue-on-error: true
         run: |
           echo "Setting startup command..."
-          az webapp config set --resource-group rg-fabrikam-dev-izbd --name fabrikam-api-dev-izbD --startup-file "dotnet FabrikamApi.dll" || echo "Warning: Could not set startup command"
-          
+          az webapp config set --resource-group ${{ vars.AZURE_RESOURCE_GROUP || 'rg-fabrikam-dev-izbd' }} --name ${{ vars.AZURE_API_APP_NAME || 'fabrikam-api-dev-izbD' }} --startup-file "dotnet FabrikamApi.dll" || echo "Warning: Could not set startup command"
+
           echo "Restarting app to apply startup command..."
-          az webapp restart --resource-group rg-fabrikam-dev-izbd --name fabrikam-api-dev-izbD || echo "Warning: Could not restart app"
-          
+          az webapp restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP || 'rg-fabrikam-dev-izbd' }} --name ${{ vars.AZURE_API_APP_NAME || 'fabrikam-api-dev-izbD' }} || echo "Warning: Could not restart app"
+
       - name: Health Check
         continue-on-error: true
         run: |
           echo "Waiting for deployment to complete..."
           sleep 30
-          
-          echo "Testing API health endpoint..."
+
+          API_URL="https://${{ vars.API_DOMAIN || 'fabrikam-api-dev.levelupcsp.com' }}"
+          echo "Testing API health endpoint at: $API_URL/health"
           for i in {1..5}; do
             echo "Health check attempt $i..."
-            if curl -f -s https://fabrikam-api-dev-izbd.azurewebsites.net/health; then
+            if curl -f -s "$API_URL/health"; then
               echo "✅ Health check passed!"
               exit 0
             else
@@ -121,12 +122,13 @@ jobs:
               sleep 30
             fi
           done
-          
+
           echo "⚠️ Health check failed after 5 attempts, but deployment may still be successful"
           echo "Check the Azure portal for deployment status"
-          
+
       - name: Deployment Summary
         run: |
+          API_URL="https://${{ vars.API_DOMAIN || 'fabrikam-api-dev.levelupcsp.com' }}"
           echo "🚀 Deployment process completed!"
           echo "📊 Deployment Summary:"
           echo "  ✅ Build: Successful"
@@ -134,9 +136,8 @@ jobs:
           echo "  ✅ Deploy: Successful"
           echo "  ℹ️  Health Check: See previous step"
           echo ""
-          echo "🌐 Application URL: https://fabrikam-api-dev-izbd.azurewebsites.net"
-          echo "🔍 Health Endpoint: https://fabrikam-api-dev-izbd.azurewebsites.net/health"
+          echo "🌐 Application URL: $API_URL"
+          echo "🔍 Health Endpoint: $API_URL/health"
           echo ""
           echo "If health checks failed, the app may still be starting up."
           echo "Check the Azure portal for final deployment status."
-          

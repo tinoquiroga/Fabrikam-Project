@@ -8,8 +8,8 @@ on:
     branches:
       - main
     paths:
-      - 'FabrikamMcp/**'
-      - '.github/workflows/main_fabrikam-mcp-dev-izbd.yml'
+      - "FabrikamMcp/**"
+      - ".github/workflows/main_fabrikam-mcp-dev-izbd.yml"
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
+          dotnet-version: "9.x"
 
       - name: Build with dotnet
         run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
@@ -77,7 +77,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app-mcp
-          
+
       - name: Verify deployment package
         run: |
           echo "Contents of deployment package:"
@@ -88,7 +88,7 @@ jobs:
           find . -name "*.dll" -type f || echo "No DLL files found"
           echo "Main application DLL:"
           find . -name "FabrikamMcp.dll" -type f || echo "FabrikamMcp.dll not found"
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -100,31 +100,32 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fabrikam-mcp-dev-izbD'
-          slot-name: 'Production'
+          app-name: "fabrikam-mcp-dev-izbD"
+          slot-name: "Production"
           package: .
-          
+
       - name: Set startup command
         continue-on-error: true
         run: |
           echo "Setting startup command..."
-          az webapp config set --resource-group rg-fabrikam-dev-izbd --name fabrikam-mcp-dev-izbD --startup-file "dotnet FabrikamMcp.dll" || echo "Warning: Could not set startup command"
-          
+          az webapp config set --resource-group ${{ vars.AZURE_RESOURCE_GROUP || 'rg-fabrikam-dev-izbd' }} --name ${{ vars.AZURE_MCP_APP_NAME || 'fabrikam-mcp-dev-izbD' }} --startup-file "dotnet FabrikamMcp.dll" || echo "Warning: Could not set startup command"
+
           echo "Restarting app to apply startup command..."
-          az webapp restart --resource-group rg-fabrikam-dev-izbd --name fabrikam-mcp-dev-izbD || echo "Warning: Could not restart app"
-          
+          az webapp restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP || 'rg-fabrikam-dev-izbd' }} --name ${{ vars.AZURE_MCP_APP_NAME || 'fabrikam-mcp-dev-izbD' }} || echo "Warning: Could not restart app"
+
       - name: Health Check
         continue-on-error: true
         run: |
           echo "Waiting for deployment to complete..."
           sleep 30
-          
+
+          MCP_URL="https://${{ vars.MCP_DOMAIN || 'fabrikam-mcp-dev.levelupcsp.com' }}"
           echo "Testing MCP status endpoint..."
-          echo "Trying to reach: https://fabrikam-mcp-dev-izbd.azurewebsites.net/status"
-          
+          echo "Trying to reach: $MCP_URL/status"
+
           for i in {1..5}; do
             echo "Health check attempt $i..."
-            if curl -f -s https://fabrikam-mcp-dev-izbd.azurewebsites.net/status; then
+            if curl -f -s "$MCP_URL/status"; then
               echo "✅ MCP status endpoint is responding!"
               exit 0
             else
@@ -132,12 +133,13 @@ jobs:
               sleep 30
             fi
           done
-          
+
           echo "⚠️ Health check failed after 5 attempts, but deployment may still be successful"
           echo "Check the Azure portal for deployment status"
-          
+
       - name: Deployment Summary
         run: |
+          MCP_URL="https://${{ vars.MCP_DOMAIN || 'fabrikam-mcp-dev.levelupcsp.com' }}"
           echo "🚀 MCP Deployment process completed!"
           echo "📊 Deployment Summary:"
           echo "  ✅ Build: Successful"
@@ -145,11 +147,10 @@ jobs:
           echo "  ✅ Deploy: Successful"
           echo "  ℹ️  Health Check: See previous step"
           echo ""
-          echo "🌐 MCP Server URL: https://fabrikam-mcp-dev-izbd.azurewebsites.net"
-          echo "🔍 Status Endpoint: https://fabrikam-mcp-dev-izbd.azurewebsites.net/status"
+          echo "🌐 MCP Server URL: $MCP_URL"
+          echo "🔍 Status Endpoint: $MCP_URL/status"
           echo ""
           echo "If health checks failed, the app may still be starting up."
           echo "Check the Azure portal for final deployment status."
-          
+
           echo "MCP deployment completed successfully!"
-          

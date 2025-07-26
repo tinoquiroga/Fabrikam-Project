@@ -8,18 +8,18 @@ on:
     branches:
       - main
     paths:
-      - 'FabrikamApi/**'
-      - 'FabrikamMcp/**'
-      - '.github/workflows/deploy-full-stack.yml'
+      - "FabrikamApi/**"
+      - "FabrikamMcp/**"
+      - ".github/workflows/deploy-full-stack.yml"
   workflow_dispatch:
     inputs:
       deploy_api:
-        description: 'Deploy API service'
+        description: "Deploy API service"
         required: true
         default: true
         type: boolean
       deploy_mcp:
-        description: 'Deploy MCP service' 
+        description: "Deploy MCP service"
         required: true
         default: true
         type: boolean
@@ -42,7 +42,7 @@ jobs:
               - 'FabrikamApi/**'
             mcp:
               - 'FabrikamMcp/**'
-      
+
       - name: Decide what to deploy
         id: decide
         run: |
@@ -53,7 +53,7 @@ jobs:
             echo "deploy-api=${{ steps.changes.outputs.api }}" >> $GITHUB_OUTPUT
             echo "deploy-mcp=${{ steps.changes.outputs.mcp }}" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "🔍 Deployment decisions:"
           echo "  API: ${{ steps.changes.outputs.api || github.event.inputs.deploy_api }}"
           echo "  MCP: ${{ steps.changes.outputs.mcp || github.event.inputs.deploy_mcp }}"
@@ -67,16 +67,16 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
-      
+          dotnet-version: "9.x"
+
       - name: Build API
         run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
-      
+
       - name: Publish API
         run: |
           echo "📦 Publishing FabrikamApi..."
           dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ./publish-api --no-build
-      
+
       - name: Upload API artifact
         uses: actions/upload-artifact@v4
         with:
@@ -92,16 +92,16 @@ jobs:
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
-      
+          dotnet-version: "9.x"
+
       - name: Build MCP
         run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
-      
-      - name: Publish MCP  
+
+      - name: Publish MCP
         run: |
           echo "📦 Publishing FabrikamMcp..."
           dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ./publish-mcp --no-build
-      
+
       - name: Upload MCP artifact
         uses: actions/upload-artifact@v4
         with:
@@ -120,19 +120,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: fabrikam-api
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7B45365BE95A4F148FB5FC53309D576A }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F4B38BCC1A3C41DB87825D58D05171B2 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F6B88EEEE4B94A859DB59C0B1D8F3832 }}
-      
+
       - name: Deploy API to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fabrikam-api-dev-izbD'
-          slot-name: 'Production'
+          app-name: "fabrikam-api-dev-izbD"
+          slot-name: "Production"
           package: .
 
   deploy-mcp:
@@ -147,19 +147,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: fabrikam-mcp
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8C8EF1B326A471D88D0808AB703A5EE }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9C449FA4736D46E6A0CFD35DC61B177A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B4519DE6CF4C4656B779761582012720 }}
-      
+
       - name: Deploy MCP to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fabrikam-mcp-dev-izbD'
-          slot-name: 'Production'
+          app-name: "fabrikam-mcp-dev-izbD"
+          slot-name: "Production"
           package: .
 
   deployment-summary:
@@ -177,7 +177,7 @@ jobs:
           echo "  🤖 MCP Service: ${{ needs.detect-changes.outputs.should-deploy-mcp == 'true' && '✅ Deployed' || '⏭️ Skipped' }}"
           echo ""
           echo "🌐 **Application URLs:**"
-          echo "  📡 API: https://fabrikam-api-dev-izbd.azurewebsites.net"
-          echo "  🔌 MCP: https://fabrikam-mcp-dev-izbd.azurewebsites.net"
+          echo "  📡 API: https://${{ vars.API_DOMAIN || 'fabrikam-api-dev.levelupcsp.com' }}"
+          echo "  🔌 MCP: https://${{ vars.MCP_DOMAIN || 'fabrikam-mcp-dev.levelupcsp.com' }}"
           echo ""
           echo "✨ Monorepo deployment completed successfully!"

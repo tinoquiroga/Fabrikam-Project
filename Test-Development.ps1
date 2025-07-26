@@ -4,6 +4,7 @@
 # Features:
 # - Automatic server management (stop, build, start, test, cleanup)
 # - Clean build option for fresh environment
+# - Build artifact cleanup to prevent VS Code memory issues
 # - Individual component testing (API only, MCP only)
 # - Integration testing between API and MCP
 # - Production testing against Azure endpoints
@@ -13,6 +14,7 @@
 # Usage Examples:
 # .\Test-Development.ps1                    # Quick test with existing servers
 # .\Test-Development.ps1 -CleanBuild       # Stop servers, clean build, start fresh, test
+# .\Test-Development.ps1 -CleanArtifacts   # Clean build artifacts after testing (prevents VS Code memory issues)
 # .\Test-Development.ps1 -Production       # Test against Azure production endpoints with version check
 # .\Test-Development.ps1 -Production -Force # Test production without version check prompts
 # .\Test-Development.ps1 -ApiOnly          # Test API endpoints only
@@ -26,6 +28,7 @@ param(
     [switch]$Verbose,           # Show detailed output and debugging info
     [switch]$CleanBuild,        # Stop servers, clean build, fresh start
     [switch]$SkipBuild,         # Skip build step, use existing servers
+    [switch]$CleanArtifacts,    # Clean build artifacts after testing (prevents VS Code memory issues)
     [switch]$Production,        # Test against Azure production endpoints
     [switch]$Force,             # Skip confirmation prompts
     [int]$TimeoutSeconds = 30   # HTTP request timeout
@@ -136,8 +139,8 @@ function Get-EndpointConfiguration {
     }
     
     $defaultAzure = @{
-        ApiBaseUrl  = "https://fabrikam-api-dev-izbd.azurewebsites.net"
-        McpBaseUrl  = "https://fabrikam-mcp-dev-izbd.azurewebsites.net"
+        ApiBaseUrl  = $env:API_DOMAIN ? "https://$env:API_DOMAIN" : "https://fabrikam-api-dev.levelupcsp.com"
+        McpBaseUrl  = $env:MCP_DOMAIN ? "https://$env:MCP_DOMAIN" : "https://fabrikam-mcp-dev.levelupcsp.com"
         Environment = "Azure Production"
     }
     
@@ -363,6 +366,11 @@ function Build-Solution {
         try {
             dotnet clean $SolutionFile --verbosity quiet
             Write-Success "✅ Solution cleaned"
+            
+            # Also clean build artifacts to prevent VS Code memory issues
+            Write-Info "🧹 Cleaning build artifacts..."
+            Remove-BuildArtifacts | Out-Null
+            
         }
         catch {
             Write-Error "❌ Clean failed: $($_.Exception.Message)"
@@ -395,6 +403,69 @@ function Build-Solution {
     }
     catch {
         Write-Error "❌ Build error: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Remove-BuildArtifacts {
+    <#
+    .SYNOPSIS
+    Removes build artifacts (bin/obj folders) to prevent VS Code memory issues
+    
+    .DESCRIPTION
+    VS Code can consume excessive memory monitoring hundreds of build artifact files
+    in bin and obj directories. This function removes these directories to prevent
+    memory spikes and UI freezes while preserving source code and configuration.
+    
+    Build artifacts will be recreated on next build/run.
+    #>
+    
+    Write-Header "Cleaning Build Artifacts"
+    Write-Info "🧹 Removing bin and obj directories to prevent VS Code memory issues..."
+    
+    try {
+        $binDirs = Get-ChildItem -Path . -Recurse -Directory -Name "bin" -ErrorAction SilentlyContinue
+        $objDirs = Get-ChildItem -Path . -Recurse -Directory -Name "obj" -ErrorAction SilentlyContinue
+        
+        $totalDirs = $binDirs.Count + $objDirs.Count
+        
+        if ($totalDirs -eq 0) {
+            Write-Info "✅ No build artifacts found to clean"
+            return $true
+        }
+        
+        Write-Info "📁 Found $($binDirs.Count) bin directories and $($objDirs.Count) obj directories"
+        
+        # Remove bin directories
+        foreach ($binDir in $binDirs) {
+            $fullPath = Join-Path $PWD $binDir
+            if (Test-Path $fullPath) {
+                Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+                if ($Verbose) {
+                    Write-Debug "Removed: $fullPath"
+                }
+            }
+        }
+        
+        # Remove obj directories  
+        foreach ($objDir in $objDirs) {
+            $fullPath = Join-Path $PWD $objDir
+            if (Test-Path $fullPath) {
+                Remove-Item $fullPath -Recurse -Force -ErrorAction SilentlyContinue
+                if ($Verbose) {
+                    Write-Debug "Removed: $fullPath"
+                }
+            }
+        }
+        
+        Write-Success "✅ Cleaned $totalDirs build artifact directories"
+        Write-Info "💡 This prevents VS Code from monitoring hundreds of build files"
+        Write-Info "💡 Build artifacts will be recreated on next 'dotnet build' or 'dotnet run'"
+        
+        return $true
+    }
+    catch {
+        Write-Error "❌ Error cleaning build artifacts: $($_.Exception.Message)"
         return $false
     }
 }
@@ -1057,6 +1128,7 @@ try {
     Write-Host "• Quick test: .\Test-Development.ps1 -Quick" -ForegroundColor Gray
     Write-Host "• API only: .\Test-Development.ps1 -ApiOnly" -ForegroundColor Gray
     Write-Host "• Clean build + test: .\Test-Development.ps1 -CleanBuild" -ForegroundColor Gray
+    Write-Host "• Clean artifacts after test: .\Test-Development.ps1 -CleanArtifacts" -ForegroundColor Gray
     Write-Host "• Skip build (use running servers): .\Test-Development.ps1 -SkipBuild" -ForegroundColor Gray
     Write-Host "• Production testing: .\Test-Development.ps1 -Production" -ForegroundColor Gray
     Write-Host "• Production API only: .\Test-Development.ps1 -Production -ApiOnly" -ForegroundColor Gray
@@ -1068,5 +1140,11 @@ finally {
     # Cleanup: Stop any jobs we started (only for local development)
     if ($testJobs -and -not $Production) {
         Stop-TestJobs $testJobs
+    }
+    
+    # Clean build artifacts if requested (prevents VS Code memory issues)
+    if ($CleanArtifacts -and -not $Production) {
+        Write-Host ""
+        Remove-BuildArtifacts | Out-Null
     }
 }

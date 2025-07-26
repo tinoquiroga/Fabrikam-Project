@@ -109,6 +109,7 @@ curl https://fabrikam-mcp-dev.levelupcsp.com/mcp
 ### **Essential Guides**
 - [**Copilot Studio Setup**](Copilot-Studio-Agent-Setup-Guide.md) - Create your business AI assistant
 - [**Asset Management**](FabrikamApi/ASSET-MANAGEMENT-GUIDE.md) - Add images, blueprints, and files
+- [**Authentication Implementation**](AUTHENTICATION-IMPLEMENTATION-GUIDE.md) - Development workflow and methodology
 - [**Deployment Guide**](DEPLOYMENT-GUIDE.md) - Azure deployment instructions
 ## 📚 Documentation
 

@@ -18,16 +18,19 @@ assignees: ['davebirr']
 - [ ] Documentation updated with implementation details
 
 ## 🔗 Related Issues
-<!-- Link to parent issue #1 and any dependent issues -->
-- Parent: #1 
+<!-- Link to parent issue #2 and any dependent issues -->
+- Parent: #2 (Phase 1: Authentication Foundation & Azure Setup)
 - Dependencies: 
 - Blockers:
 
 ## 🛡️ Security Considerations
 <!-- Highlight any security implications or requirements -->
+<!-- Reference: Authentication Implementation Guide for security standards -->
 
 ## 🧪 Testing Strategy
 <!-- Describe how this feature will be tested -->
+<!-- See: AUTHENTICATION-IMPLEMENTATION-GUIDE.md for testing workflow -->
 
 ## 📚 Documentation Requirements
 <!-- What documentation needs to be created or updated -->
+<!-- Update: AUTHENTICATION-IMPLEMENTATION-GUIDE.md with any architectural decisions -->

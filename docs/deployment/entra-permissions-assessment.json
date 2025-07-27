@@ -1,0 +1,42 @@
+{
+  "Timestamp": "2025-07-26T15:02:56.4880221-04:00",
+  "UserInfo": {
+    "Department": null,
+    "Id": "f770c956-f78b-462b-a333-3dd4407bb3ad",
+    "DisplayName": "David Bjurman-Birr",
+    "UserPrincipalName": "davidb_microsoft.com#EXT#@fdpo.onmicrosoft.com",
+    "JobTitle": "ARCHITECT"
+  },
+  "Recommendations": {
+    "Alternatives": [
+      "Request Global Administrator access for Entra External ID",
+      "Implement dual strategy for future flexibility",
+      "Use Azure AD B2C if organization permits"
+    ],
+    "Reasoning": "Limited Entra permissions - recommend ASP.NET Identity approach",
+    "PrimaryStrategy": "AspNetIdentity",
+    "NextSteps": [
+      "Implement ASP.NET Core Identity with JWT tokens",
+      "Set up Azure SQL Database for user storage",
+      "Configure role-based access control",
+      "Plan for future Entra External ID migration"
+    ]
+  },
+  "RecommendedStrategy": "AspNetIdentity",
+  "Permissions": {
+    "CanAccessSubscription": true,
+    "CanListApplications": true,
+    "DirectoryRoles": [],
+    "HasApplicationAdmin": false,
+    "HasGlobalAdmin": false,
+    "CanAccessResourceGroup": true,
+    "HasUserAdmin": false
+  },
+  "CanCreateExternalId": false,
+  "TenantInfo": {
+    "SubscriptionId": "1ae622b1-c33c-457f-a2bb-351fed78922f",
+    "Name": "MCAPS-Hybrid-REQ-59531-2023-davidb",
+    "SubscriptionName": "MCAPS-Hybrid-REQ-59531-2023-davidb",
+    "TenantId": "16b3c013-d300-468d-ac64-7eda0820b6d3"
+  }
+}

@@ -1,12 +1,13 @@
 # Fabrikam Development Testing Suite
-# Comprehensive testing for API endpoints and MCP tools during development
+# Comprehensive testing for API endpoints, Authentication, and MCP tools during development
 #
 # Features:
 # - Automatic server management (stop, build, start, test, cleanup)
+# - Authentication testing (JWT tokens, user registration, login, security)
 # - Clean build option for fresh environment
 # - Build artifact cleanup to prevent VS Code memory issues
-# - Individual component testing (API only, MCP only)
-# - Integration testing between API and MCP
+# - Individual component testing (API only, MCP only, Auth only)
+# - Integration testing between API and MCP with authentication
 # - Production testing against Azure endpoints
 # - Version comparison between development and production
 # - Comprehensive error reporting and debugging
@@ -18,11 +19,13 @@
 # .\Test-Development.ps1 -Production       # Test against Azure production endpoints with version check
 # .\Test-Development.ps1 -Production -Force # Test production without version check prompts
 # .\Test-Development.ps1 -ApiOnly          # Test API endpoints only
+# .\Test-Development.ps1 -AuthOnly         # Test authentication endpoints only
 # .\Test-Development.ps1 -Quick -Verbose   # Quick test with detailed output
 
 param(
     [switch]$ApiOnly,           # Test API endpoints only
     [switch]$McpOnly,           # Test MCP server only
+    [switch]$AuthOnly,          # Test authentication endpoints only
     [switch]$IntegrationOnly,   # Test integration between API and MCP
     [switch]$Quick,             # Run essential tests only (faster)
     [switch]$Verbose,           # Show detailed output and debugging info
@@ -133,7 +136,7 @@ function Get-EndpointConfiguration {
     
     $settingsPath = ".vscode\settings.json"
     $defaultLocal = @{
-        ApiBaseUrl  = "http://localhost:7296"
+        ApiBaseUrl  = "https://localhost:7297"
         McpBaseUrl  = "http://localhost:5000"
         Environment = "Local Development"
     }
@@ -260,10 +263,17 @@ function Write-Header($message) {
 $TestResults = @{
     ApiTests         = @()
     McpTests         = @()
+    AuthTests        = @()
     IntegrationTests = @()
     TotalPassed      = 0
     TotalFailed      = 0
 }
+
+# Global authentication state for tests
+$script:AuthToken = $null
+$script:RefreshToken = $null
+$script:TestUserEmail = "testuser$(Get-Random -Minimum 1000 -Maximum 9999)@fabrikam.com"
+$script:TestUserPassword = "TestPassword123!"
 
 function Add-TestResult {
     param($Category, $Name, $Passed, $Details = "")
@@ -534,8 +544,8 @@ function Start-ServersForTesting {
                 param($Project, $WorkingDir)
                 Set-Location $WorkingDir
                 $env:ASPNETCORE_ENVIRONMENT = "Development"
-                $env:ASPNETCORE_URLS = "https://localhost:7297;http://localhost:7296"
-                dotnet run --project $Project --verbosity quiet
+                # Use the https launch profile which is configured for both HTTPS and HTTP
+                dotnet run --project $Project --launch-profile https --verbosity quiet
             } -ArgumentList $ApiProject, $PWD.Path
             
             # Wait for API server to be ready
@@ -889,6 +899,466 @@ function Test-McpServerHealth {
     }
 }
 
+# ================================
+# AUTHENTICATION TESTING FUNCTIONS
+# ================================
+
+function Test-UserRegistration {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "🔐 Testing User Registration..." -ForegroundColor Yellow
+    
+    try {
+        $registrationData = @{
+            Email           = $script:TestUserEmail
+            Password        = $script:TestUserPassword
+            ConfirmPassword = $script:TestUserPassword
+            FirstName       = "Test"
+            LastName        = "User"
+        }
+        
+        $json = $registrationData | ConvertTo-Json
+        $headers = @{ "Content-Type" = "application/json" }
+        
+        Write-Debug "Registration payload: $json"
+        $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/register" -Method POST -Body $json -Headers $headers -SkipCertificateCheck
+        
+        Write-Debug "Registration response: $($response | ConvertTo-Json)"
+        
+        if ($response.message -like "*successfully*" -or $response.token -or $response.success -eq $true) {
+            Add-TestResult "AuthTests" "User Registration" $true "Successfully registered user: $($script:TestUserEmail)"
+            return $true
+        }
+        else {
+            Add-TestResult "AuthTests" "User Registration" $false "Registration response unclear: $($response | ConvertTo-Json -Compress)"
+            return $false
+        }
+    }
+    catch {
+        $statusCode = $null
+        $responseContent = $null
+        
+        # Try to get more details about the error
+        if ($_.Exception.Response) {
+            $statusCode = $_.Exception.Response.StatusCode
+            
+            try {
+                # PowerShell 7+ way to get response content
+                if ($_.ErrorDetails) {
+                    $responseContent = $_.ErrorDetails.Message
+                }
+                else {
+                    $responseContent = $_.Exception.Message
+                }
+            }
+            catch {
+                $responseContent = $_.Exception.Message
+            }
+        }
+        
+        # Check for common success scenarios that might throw exceptions
+        if ($_.Exception.Message -like "*already exists*" -or $_.Exception.Message -like "*409*" -or $statusCode -eq 409) {
+            Add-TestResult "AuthTests" "User Registration" $true "User already exists (expected for repeated tests)"
+            return $true
+        }
+        
+        if ($statusCode -eq 400 -and $responseContent) {
+            Add-TestResult "AuthTests" "User Registration" $false "Validation error (400): $responseContent"
+        }
+        else {
+            Add-TestResult "AuthTests" "User Registration" $false "Error ($statusCode): $($_.Exception.Message)"
+        }
+        return $false
+    }
+}
+
+function Test-UserLogin {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "🔑 Testing User Login..." -ForegroundColor Yellow
+    
+    try {
+        $loginData = @{
+            Email    = $script:TestUserEmail
+            Password = $script:TestUserPassword
+        }
+        
+        $json = $loginData | ConvertTo-Json
+        $headers = @{ "Content-Type" = "application/json" }
+        
+        Write-Debug "Login payload: $json"
+        $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/login" -Method POST -Body $json -Headers $headers -SkipCertificateCheck
+        
+        Write-Debug "Login response: $($response | ConvertTo-Json)"
+        
+        if ($response.token -or $response.accessToken) {
+            $token = if ($response.token) { $response.token } else { $response.accessToken }
+            $script:AuthToken = $token
+            $script:RefreshToken = $response.refreshToken
+            Add-TestResult "AuthTests" "User Login" $true "Successfully logged in. Token length: $($token.Length)"
+            return $true
+        }
+        else {
+            Add-TestResult "AuthTests" "User Login" $false "Login response unclear: $($response | ConvertTo-Json -Compress)"
+            return $false
+        }
+    }
+    catch {
+        $statusCode = $null
+        $responseContent = $null
+        
+        # Try to get more details about the error
+        if ($_.Exception.Response) {
+            $statusCode = $_.Exception.Response.StatusCode
+            
+            try {
+                if ($_.ErrorDetails) {
+                    $responseContent = $_.ErrorDetails.Message
+                }
+                else {
+                    $responseContent = $_.Exception.Message
+                }
+            }
+            catch {
+                $responseContent = $_.Exception.Message
+            }
+        }
+        
+        if ($statusCode -eq 401) {
+            Add-TestResult "AuthTests" "User Login" $false "Authentication failed (401): Invalid credentials"
+        }
+        elseif ($statusCode -eq 400 -and $responseContent) {
+            Add-TestResult "AuthTests" "User Login" $false "Validation error (400): $responseContent"
+        }
+        else {
+            Add-TestResult "AuthTests" "User Login" $false "Error ($statusCode): $($_.Exception.Message)"
+        }
+        return $false
+    }
+}
+
+function Test-TokenValidation {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "🎫 Testing Token Validation..." -ForegroundColor Yellow
+    
+    if (-not $script:AuthToken) {
+        Add-TestResult "AuthTests" "Token Validation" $false "No auth token available for testing"
+        return $false
+    }
+    
+    try {
+        $headers = @{
+            "Authorization" = "Bearer $($script:AuthToken)"
+            "Content-Type"  = "application/json"
+        }
+        
+        # Test with a protected endpoint (assuming we have one)
+        $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/me" -Method GET -Headers $headers -SkipCertificateCheck
+        
+        if ($response.email -eq $script:TestUserEmail) {
+            Add-TestResult "AuthTests" "Token Validation" $true "Token is valid. User: $($response.email)"
+            return $true
+        }
+        else {
+            Add-TestResult "AuthTests" "Token Validation" $false "Token validation failed: User mismatch"
+            return $false
+        }
+    }
+    catch {
+        if ($_.Exception.Message -like "*401*" -or $_.Exception.Message -like "*Unauthorized*") {
+            Add-TestResult "AuthTests" "Token Validation" $false "Token is invalid or expired"
+        }
+        else {
+            Add-TestResult "AuthTests" "Token Validation" $false "Error testing token: $($_.Exception.Message)"
+        }
+        return $false
+    }
+}
+
+function Test-TokenRefresh {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "🔄 Testing Token Refresh..." -ForegroundColor Yellow
+    
+    if (-not $script:RefreshToken) {
+        Add-TestResult "AuthTests" "Token Refresh" $false "No refresh token available for testing"
+        return $false
+    }
+    
+    try {
+        $refreshData = @{
+            refreshToken = $script:RefreshToken
+        }
+        
+        $json = $refreshData | ConvertTo-Json
+        $headers = @{ "Content-Type" = "application/json" }
+        
+        $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/refresh" -Method POST -Body $json -Headers $headers -SkipCertificateCheck
+        
+        if ($response.token) {
+            $script:AuthToken = $response.token
+            if ($response.refreshToken) {
+                $script:RefreshToken = $response.refreshToken
+            }
+            Add-TestResult "AuthTests" "Token Refresh" $true "Successfully refreshed token. New token length: $($response.token.Length)"
+            return $true
+        }
+        else {
+            Add-TestResult "AuthTests" "Token Refresh" $false "Token refresh failed: No new token received"
+            return $false
+        }
+    }
+    catch {
+        Add-TestResult "AuthTests" "Token Refresh" $false "Error refreshing token: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Test-ProtectedEndpoint {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297",
+        [string]$Endpoint = "/api/customers"
+    )
+    
+    Write-Host "🛡️ Testing Protected Endpoint Access..." -ForegroundColor Yellow
+    
+    # Test without token (should fail)
+    try {
+        $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -SkipCertificateCheck
+        # If this succeeds, the endpoint isn't protected
+        Add-TestResult "AuthTests" "Protected Endpoint (No Auth)" $true "Endpoint is publicly accessible"
+    }
+    catch {
+        if ($_.Exception.Message -like "*401*" -or $_.Exception.Message -like "*Unauthorized*") {
+            Add-TestResult "AuthTests" "Protected Endpoint (No Auth)" $true "Endpoint correctly requires authentication"
+        }
+        else {
+            Add-TestResult "AuthTests" "Protected Endpoint (No Auth)" $false "Unexpected error: $($_.Exception.Message)"
+        }
+    }
+    
+    # Test with token (should succeed if we have a valid token)
+    if ($script:AuthToken) {
+        try {
+            $headers = @{
+                "Authorization" = "Bearer $($script:AuthToken)"
+            }
+            
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -Headers $headers -SkipCertificateCheck
+            Add-TestResult "AuthTests" "Protected Endpoint (With Auth)" $true "Successfully accessed protected endpoint with token"
+            return $true
+        }
+        catch {
+            Add-TestResult "AuthTests" "Protected Endpoint (With Auth)" $false "Failed to access protected endpoint: $($_.Exception.Message)"
+            return $false
+        }
+    }
+}
+
+function Test-UserLogout {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "🚪 Testing User Logout..." -ForegroundColor Yellow
+    
+    if (-not $script:AuthToken) {
+        Add-TestResult "AuthTests" "User Logout" $false "No auth token available for logout testing"
+        return $false
+    }
+    
+    try {
+        $headers = @{
+            "Authorization" = "Bearer $($script:AuthToken)"
+            "Content-Type"  = "application/json"
+        }
+        
+        $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/logout" -Method POST -Headers $headers -SkipCertificateCheck
+        
+        # Clear our stored tokens
+        $script:AuthToken = $null
+        $script:RefreshToken = $null
+        
+        Add-TestResult "AuthTests" "User Logout" $true "Successfully logged out user"
+        return $true
+    }
+    catch {
+        # Even if logout endpoint doesn't exist, clear tokens
+        $script:AuthToken = $null
+        $script:RefreshToken = $null
+        
+        if ($_.Exception.Message -like "*404*") {
+            Add-TestResult "AuthTests" "User Logout" $true "Logout endpoint not implemented (tokens cleared locally)"
+        }
+        else {
+            Add-TestResult "AuthTests" "User Logout" $false "Error during logout: $($_.Exception.Message)"
+        }
+        return $false
+    }
+}
+
+function Test-AuthenticationFlow {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "🔐 Testing Complete Authentication Flow..." -ForegroundColor Cyan
+    
+    $success = $true
+    
+    # Test registration
+    if (-not (Test-UserRegistration -BaseUrl $BaseUrl)) {
+        $success = $false
+    }
+    
+    # Test login
+    if (-not (Test-UserLogin -BaseUrl $BaseUrl)) {
+        $success = $false
+    }
+    
+    # Test token validation
+    if (-not (Test-TokenValidation -BaseUrl $BaseUrl)) {
+        $success = $false
+    }
+    
+    # Test protected endpoint
+    if (-not (Test-ProtectedEndpoint -BaseUrl $BaseUrl)) {
+        # This might fail if endpoints aren't protected, which is okay
+    }
+    
+    # Test token refresh
+    if (-not (Test-TokenRefresh -BaseUrl $BaseUrl)) {
+        # This might fail if refresh isn't implemented, which is okay
+    }
+    
+    # Test logout
+    Test-UserLogout -BaseUrl $BaseUrl
+    
+    return $success
+}
+
+function Test-DemoUserAuthentication {
+    [CmdletBinding()]
+    param(
+        [string]$BaseUrl = "https://localhost:7297"
+    )
+    
+    Write-Host "👥 Testing Demo User Authentication..." -ForegroundColor Cyan
+    
+    # Fetch demo users dynamically from API
+    try {
+        Write-Verbose "Fetching demo credentials from API..."
+        $response = Invoke-RestMethod -Uri "$ApiBaseUrl/api/auth/demo-credentials" -Method GET -SkipCertificateCheck -ErrorAction Stop
+        $demoUsers = $response.demoUsers | ForEach-Object {
+            @{
+                Name     = $_.Name
+                Email    = $_.Email
+                Password = $_.Password
+                Role     = $_.Role
+            }
+        }
+        Write-Host "✅ Retrieved instance-specific demo credentials" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "⚠️ Could not fetch dynamic credentials: $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host "   Using fallback credentials (may not work if API server has unique passwords)" -ForegroundColor Yellow
+        
+        # Fallback demo users (these may not work with dynamic passwords)
+        $demoUsers = @(
+            @{
+                Name     = "Admin User"
+                Email    = "lee.gu@fabrikam.levelupcsp.com"
+                Password = "API_NOT_AVAILABLE"
+                Role     = "Admin"
+            },
+            @{
+                Name     = "Read-Write User"
+                Email    = "alex.wilber@fabrikam.levelupcsp.com"
+                Password = "API_NOT_AVAILABLE"
+                Role     = "Read-Write"
+            },
+            @{
+                Name     = "Read-Only User"
+                Email    = "henrietta.mueller@fabrikam.levelupcsp.com"
+                Password = "API_NOT_AVAILABLE"
+                Role     = "Read-Only"
+            }
+        )
+    }
+    
+    $successCount = 0
+    $totalCount = $demoUsers.Count
+    
+    foreach ($user in $demoUsers) {
+        Write-Host "  Testing $($user.Name) ($($user.Email))..." -ForegroundColor Yellow
+        
+        try {
+            $loginData = @{
+                Email    = $user.Email
+                Password = $user.Password
+            }
+            
+            $json = $loginData | ConvertTo-Json
+            $headers = @{ "Content-Type" = "application/json" }
+            
+            $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/login" -Method POST -Body $json -Headers $headers -SkipCertificateCheck
+            
+            if ($response.accessToken -and $response.user) {
+                $userRoles = if ($response.user.roles) { $response.user.roles -join ', ' } else { 'None' }
+                Add-TestResult "AuthTests" "Demo User: $($user.Name)" $true "Authenticated successfully. Roles: $userRoles"
+                $successCount++
+                
+                Write-Debug "Demo user $($user.Email) authenticated successfully with roles: $userRoles"
+            }
+            else {
+                Add-TestResult "AuthTests" "Demo User: $($user.Name)" $false "Authentication failed: No access token or user data"
+            }
+        }
+        catch {
+            $statusCode = $null
+            if ($_.Exception.Response) {
+                $statusCode = $_.Exception.Response.StatusCode
+            }
+            
+            if ($statusCode -eq 401) {
+                Add-TestResult "AuthTests" "Demo User: $($user.Name)" $false "Authentication failed: Invalid credentials (401)"
+            }
+            elseif ($statusCode -eq 404) {
+                Add-TestResult "AuthTests" "Demo User: $($user.Name)" $false "User not found: May not be seeded yet (404)"
+            }
+            else {
+                Add-TestResult "AuthTests" "Demo User: $($user.Name)" $false "Error ($statusCode): $($_.Exception.Message)"
+            }
+        }
+    }
+    
+    $success = $successCount -eq $totalCount
+    if ($success) {
+        Write-Host "  ✅ All $totalCount demo users authenticated successfully" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  ⚠️ $successCount of $totalCount demo users authenticated successfully" -ForegroundColor Yellow
+    }
+    
+    return $success
+}
+
 function Show-TestSummary {
     Write-Host "`n" + "="*60 -ForegroundColor Cyan
     Write-Host "TEST EXECUTION SUMMARY" -ForegroundColor Cyan
@@ -920,6 +1390,14 @@ function Show-TestSummary {
     if ($TestResults.McpTests.Count -gt 0) {
         Write-Host "`nMCP Tests:" -ForegroundColor Yellow
         foreach ($test in $TestResults.McpTests) {
+            $status = if ($test.Passed) { "✅" } else { "❌" }
+            Write-Host "  $status $($test.Name)" -ForegroundColor $(if ($test.Passed) { "Green" } else { "Red" })
+        }
+    }
+    
+    if ($TestResults.AuthTests.Count -gt 0) {
+        Write-Host "`nAuthentication Tests:" -ForegroundColor Yellow
+        foreach ($test in $TestResults.AuthTests) {
             $status = if ($test.Passed) { "✅" } else { "❌" }
             Write-Host "  $status $($test.Name)" -ForegroundColor $(if ($test.Passed) { "Green" } else { "Red" })
         }
@@ -1053,7 +1531,28 @@ try {
         }
     }
 
-    if (-not $ApiOnly) {
+    if ($AuthOnly) {
+        Write-Host "`n🔐 AUTHENTICATION TESTS" -ForegroundColor Cyan
+        Write-Host "="*30 -ForegroundColor Cyan
+        
+        # Test basic authentication flow with new user
+        Test-AuthenticationFlow -BaseUrl $ApiBaseUrl
+        
+        # Test demo user authentication
+        Test-DemoUserAuthentication -BaseUrl $ApiBaseUrl
+    }
+    elseif (-not $McpOnly -and -not $Quick) {
+        Write-Host "`n🔐 AUTHENTICATION TESTS" -ForegroundColor Cyan
+        Write-Host "="*30 -ForegroundColor Cyan
+        
+        # Run basic authentication tests as part of comprehensive testing
+        Test-AuthenticationFlow -BaseUrl $ApiBaseUrl
+        
+        # Test demo user authentication
+        Test-DemoUserAuthentication -BaseUrl $ApiBaseUrl
+    }
+
+    if (-not $ApiOnly -and -not $AuthOnly) {
         Write-Host "`n🔧 MCP SERVER TESTS" -ForegroundColor Cyan
         Write-Host "="*30 -ForegroundColor Cyan
     

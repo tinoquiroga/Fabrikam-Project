@@ -1,0 +1,28 @@
+{
+  "Timestamp": "2025-07-26T15:17:57.8450549-04:00",
+  "ResourceGroup": "rg-fabrikam-dev",
+  "Configuration": {
+    "ConfigFile": "FabrikamApi/src/appsettings.Authentication.json",
+    "UserSecretsSet": true,
+    "JwtIssuer": "https://fabrikam-dev-api.levelupcsp.com"
+  },
+  "Instance": "fabrikam-dev",
+  "Credentials": {
+    "JwtSecret": "[SECURE - Check user secrets]",
+    "SqlPassword": "[SECURE - Check deployment notes]",
+    "SqlAdmin": "fabrikam-admin"
+  },
+  "NextSteps": [
+    "Update FabrikamApi to use Authentication strategy",
+    "Run database migrations to create Identity tables",
+    "Test user registration and login endpoints",
+    "Configure role-based authorization",
+    "Update MCP tools for authenticated access"
+  ],
+  "Resources": {
+    "DatabaseSku": "S0",
+    "SqlServer": "fabrikam-dev-sql.database.windows.net",
+    "Database": "fabrikam-dev-db"
+  },
+  "Strategy": "ASP.NET Core Identity"
+}

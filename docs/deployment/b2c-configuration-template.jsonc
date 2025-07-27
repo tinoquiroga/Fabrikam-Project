@@ -1,0 +1,50 @@
+{
+  "AzureB2C": {
+    // B2C Tenant Configuration
+    "TenantId": "[Replace with B2C Tenant ID after creation]",
+    "TenantName": "fabrikam-modular-homes.onmicrosoft.com",
+    "Instance": "https://fabrikam-modular-homes.b2clogin.com/",
+    "Domain": "fabrikam-modular-homes.onmicrosoft.com",
+    
+    // Application Registration
+    "ClientId": "[Replace with Fabrikam-API Application ID]",
+    "ClientSecret": "[Replace with Client Secret - Store in Key Vault for production]",
+    
+    // User Flow Policies
+    "SignUpSignInPolicyId": "B2C_1_signup_signin",
+    "ResetPasswordPolicyId": "B2C_1_password_reset", 
+    "EditProfilePolicyId": "B2C_1_profile_edit",
+    
+    // JWT Configuration
+    "TokenValidationParameters": {
+      "ValidateIssuer": true,
+      "ValidateAudience": true,
+      "ValidateLifetime": true,
+      "ValidateIssuerSigningKey": true,
+      "ClockSkew": "00:05:00",
+      "RequireExpirationTime": true
+    },
+    
+    // Development URLs
+    "RedirectUris": {
+      "Development": [
+        "https://localhost:7297/signin-oidc",
+        "https://localhost:7297/signout-oidc"
+      ],
+      "Production": [
+        "https://fabrikam-api-dev.levelupcsp.com/signin-oidc",
+        "https://fabrikam-api-dev.levelupcsp.com/signout-oidc"
+      ]
+    }
+  },
+  
+  // Azure Environment
+  "Azure": {
+    "SubscriptionId": "1ae622b1-c33c-457f-a2bb-351fed78922f",
+    "SubscriptionName": "MCAPS-Hybrid-REQ-59531-2023-davidb",
+    "TenantId": "16b3c013-d300-468d-ac64-7eda0820b6d3",
+    "TenantName": "Microsoft Non-Production",
+    "ResourceGroup": "rg-AiSkilling",
+    "Region": "East US 2"
+  }
+}

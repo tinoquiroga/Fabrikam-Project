@@ -10,10 +10,10 @@ namespace FabrikamApi.Controllers;
 [Route("api/[controller]")]
 public class CustomersController : ControllerBase
 {
-    private readonly FabrikamDbContext _context;
+    private readonly FabrikamIdentityDbContext _context;
     private readonly ILogger<CustomersController> _logger;
 
-    public CustomersController(FabrikamDbContext context, ILogger<CustomersController> logger)
+    public CustomersController(FabrikamIdentityDbContext context, ILogger<CustomersController> logger)
     {
         _context = context;
         _logger = logger;

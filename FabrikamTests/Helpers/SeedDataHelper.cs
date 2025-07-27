@@ -275,6 +275,35 @@ public class CustomerSeedData
     public DateTime CreatedDate { get; set; }
 }
 
+// DTO to match API customer response format
+public class ApiCustomerData
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public AddressData Address { get; set; } = new();
+    public string Region { get; set; } = "";
+    public DateTime CreatedDate { get; set; }
+    public OrderSummaryData OrderSummary { get; set; } = new();
+    public List<object> RecentOrders { get; set; } = new();
+}
+
+public class AddressData
+{
+    public string Address { get; set; } = "";
+    public string City { get; set; } = "";
+    public string State { get; set; } = "";
+    public string ZipCode { get; set; } = "";
+}
+
+public class OrderSummaryData
+{
+    public int TotalOrders { get; set; }
+    public decimal TotalSpent { get; set; }
+    public DateTime? LastOrderDate { get; set; }
+}
+
 public class OrderSeedData
 {
     public int Id { get; set; }
@@ -303,6 +332,50 @@ public class SalesAnalyticsSeedData
     public decimal AverageOrderValue { get; set; }
     public List<StatusBreakdown> StatusBreakdown { get; set; } = new();
     public List<RegionBreakdown> RegionBreakdown { get; set; } = new();
+}
+
+// DTO to match API analytics response format
+public class ApiSalesAnalyticsData
+{
+    public SalesSummaryData Summary { get; set; } = new();
+    public List<SalesByStatusData> ByStatus { get; set; } = new();
+    public List<SalesByRegionData> ByRegion { get; set; } = new();
+    public List<SalesTrendData> RecentTrends { get; set; } = new();
+}
+
+public class SalesSummaryData
+{
+    public int TotalOrders { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public decimal AverageOrderValue { get; set; }
+    public SalesPeriodData Period { get; set; } = new();
+}
+
+public class SalesPeriodData
+{
+    public string FromDate { get; set; } = "";
+    public string ToDate { get; set; } = "";
+}
+
+public class SalesByStatusData
+{
+    public string Status { get; set; } = "";
+    public int Count { get; set; }
+    public decimal Revenue { get; set; }
+}
+
+public class SalesByRegionData
+{
+    public string Region { get; set; } = "";
+    public int Count { get; set; }
+    public decimal Revenue { get; set; }
+}
+
+public class SalesTrendData
+{
+    public string Date { get; set; } = "";
+    public int Orders { get; set; }
+    public decimal Revenue { get; set; }
 }
 
 public class StatusBreakdown

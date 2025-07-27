@@ -3,31 +3,25 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "baseName": {
-      "value": "FabrikamAIDemo"
+      "value": "FabrikamQuickDemo"
     },
     "environment": {
       "value": "dev"
     },
     "githubRepository": {
-      "value": "https://github.com/davebirr/Fabrikam-Project"
+      "value": "https://github.com/YOUR-USERNAME/Fabrikam-Project"
     },
     "skuName": {
-      "value": "B1"
-    },
-    "customDomain": {
-      "value": "levelupcsp.com"
-    },
-    "enableCustomDomains": {
-      "value": true
+      "value": "F1"
     },
     "databaseProvider": {
-      "value": "SqlServer"
+      "value": "InMemory"
     },
     "enableAuthentication": {
-      "value": true
+      "value": false
     },
-    "sqlAdminUsername": {
-      "value": "fabrikamadmin"
+    "enableCustomDomains": {
+      "value": false
     }
   }
 }

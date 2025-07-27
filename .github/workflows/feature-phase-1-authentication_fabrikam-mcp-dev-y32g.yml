@@ -59,7 +59,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_MCP_APP_NAME || 'fabrikam-mcp-dev-y32g' }}
+          app-name: 'fabrikam-mcp-dev-y32g'
           slot-name: 'Production'
           package: .
           

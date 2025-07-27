@@ -1,37 +1,88 @@
-# 📚 Fabrikam Project Documentation
+# 📚 F### 👋 **New to the Project?**
 
-Welcome to the Fabrikam Project documentation! This directory contains comprehensive guides organized by topic area.
+**Start here if this is your first time with Fabrikam:**
 
-## 📖 Quick Navigation
+1. **[🚀 Local Development Setup](getting-started/SETTING-UP-FOR-LOCAL-DEVELOPMENT.md)** - Get your development environment ready
+2. **[🏗️ Business Model Overview](../BUSINESS-MODEL-SUMMARY.md)** - Understand what Fabrikam does
+3. **[🔄 Development Workflow](getting-started/DEVELOPMENT-WORKFLOW.md)** - Learn the daily development process
+4. **[🤝 Contributing Guide](../CONTRIBUTING.md)** - How to contribute code and documentation Project Documentation
 
-### 🚀 Getting Started
+**Welcome to the Fabrikam modular home business platform!** This documentation is organized by your role and what you want to accomplish.
 
-- [**Project README**](../README.md) - Project overview and quick start
-- [**Contributing Guide**](../CONTRIBUTING.md) - How to contribute to the project
-- [**Development Workflow**](development/DEVELOPMENT-WORKFLOW.md) - Daily development process
+## 🎯 **Choose Your Path**
 
-### 🎬 Demos & Showcases
+### � **New to the Project?**
 
-- [**Demo Ready Summary**](demos/DEMO-READY-SUMMARY.md) - Complete demo preparation guide
-- [**Demo User Authentication Guide**](demos/DEMO-USER-AUTHENTICATION-GUIDE.md) - Demo user credentials and authentication testing
-- [**Copilot Demo Prompts**](demos/COPILOT-DEMO-PROMPTS.md) - Comprehensive 3-minute demo scenarios
-- [**Quick Demo Prompts**](demos/QUICK-DEMO-PROMPTS.md) - Copy-paste ready demo prompts
-- [**Copilot Studio Setup**](demos/Copilot-Studio-Agent-Setup-Guide.md) - MCP server integration guide
-- [**Demo Validation Script**](demos/Validate-Demo.ps1) - Automated demo readiness check
+**Start here if this is your first time with Fabrikam:**
 
-### 🚀 Deployment & Production
+1. **[🚀 Local Development Setup](getting-started/SETTING-UP-FOR-LOCAL-DEVELOPMENT.md)** - Get your development environment ready
+2. **[🏗️ Business Model Overview](../BUSINESS-MODEL-SUMMARY.md)** - Understand what Fabrikam does
+3. **[🔄 Development Workflow](getting-started/DEVELOPMENT-WORKFLOW.md)** - Learn the daily development process
+4. **[🤝 Contributing Guide](../CONTRIBUTING.md)** - How to contribute code and documentation
 
-- [**Deployment Guide**](deployment/DEPLOYMENT-GUIDE.md) - Azure deployment instructions
-- [**Release Guide**](deployment/RELEASE-GUIDE.md) - Release process and versioning
-- [**Production Testing**](deployment/PRODUCTION-TESTING-GUIDE.md) - Production environment validation
+### 🎬 **Want to See a Demo?**
 
-### 🛠️ Development & Testing
+**Perfect for stakeholders, prospects, or quick project overview:**
 
-- [**Development Workflow**](development/DEVELOPMENT-WORKFLOW.md) - Daily development process
+- **[⚡ Quick Demo (3-min)](demos/QUICK-DEMO-PROMPTS.md)** - Copy-paste prompts for immediate demo
+- **[🎭 Comprehensive Demo](demos/COPILOT-DEMO-PROMPTS.md)** - Full feature showcase with business scenarios
+- **[👤 Demo Users Guide](demos/DEMO-USER-AUTHENTICATION-GUIDE.md)** - Test accounts and authentication flows
+- **[✅ Demo Validation](demos/Validate-Demo.ps1)** - Automated demo readiness check
+
+### 🚀 **Ready to Deploy?**
+
+**For deployment engineers and DevOps teams:**
+
+- **[🔧 Deployment Guide](deployment/DEPLOYMENT-GUIDE.md)** - Step-by-step Azure deployment
+- **[🔐 Authentication Setup](deployment/AZURE-B2C-SETUP-GUIDE.md)** - Azure B2C configuration
+- **[📦 Release Process](deployment/RELEASE-GUIDE.md)** - Versioning and release management
+- **[🧪 Production Testing](deployment/PRODUCTION-TESTING-GUIDE.md)** - Validate production deployments
+
+### 🛠️ **Development Deep Dive**
+
+**For active contributors and maintainers:**
+
+#### **Testing & Quality**
+
+- **[🧪 Testing Strategy](development/testing/TESTING-STRATEGY.md)** - Comprehensive testing approach
+- **[📊 Test Results Summary](development/testing/PROJECT-TESTING-SUMMARY.md)** - Current test coverage and results
+- **[⚡ Performance Troubleshooting](development/PERFORMANCE-TROUBLESHOOTING-GUIDE.md)** - Debug performance issues
+
+#### **Authentication & Security**
+
+- **[🔐 Authentication Implementation](development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md)** - Dual auth strategy details
+- **[💡 Authentication Lessons](development/AUTHENTICATION-LESSONS-LEARNED.md)** - What we learned building auth
+- **[� Secret Management](development/SECRET-MANAGEMENT-STRATEGY.md)** - Handling sensitive configuration
+
+#### **Tools & Workflow**
+
+- **[💻 VS Code Setup](development/VS-CODE-PERFORMANCE-GUIDE.md)** - Optimize your development environment
+- **[🐛 GitHub Issues Guide](development/GITHUB-ISSUES-SETUP.md)** - Issue templates and management
+- **[📦 Build Artifacts](development/BUILD-ARTIFACT-MANAGEMENT.md)** - Managing builds and deployments
+
+### 🏗️ **Architecture & Design**
+
+**For architects and technical decision makers:**
+
+- **[🏛️ API Architecture](architecture/API-ARCHITECTURE.md)** - System design and API patterns
+- **[🔐 Authentication Strategy](architecture/DUAL-AUTHENTICATION-STRATEGY.md)** - Security architecture decisions
+- **[🚀 Future Enhancements](architecture/TODO-FUTURE-ENHANCEMENTS.md)** - Planned improvements and roadmap
+
+### � **Business Context**
+
+**Understand the business domain and requirements:**
+
+- **[🏢 Business Model Summary](../BUSINESS-MODEL-SUMMARY.md)** - $500M modular home manufacturer profile
+- **[🤖 Business Simulator Requirements](future-features/BUSINESS-SIMULATOR-REQUIREMENTS.md)** - Issue #9 implementation details
+
+---
+
+## 🔍 **Quick Reference**
+
 - [**Authentication Implementation Guide**](development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md) - Complete authentication infrastructure documentation
 - [**Authentication Lessons Learned**](development/AUTHENTICATION-LESSONS-LEARNED.md) - Implementation insights and best practices
-- [**Testing Strategy**](development/TESTING-STRATEGY.md) - Comprehensive testing approach
-- [**Project Testing Summary**](development/PROJECT-TESTING-SUMMARY.md) - Testing tools overview
+- [**Testing Strategy**](development/testing/TESTING-STRATEGY.md) - Comprehensive testing approach
+- [**Project Testing Summary**](development/testing/PROJECT-TESTING-SUMMARY.md) - Testing tools overview
 - [**Commit Checklist**](development/COMMIT-CHECKLIST.md) - Pre-commit validation steps
 - [**Asset Management Guide**](development/ASSET-MANAGEMENT-GUIDE.md) - Product asset organization and naming
 
@@ -62,66 +113,87 @@ docs/
 ├── demos/                       # Demo guides and prompts
 │   ├── COPILOT-DEMO-PROMPTS.md
 │   ├── QUICK-DEMO-PROMPTS.md
-│   ├── DEMO-READY-SUMMARY.md
-│   ├── DEMO-USER-AUTHENTICATION-GUIDE.md
-│   ├── Copilot-Studio-Agent-Setup-Guide.md
-│   └── Validate-Demo.ps1
-├── deployment/                  # Deployment and production guides
-│   ├── DEPLOYMENT-GUIDE.md
-│   ├── RELEASE-GUIDE.md
-│   └── PRODUCTION-TESTING-GUIDE.md
-├── development/                 # Development workflow and testing
-│   ├── DEVELOPMENT-WORKFLOW.md
-│   ├── AUTHENTICATION-IMPLEMENTATION-GUIDE.md
-│   ├── AUTHENTICATION-LESSONS-LEARNED.md
-│   ├── TESTING-STRATEGY.md
-│   ├── PROJECT-TESTING-SUMMARY.md
-│   ├── COMMIT-CHECKLIST.md
-│   └── ASSET-MANAGEMENT-GUIDE.md
-└── architecture/               # Technical architecture and planning
-    ├── API-ARCHITECTURE.md
-    └── TODO-FUTURE-ENHANCEMENTS.md
+│   └── DEMO-READY-SUMMARY.md
+├── getting-started/             # New user onboarding
+├── development/                 # Development guides and tools
+│   └── testing/                 # Testing documentation
+├── future-features/             # Future roadmap items
+├── deployment/                  # Azure deployment guides
+└── architecture/                # System design docs
 ```
 
-## 🎯 Document Categories Explained
+---
 
-### 🎬 **Demos**
+## 🎯 **Common Tasks**
 
-Everything needed to showcase the Fabrikam MCP server's business intelligence capabilities:
+**Quick answers to "How do I...?" questions:**
 
-- Ready-to-use demo scripts and scenarios
-- Copilot Studio integration guides
-- Technical validation and setup instructions
+- 🔧 **"How do I set up development?"** → [Local Development Setup](getting-started/SETTING-UP-FOR-LOCAL-DEVELOPMENT.md)
+- 🎬 **"Show me a quick demo"** → [3-Minute Demo](demos/QUICK-DEMO-PROMPTS.md)
+- 🚀 **"How do I deploy this?"** → [Deployment Guide](deployment/DEPLOYMENT-GUIDE.md)
+- 🧪 **"How do I run tests?"** → [Testing Strategy](development/testing/TESTING-STRATEGY.md)
+- 🔐 **"How does authentication work?"** → [Auth Implementation Guide](development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md)
+- 🏗️ **"What's the business model?"** → [Business Model Summary](../BUSINESS-MODEL-SUMMARY.md)
 
-### 🚀 **Deployment**
+**Quick Links:**
 
-Production deployment and release management:
+- 🌐 **[Live API Documentation](https://localhost:7297/swagger)** (when running locally)
+- 📊 **[GitHub Issues](https://github.com/davebirr/Fabrikam-Project/issues)**
+- 🤖 **[Issue #9: Business Simulator](https://github.com/davebirr/Fabrikam-Project/issues/9)**
 
-- Azure cloud deployment procedures
-- Release versioning and change management
-- Production environment testing and validation
+---
 
-### 🛠️ **Development**
+## 📁 **Document Organization**
 
-Daily development workflow and quality assurance:
+This documentation is organized by **user goals** rather than technical categories. Each section is designed to get you from "I want to..." to "Done!" as quickly as possible.
 
-- Local development setup and testing tools
-- Code quality standards and testing strategies
-- Commit guidelines and validation checklists
+**Current folder structure:**
 
-### 🏗️ **Architecture**
+```
+docs/
+├── README.md                   # This navigation guide
+├── getting-started/            # New contributor onboarding
+├── demos/                      # Demo guides and validation
+├── development/                # Development workflow and tools
+│   └── testing/                # Testing documentation
+├── future-features/            # Future roadmap items
+├── deployment/                 # Azure deployment and production
+├── architecture/               # Technical architecture and design
+└── assets/                     # Images and supporting files
+```
 
-Technical design and future planning:
+**Philosophy:** Each document should be **actionable** and **complete** - you shouldn't need to jump between multiple docs to accomplish a single goal.
 
-- System architecture documentation
-- Feature roadmap and enhancement planning
-- Technical decision records and design patterns
+---
 
-## 🔗 Related Resources
+## 🤝 **Contributing to Documentation**
 
-### External Links
+Found a gap or improvement? Here's how to help:
 
-- [GitHub Repository](https://github.com/davebirr/Fabrikam-Project)
+1. **Small Fixes**: Edit directly on GitHub and create a PR
+2. **New Content**: Follow the user journey approach - think "What does someone want to accomplish?"
+3. **Organization**: Keep the flat structure - avoid deep nesting
+4. **Style**: Use clear headings, action-oriented language, and practical examples
+
+**Documentation Standards:**
+
+- ✅ Start with a clear purpose statement
+- ✅ Include practical examples and code snippets
+- ✅ Add troubleshooting sections for complex procedures
+- ✅ Link to related documents but keep each doc self-contained
+- ✅ Use emojis and formatting to improve scanability
+
+---
+
+## 🎯 **Getting Help**
+
+- **Quick Questions**: Check existing [GitHub Issues](https://github.com/davebirr/Fabrikam-Project/issues)
+- **Technical Issues**: Create a new issue with reproduction steps
+- **Documentation Issues**: Submit a PR or create an issue
+- **Business Questions**: Review the [Business Model Summary](../BUSINESS-MODEL-SUMMARY.md)
+
+**Happy building!** 🏗️✨
+
 - [Azure Portal](https://portal.azure.com) (for deployment)
 - [Model Context Protocol](https://modelcontextprotocol.io/) (MCP documentation)
 
@@ -135,10 +207,10 @@ Technical design and future planning:
 
 ## 💡 Tips for Navigation
 
-1. **New Contributors**: Start with [CONTRIBUTING.md](../CONTRIBUTING.md) and [DEVELOPMENT-WORKFLOW.md](development/DEVELOPMENT-WORKFLOW.md)
+1. **New Contributors**: Start with [CONTRIBUTING.md](../CONTRIBUTING.md) and [DEVELOPMENT-WORKFLOW.md](getting-started/DEVELOPMENT-WORKFLOW.md)
 2. **Demo Preparation**: Use [DEMO-READY-SUMMARY.md](demos/DEMO-READY-SUMMARY.md) as your checklist
 3. **Deployment**: Follow [DEPLOYMENT-GUIDE.md](deployment/DEPLOYMENT-GUIDE.md) for Azure setup
-4. **Daily Development**: Keep [TESTING-STRATEGY.md](development/TESTING-STRATEGY.md) handy for quality assurance
+4. **Daily Development**: Keep [TESTING-STRATEGY.md](development/testing/TESTING-STRATEGY.md) handy for quality assurance
 
 ## 📝 Documentation Standards
 

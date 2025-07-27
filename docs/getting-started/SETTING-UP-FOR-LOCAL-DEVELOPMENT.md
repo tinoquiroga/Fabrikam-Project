@@ -1,0 +1,441 @@
+# 🚀 Setting Up for Local Development
+
+This guide provides step-by-step instructions for setting up your development environment to contribute to the Fabrikam modular home business platform. Whether you're a first-time contributor or setting up a new workstation, this guide will get you up and running quickly.
+
+## 📋 **Prerequisites Overview**
+
+The Fabrikam project is a **.NET 9.0** business platform with **Azure integration** and **AI-powered tools**. You'll need:
+
+- **Development Environment**: Visual Studio Code with .NET development tools
+- **Runtime & SDK**: .NET 9.0 SDK and supporting tools
+- **Source Control**: Git and GitHub CLI for repository management
+- **AI Integration**: GitHub Copilot and Model Context Protocol (MCP) servers
+- **Azure Tools**: Azure CLI and development tools for cloud integration
+- **Package Management**: PowerShell 7 for automation scripts
+
+## 🛠️ **Required Software Installation**
+
+### **Core Development Tools**
+
+#### **1. Visual Studio Code**
+
+```powershell
+# Install VS Code
+winget install --exact Microsoft.VisualStudioCode
+
+# Alternative: Download from https://code.visualstudio.com/
+```
+
+#### **2. .NET 9.0 SDK** (Primary requirement)
+
+```powershell
+# Install .NET 9.0 SDK
+winget install --exact Microsoft.DotNet.SDK.9
+
+# Verify installation
+dotnet --version
+# Should show: 9.0.x
+```
+
+#### **3. Git & GitHub CLI**
+
+```powershell
+# Install Git
+winget install --exact Git.Git
+
+# Install GitHub CLI (required for issue management)
+winget install --exact GitHub.cli
+
+# Verify installations
+git --version
+gh --version
+```
+
+#### **4. PowerShell 7**
+
+```powershell
+# Install PowerShell 7 (for project automation scripts)
+winget install --exact Microsoft.PowerShell
+
+# Verify installation
+pwsh --version
+```
+
+### **Azure Development Tools**
+
+#### **5. Azure CLI**
+
+```powershell
+# Install Azure CLI
+winget install --exact Microsoft.AzureCLI
+
+# Verify installation
+az --version
+```
+
+#### **6. Azure Developer CLI**
+
+```powershell
+# Install Azure Developer CLI (for azd deployment)
+winget install --exact Microsoft.Azd
+
+# Verify installation
+azd version
+```
+
+## 🔌 **VS Code Extensions Setup**
+
+### **Essential Extensions** (Required)
+
+Install these extensions for core .NET development:
+
+```powershell
+# Core .NET Development
+code --install-extension ms-dotnettools.csdevkit
+code --install-extension ms-dotnettools.csharp
+code --install-extension ms-dotnettools.vscode-dotnet-runtime
+
+# GitHub Copilot (Required for MCP development)
+code --install-extension github.copilot
+code --install-extension github.copilot-chat
+
+# GitHub Integration
+code --install-extension github.vscode-pull-request-github
+code --install-extension github.vscode-github-actions
+
+# API Testing
+code --install-extension humao.rest-client
+
+# Azure Development
+code --install-extension ms-azuretools.azure-dev
+code --install-extension ms-azuretools.vscode-bicep
+code --install-extension ms-azuretools.vscode-azure-github-copilot
+```
+
+### **Configuration Support** (Recommended)
+
+```powershell
+# Development Quality of Life
+code --install-extension editorconfig.editorconfig
+code --install-extension ms-vscode.powershell
+code --install-extension redhat.vscode-yaml
+```
+
+### **⚠️ Extensions to AVOID**
+
+The project has identified extensions that cause UI freezes and performance issues. **Do NOT install these**:
+
+```text
+❌ yzhang.markdown-all-in-one     # Creates phantom files
+❌ eamodio.gitlens                # Heavy git processing causes freezes
+❌ usernamehw.errorlens           # Constant error processing
+❌ ms-python.python               # Not needed for .NET development
+❌ Heavy Azure extensions         # Only install specific ones listed above
+```
+
+## 🏗️ **Model Context Protocol (MCP) Servers Setup**
+
+The Fabrikam project integrates with multiple MCP servers for AI-enhanced development:
+
+### **1. Microsoft Docs MCP**
+
+```powershell
+# This will be automatically available through GitHub Copilot
+# when working with the project - no separate installation needed
+```
+
+### **2. Azure MCP Server**
+
+```powershell
+# Integrated with Azure CLI authentication
+# Configure after repository setup (covered below)
+```
+
+### **3. GitHub MCP Server**
+
+```powershell
+# Integrated with GitHub CLI
+# Configure after repository setup (covered below)
+```
+
+> **Note**: MCP servers integrate through VS Code and GitHub Copilot. The specific server configurations are included in the project's `.vscode/settings.json`.
+
+## 📁 **Repository Setup**
+
+### **Fork and Clone the Repository**
+
+#### **1. Fork the Repository**
+
+Visit [https://github.com/davebirr/Fabrikam-Project](https://github.com/davebirr/Fabrikam-Project) and click **"Fork"** to create your own copy.
+
+#### **2. Clone Your Fork**
+
+```powershell
+# Navigate to your development directory
+cd "C:\Dev"  # or wherever you keep projects
+
+# Clone your fork (replace YOUR-USERNAME)
+git clone https://github.com/YOUR-USERNAME/Fabrikam-Project --origin fork
+cd Fabrikam-Project
+
+# Add the original repository as upstream
+git remote add upstream https://github.com/davebirr/Fabrikam-Project
+
+# Verify remotes
+git remote -v
+# Should show:
+# fork     https://github.com/YOUR-USERNAME/Fabrikam-Project (fetch)
+# fork     https://github.com/YOUR-USERNAME/Fabrikam-Project (push)
+# upstream https://github.com/davebirr/Fabrikam-Project (fetch)
+# upstream https://github.com/davebirr/Fabrikam-Project (push)
+```
+
+#### **3. Set Up Development Branch**
+
+```powershell
+# Switch to the main branch and ensure it's up to date
+git checkout main
+git pull upstream main
+
+# Create your feature branch from main
+git checkout -b feature/your-feature-name
+
+# Example:
+git checkout -b feature/add-customer-dashboard
+```
+
+## 🔐 **Authentication Setup**
+
+### **1. GitHub CLI Authentication**
+
+```powershell
+# Authenticate with GitHub
+gh auth login
+
+# Choose:
+# - GitHub.com
+# - HTTPS
+# - Yes (authenticate Git with GitHub credentials)
+# - Login with web browser
+
+# Verify authentication
+gh auth status
+```
+
+### **2. Azure CLI Authentication** (Optional but recommended)
+
+```powershell
+# Login to Azure (for cloud development/deployment)
+az login
+
+# Set your subscription (replace with your subscription ID)
+az account set --subscription "YOUR-SUBSCRIPTION-ID"
+
+# Verify authentication
+az account show
+```
+
+## 🧪 **Project Verification**
+
+### **1. Build the Solution**
+
+```powershell
+# From the repository root
+dotnet build Fabrikam.sln
+
+# Should succeed with no errors
+```
+
+### **2. Run Tests**
+
+```powershell
+# Run the development test suite
+.\Test-Development.ps1 -Quick
+
+# Should show: All tests passing ✅
+```
+
+### **3. Start the Development Servers**
+
+#### **Terminal 1: API Server**
+
+```powershell
+# Start the main API server
+dotnet run --project FabrikamApi\src\FabrikamApi.csproj
+
+# Should start on: https://localhost:7297
+```
+
+#### **Terminal 2: MCP Server**
+
+```powershell
+# Start the MCP server
+dotnet run --project FabrikamMcp\src\FabrikamMcp.csproj
+
+# Should start on: http://localhost:5000
+```
+
+### **4. Test API Endpoints**
+
+Open `api-tests.http` in VS Code and test the endpoints:
+
+```http
+### Test basic API connectivity
+GET https://localhost:7297/api/products
+```
+
+Click **"Send Request"** - you should see product data returned.
+
+## 🔧 **Project Configuration**
+
+### **VS Code Workspace Settings**
+
+The project includes optimized VS Code settings in `.vscode/settings.json`. Key configurations:
+
+```json
+{
+  "dotnet.defaultSolution": "Fabrikam.sln",
+  "omnisharp.enableAsyncCompletion": false,
+  "files.autoSave": "off",
+  "extensions.autoUpdate": false
+}
+```
+
+These settings are automatically applied when you open the project.
+
+### **Environment Variables**
+
+Copy the environment template:
+
+```powershell
+copy .env.example .env
+```
+
+Edit `.env` with your specific settings (most defaults work for local development).
+
+## 🚀 **Development Workflow**
+
+### **Daily Development Process**
+
+```powershell
+# 1. Update your local repository
+git checkout main
+git pull upstream main
+
+# 2. Create/switch to your feature branch
+git checkout feature/your-feature-name
+
+# 3. Start development servers (use VS Code tasks)
+# Ctrl+Shift+P → "Tasks: Run Task" → "🚀 Start API Server"
+# Ctrl+Shift+P → "Tasks: Run Task" → "🤖 Start MCP Server"
+
+# 4. Make your changes and test
+.\Test-Development.ps1 -Quick
+
+# 5. Commit and push
+git add .
+git commit -m "feat: add your feature description"
+git push fork feature/your-feature-name
+```
+
+### **Creating Pull Requests**
+
+```powershell
+# Create PR using GitHub CLI
+gh pr create --title "feat: Your Feature Description" --body "Detailed description of changes"
+
+# Or use the GitHub web interface
+```
+
+## 🎯 **Project Structure Understanding**
+
+```
+Fabrikam-Project/
+├── FabrikamApi/          # Main ASP.NET Core Web API
+│   ├── src/              # Source code
+│   │   ├── Controllers/  # API controllers
+│   │   ├── Services/     # Business logic
+│   │   └── Data/         # Data models and seed data
+│   └── infra/            # Azure infrastructure (Bicep)
+├── FabrikamMcp/          # Model Context Protocol server
+│   ├── src/              # MCP server implementation
+│   └── infra/            # MCP infrastructure
+├── FabrikamTests/        # Comprehensive test suite
+├── docs/                 # Documentation
+└── scripts/              # Automation scripts
+```
+
+## 🔍 **Troubleshooting**
+
+### **Common Issues**
+
+#### **Build Errors**
+
+```powershell
+# Clear build artifacts
+dotnet clean
+dotnet restore
+dotnet build
+```
+
+#### **VS Code Extension Issues**
+
+```powershell
+# Run the extension cleanup script
+.\scripts\Disable-ProblematicExtensions.ps1
+```
+
+#### **Port Conflicts**
+
+- API Server: `https://localhost:7297`
+- MCP Server: `http://localhost:5000`
+
+Kill any processes using these ports:
+
+```powershell
+# Find and kill processes on ports
+netstat -ano | findstr 7297
+taskkill /PID [PID_NUMBER] /F
+```
+
+#### **Git Authentication Issues**
+
+```powershell
+# Re-authenticate GitHub CLI
+gh auth logout
+gh auth login
+```
+
+### **Getting Help**
+
+1. **Documentation**: Check `docs/` folder for detailed guides
+2. **Issues**: Search existing GitHub issues
+3. **Discussions**: Use GitHub Discussions for questions
+4. **Test Suite**: Run `.\Test-Development.ps1 -Verbose` for diagnostics
+
+## 🎉 **You're Ready!**
+
+Once you've completed this setup:
+
+✅ **Development Environment**: VS Code with optimized settings  
+✅ **Build System**: .NET 9.0 with all dependencies  
+✅ **Source Control**: Git with proper remote configuration  
+✅ **AI Tools**: GitHub Copilot with MCP integration  
+✅ **Azure Tools**: CLI and development tools configured  
+✅ **Testing**: Automated test suite running  
+✅ **Project Understanding**: Familiar with structure and workflow
+
+You're now ready to contribute to the Fabrikam modular home business platform!
+
+**Next Steps**:
+
+- Review the [Business Model Summary](../../BUSINESS-MODEL-SUMMARY.md)
+- Explore the [API Documentation](https://localhost:7297/swagger)
+- Check out [Issue #9](https://github.com/davebirr/Fabrikam-Project/issues/9) for the Business Simulator feature
+- Join the development workflow with your first contribution!
+
+---
+
+> **💡 Pro Tip**: Use the VS Code tasks (Ctrl+Shift+P → "Tasks: Run Task") to quickly start servers, run tests, and manage the project. The project includes optimized tasks for common development operations.
+
+**Happy Coding!** 🏗️✨

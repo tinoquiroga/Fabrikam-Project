@@ -387,8 +387,8 @@ Get-Content auth-users.json | ConvertFrom-Json
 ## 📚 Related Documentation
 
 - **[Authentication Implementation Guide](../development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md)** - Complete implementation details
-- **[Testing Strategy](../development/TESTING-STRATEGY.md)** - Comprehensive testing approach
-- **[Development Workflow](../development/DEVELOPMENT-WORKFLOW.md)** - Daily development procedures
+- **[Testing Strategy](../development/testing/TESTING-STRATEGY.md)** - Comprehensive testing approach
+- **[Development Workflow](../getting-started/DEVELOPMENT-WORKFLOW.md)** - Daily development procedures
 - **[Quick Demo Prompts](QUICK-DEMO-PROMPTS.md)** - Ready-to-use demo scenarios
 
 ---

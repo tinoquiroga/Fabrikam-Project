@@ -13,7 +13,7 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 78000
+        "unitPrice": 115000
       }
     ]
   },
@@ -31,7 +31,7 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 125000
+        "unitPrice": 185000
       }
     ]
   },
@@ -49,12 +49,12 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 78000
+        "unitPrice": 115000
       },
       {
         "productId": 7,
         "quantity": 1,
-        "unitPrice": 12000
+        "unitPrice": 18500
       }
     ]
   },
@@ -72,7 +72,7 @@
       {
         "productId": 4,
         "quantity": 1,
-        "unitPrice": 162000
+        "unitPrice": 225000
       }
     ]
   },
@@ -90,12 +90,12 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 125000
+        "unitPrice": 185000
       },
       {
         "productId": 8,
         "quantity": 1,
-        "unitPrice": 20000
+        "unitPrice": 32000
       }
     ]
   },
@@ -113,7 +113,7 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 195000
+        "unitPrice": 295000
       }
     ]
   },
@@ -131,7 +131,7 @@
       {
         "productId": 5,
         "quantity": 1,
-        "unitPrice": 38000
+        "unitPrice": 58000
       }
     ]
   },
@@ -149,7 +149,7 @@
       {
         "productId": 1,
         "quantity": 2,
-        "unitPrice": 82000
+        "unitPrice": 115000
       }
     ]
   },
@@ -167,12 +167,12 @@
       {
         "productId": 4,
         "quantity": 1,
-        "unitPrice": 162000
+        "unitPrice": 225000
       },
       {
         "productId": 9,
         "quantity": 1,
-        "unitPrice": 7000
+        "unitPrice": 12500
       }
     ]
   },
@@ -190,7 +190,7 @@
       {
         "productId": 6,
         "quantity": 1,
-        "unitPrice": 115000
+        "unitPrice": 165000
       }
     ]
   },
@@ -208,12 +208,12 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 195000
+        "unitPrice": 295000
       },
       {
         "productId": 10,
         "quantity": 1,
-        "unitPrice": 18000
+        "unitPrice": 28000
       }
     ]
   },
@@ -231,12 +231,12 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 128000
+        "unitPrice": 185000
       },
       {
         "productId": 11,
         "quantity": 1,
-        "unitPrice": 16000
+        "unitPrice": 22500
       }
     ]
   },
@@ -254,12 +254,12 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 82000
+        "unitPrice": 115000
       },
       {
         "productId": 12,
         "quantity": 1,
-        "unitPrice": 22000
+        "unitPrice": 35000
       }
     ]
   },
@@ -277,7 +277,7 @@
       {
         "productId": 5,
         "quantity": 2,
-        "unitPrice": 40000
+        "unitPrice": 58000
       }
     ]
   },
@@ -295,12 +295,12 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 205000
+        "unitPrice": 295000
       },
       {
         "productId": 8,
         "quantity": 1,
-        "unitPrice": 22000
+        "unitPrice": 32000
       }
     ]
   },
@@ -318,7 +318,7 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 135000
+        "unitPrice": 185000
       }
     ]
   },
@@ -336,12 +336,12 @@
       {
         "productId": 6,
         "quantity": 1,
-        "unitPrice": 118000
+        "unitPrice": 165000
       },
       {
         "productId": 9,
         "quantity": 1,
-        "unitPrice": 7500
+        "unitPrice": 12500
       }
     ]
   },
@@ -359,12 +359,12 @@
       {
         "productId": 4,
         "quantity": 1,
-        "unitPrice": 168000
+        "unitPrice": 225000
       },
       {
         "productId": 10,
         "quantity": 1,
-        "unitPrice": 19000
+        "unitPrice": 28000
       }
     ]
   },
@@ -382,12 +382,12 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 85000
+        "unitPrice": 115000
       },
       {
         "productId": 11,
         "quantity": 1,
-        "unitPrice": 17000
+        "unitPrice": 22500
       }
     ]
   },
@@ -405,12 +405,12 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 210000
+        "unitPrice": 295000
       },
       {
         "productId": 12,
         "quantity": 1,
-        "unitPrice": 23000
+        "unitPrice": 35000
       }
     ]
   },
@@ -428,7 +428,7 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 89500
+        "unitPrice": 115000
       }
     ]
   },
@@ -446,12 +446,12 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 145000
+        "unitPrice": 185000
       },
       {
         "productId": 7,
         "quantity": 1,
-        "unitPrice": 15000
+        "unitPrice": 18500
       }
     ]
   },
@@ -469,12 +469,12 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 225000
+        "unitPrice": 295000
       },
       {
         "productId": 8,
         "quantity": 2,
-        "unitPrice": 25000
+        "unitPrice": 32000
       }
     ]
   },
@@ -492,7 +492,7 @@
       {
         "productId": 4,
         "quantity": 1,
-        "unitPrice": 175000
+        "unitPrice": 225000
       }
     ]
   },
@@ -510,12 +510,12 @@
       {
         "productId": 5,
         "quantity": 1,
-        "unitPrice": 45000
+        "unitPrice": 58000
       },
       {
         "productId": 9,
         "quantity": 1,
-        "unitPrice": 8000
+        "unitPrice": 12500
       }
     ]
   },
@@ -533,12 +533,12 @@
       {
         "productId": 6,
         "quantity": 1,
-        "unitPrice": 125000
+        "unitPrice": 165000
       },
       {
         "productId": 10,
         "quantity": 1,
-        "unitPrice": 22000
+        "unitPrice": 28000
       }
     ]
   },
@@ -556,12 +556,12 @@
       {
         "productId": 1,
         "quantity": 2,
-        "unitPrice": 89500
+        "unitPrice": 115000
       },
       {
         "productId": 11,
         "quantity": 1,
-        "unitPrice": 18000
+        "unitPrice": 22500
       }
     ]
   },
@@ -579,12 +579,12 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 145000
+        "unitPrice": 185000
       },
       {
         "productId": 12,
         "quantity": 1,
-        "unitPrice": 25000
+        "unitPrice": 35000
       }
     ]
   },
@@ -602,7 +602,7 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 225000
+        "unitPrice": 295000
       }
     ]
   },
@@ -620,12 +620,12 @@
       {
         "productId": 6,
         "quantity": 1,
-        "unitPrice": 125000
+        "unitPrice": 165000
       },
       {
         "productId": 8,
         "quantity": 1,
-        "unitPrice": 25000
+        "unitPrice": 32000
       }
     ]
   },
@@ -643,12 +643,12 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 89500
+        "unitPrice": 115000
       },
       {
         "productId": 7,
         "quantity": 1,
-        "unitPrice": 15000
+        "unitPrice": 18500
       }
     ]
   },
@@ -666,7 +666,7 @@
       {
         "productId": 4,
         "quantity": 1,
-        "unitPrice": 175000
+        "unitPrice": 225000
       }
     ]
   },
@@ -684,12 +684,12 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 145000
+        "unitPrice": 185000
       },
       {
         "productId": 9,
         "quantity": 2,
-        "unitPrice": 8000
+        "unitPrice": 12500
       }
     ]
   },
@@ -707,12 +707,12 @@
       {
         "productId": 5,
         "quantity": 2,
-        "unitPrice": 45000
+        "unitPrice": 58000
       },
       {
         "productId": 10,
         "quantity": 1,
-        "unitPrice": 22000
+        "unitPrice": 28000
       }
     ]
   },
@@ -730,7 +730,7 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 225000
+        "unitPrice": 295000
       }
     ]
   },
@@ -748,12 +748,12 @@
       {
         "productId": 2,
         "quantity": 1,
-        "unitPrice": 145000
+        "unitPrice": 185000
       },
       {
         "productId": 8,
         "quantity": 1,
-        "unitPrice": 25000
+        "unitPrice": 32000
       }
     ]
   },
@@ -771,7 +771,7 @@
       {
         "productId": 6,
         "quantity": 1,
-        "unitPrice": 125000
+        "unitPrice": 165000
       }
     ]
   },
@@ -789,12 +789,12 @@
       {
         "productId": 1,
         "quantity": 1,
-        "unitPrice": 89500
+        "unitPrice": 115000
       },
       {
         "productId": 11,
         "quantity": 2,
-        "unitPrice": 18000
+        "unitPrice": 22500
       }
     ]
   },
@@ -812,12 +812,12 @@
       {
         "productId": 4,
         "quantity": 1,
-        "unitPrice": 175000
+        "unitPrice": 225000
       },
       {
         "productId": 12,
         "quantity": 1,
-        "unitPrice": 25000
+        "unitPrice": 35000
       }
     ]
   },
@@ -835,7 +835,7 @@
       {
         "productId": 3,
         "quantity": 1,
-        "unitPrice": 225000
+        "unitPrice": 295000
       }
     ]
   },
@@ -853,12 +853,12 @@
       {
         "productId": 5,
         "quantity": 1,
-        "unitPrice": 45000
+        "unitPrice": 58000
       },
       {
         "productId": 9,
         "quantity": 1,
-        "unitPrice": 8000
+        "unitPrice": 12500
       }
     ]
   }

@@ -109,6 +109,12 @@
       "metadata": {
         "description": "SQL Server administrator password (only used when databaseProvider is SqlServer). Auto-generated if not provided."
       }
+    },
+    "deploymentUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID of the user deploying this template. This user will be granted Key Vault Secrets Officer permissions. Get this with: az ad signed-in-user show --query id -o tsv"
+      }
     }
   },
   "variables": {
@@ -129,7 +135,9 @@
     "sqlDatabaseName": "[concat('sqldb-', parameters('environment'), '-', variables('suffix'))]",
     "keyVaultName": "[concat('kv-', parameters('environment'), '-', variables('suffix'))]",
     "jwtSecretName": "FabrikamJwtSecret",
-    "sqlConnectionSecretName": "DefaultConnection"
+    "sqlConnectionSecretName": "DefaultConnection",
+    "keyVaultSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
+    "keyVaultSecretsOfficerRoleId": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7"
   },
   "resources": [
     {
@@ -377,22 +385,10 @@
           "family": "A",
           "name": "standard"
         },
-        "accessPolicies": [
-          {
-            "tenantId": "[subscription().tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('apiAppName')), '2021-02-01', 'Full').identity.principalId]",
-            "permissions": {
-              "secrets": [
-                "get",
-                "list"
-              ]
-            }
-          }
-        ],
         "enabledForDeployment": false,
         "enabledForTemplateDeployment": false,
         "enabledForDiskEncryption": false,
-        "enableRbacAuthorization": false,
+        "enableRbacAuthorization": true,
         "enableSoftDelete": true,
         "softDeleteRetentionInDays": 7,
         "publicNetworkAccess": "Enabled"
@@ -424,6 +420,53 @@
       ],
       "properties": {
         "value": "[base64(concat(uniqueString(resourceGroup().id), uniqueString(subscription().id), uniqueString(variables('suffix'))))]"
+      }
+    },
+    {
+      "condition": "[parameters('enableAuthentication')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('apiAppName'), variables('keyVaultSecretsUserRoleId'))]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('apiAppName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsUserRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('apiAppName')), '2021-02-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "condition": "[parameters('enableAuthentication')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, variables('mcpAppName'), variables('keyVaultSecretsUserRoleId'))]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('mcpAppName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsUserRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('mcpAppName')), '2021-02-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "condition": "[parameters('enableAuthentication')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, parameters('deploymentUser'), variables('keyVaultSecretsOfficerRoleId'))]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsOfficerRoleId'))]",
+        "principalId": "[parameters('deploymentUser')]",
+        "principalType": "User"
       }
     }
   ],

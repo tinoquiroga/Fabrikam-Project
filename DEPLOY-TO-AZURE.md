@@ -4,15 +4,17 @@
 
 Click the button below to deploy the enhanced Fabrikam platform with Key Vault integration:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Fmain%2Fdeployment%2FAzureDeploymentTemplate.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.json)
 
 ## 🔐 Key Features
 
 ### Enhanced Security:
-- ✅ **Azure Key Vault** deployed for both InMemory and SQL Server configurations
+- ✅ **Azure Key Vault** deployed with **RBAC authorization** (not legacy access policies)
 - ✅ **JWT secrets** secured in Key Vault (never in app configuration)
 - ✅ **SQL connection strings** secured for SQL Server deployments
 - ✅ **Managed Identity** authentication to Key Vault
+- ✅ **Auto-assigned permissions**: App Services get Key Vault Secrets User role
+- ✅ **Deployment user permissions**: Deployer gets Key Vault Secrets Officer role
 
 ### Flexible Database Options:
 - 🚀 **InMemory**: Quick demos, no persistence, instant startup
@@ -20,7 +22,7 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
 
 ### Smart Resource Naming:
 - 📋 **Pattern**: `rg-fabrikam-{environment}-{suffix}`
-- 🔀 **Example**: `rg-fabrikam-dev-y32g`
+- 🔀 **Example**: `rg-FabrikamAiDemo-y32g` (matches your actual deployment pattern)
 - ✅ **Benefits**: Unique isolation, easy identification
 
 ## 📋 Deployment Parameters
@@ -31,6 +33,7 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
 | **Enable Authentication** | JWT authentication system | true, false | true |
 | **Environment** | Deployment environment | dev, staging, prod | dev |
 | **SKU Name** | App Service pricing tier | F1, B1, B2, S1, S2 | B1 |
+| **Deployment User** | Your Azure user object ID | (auto-detected) | Required for Key Vault access |
 
 ## 🏗️ What Gets Deployed
 
@@ -53,19 +56,26 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
 
 ### Before Deployment:
 1. **Create Resource Group** with unique suffix:
-   ```bash
+   ```powershell
    # Generate 4-character suffix
    $suffix = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
    
    # Create resource group
-   az group create --name "rg-fabrikam-dev-$suffix" --location "East US 2"
+   az group create --name "rg-FabrikamAiDemo-$suffix" --location "East US 2"
    ```
 
-2. **Note the Resource Group Name** for CI/CD setup later
+2. **Get your Azure User ID** for Key Vault access:
+   ```powershell
+   # Get your user object ID (needed for Key Vault RBAC permissions)
+   $userObjectId = az ad signed-in-user show --query id -o tsv
+   Write-Host "Your User Object ID: $userObjectId"
+   ```
+
+3. **Note both values** for the ARM template deployment
 
 ### After Deployment:
 1. **Test the deployed API** endpoints
-2. **Verify Key Vault** contains secrets
+2. **Verify Key Vault** contains secrets and you have access
 3. **Set up CI/CD** using the auto-fix workflows
 
 ## 🔄 CI/CD Integration Testing

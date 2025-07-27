@@ -24,10 +24,10 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -51,15 +51,15 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_31F59F8ACFDA4B5A86E909FB5269403B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_824A9B8975FB4CEFB0DDB5C25FB944DA }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5A708CA55BD740A2A4D6B029A8C26C66 }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID || secrets.AZUREAPPSERVICE_CLIENTID_31F59F8ACFDA4B5A86E909FB5269403B }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || secrets.AZUREAPPSERVICE_TENANTID_824A9B8975FB4CEFB0DDB5C25FB944DA }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5A708CA55BD740A2A4D6B029A8C26C66 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fabrikam-api-dev-y32g'
+          app-name: ${{ vars.AZURE_API_APP_NAME || 'fabrikam-api-dev-y32g' }}
           slot-name: 'Production'
           package: .
           

@@ -7,11 +7,11 @@
   "rest-client.environmentVariables": {
     "local": {
       "apiUrl": "https://localhost:7297",
-      "mcpUrl": "http://localhost:5000"
+      "mcpUrl": "https://localhost:5000"
     },
     "azure": {
-      "apiUrl": "fabrikam-api-dev-y32g.azurewebsites.net",
-      "mcpUrl": "fabrikam-mcp-dev-y32g.azurewebsites.net"
+      "apiUrl": "https://fabrikam-api-dev-y32g.azurewebsites.net",
+      "mcpUrl": "https://fabrikam-mcp-dev-y32g.azurewebsites.net"
     }
   },
   "azure.subscriptionId": "1ae622b1-c33c-457f-a2bb-351fed78922f",

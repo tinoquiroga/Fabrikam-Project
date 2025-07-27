@@ -388,10 +388,10 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // Only allow in development environment
-            if (!_environment.IsDevelopment())
+            // Allow in development environment OR dev environment (for Azure deployments)
+            if (!_environment.IsDevelopment() && !_environment.EnvironmentName.Equals("dev", StringComparison.OrdinalIgnoreCase))
             {
-                return StatusCode(403, new { message = "Demo credentials are only available in development environment" });
+                return StatusCode(403, new { message = "Demo credentials are only available in development or dev environments" });
             }
 
             var instanceId = _seedService.GetCurrentInstanceId();

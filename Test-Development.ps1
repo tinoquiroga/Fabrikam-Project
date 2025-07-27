@@ -1189,6 +1189,7 @@ function Test-TokenRefresh {
     
     try {
         $refreshData = @{
+            accessToken = $script:AuthToken
             refreshToken = $script:RefreshToken
         }
         
@@ -1197,12 +1198,12 @@ function Test-TokenRefresh {
         
         $response = Invoke-RestMethod -Uri "$BaseUrl/api/auth/refresh" -Method POST -Body $json -Headers $headers -SkipCertificateCheck
         
-        if ($response.token) {
-            $script:AuthToken = $response.token
+        if ($response.accessToken) {
+            $script:AuthToken = $response.accessToken
             if ($response.refreshToken) {
                 $script:RefreshToken = $response.refreshToken
             }
-            Add-TestResult "AuthTests" "Token Refresh" $true "Successfully refreshed token. New token length: $($response.token.Length)"
+            Add-TestResult "AuthTests" "Token Refresh" $true "Successfully refreshed token. New token length: $($response.accessToken.Length)"
             return $true
         }
         else {

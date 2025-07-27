@@ -7,11 +7,11 @@ namespace FabrikamApi.Services;
 
 public class JsonDataSeedService : ISeedService
 {
-    private readonly FabrikamDbContext _context;
+    private readonly FabrikamIdentityDbContext _context;
     private readonly ILogger<JsonDataSeedService> _logger;
     private readonly IWebHostEnvironment _environment;
 
-    public JsonDataSeedService(FabrikamDbContext context, ILogger<JsonDataSeedService> logger, IWebHostEnvironment environment)
+    public JsonDataSeedService(FabrikamIdentityDbContext context, ILogger<JsonDataSeedService> logger, IWebHostEnvironment environment)
     {
         _context = context;
         _logger = logger;
@@ -39,7 +39,6 @@ public class JsonDataSeedService : ISeedService
             await SeedOrdersFromJson();
             await SeedSupportTicketsFromJson();
 
-            await _context.SaveChangesAsync();
             _logger.LogInformation("JSON-based database seeding completed successfully");
         }
         catch (Exception ex)
@@ -69,7 +68,6 @@ public class JsonDataSeedService : ISeedService
             await SeedOrdersFromJson();
             await SeedSupportTicketsFromJson();
 
-            await _context.SaveChangesAsync();
             _logger.LogInformation("Force re-seed completed successfully");
         }
         catch (Exception ex)
@@ -103,7 +101,7 @@ public class JsonDataSeedService : ISeedService
 
         var products = productsData.Select(p => new Product
         {
-            Id = p.Id,
+            // Don't set Id - let database auto-generate
             Name = p.Name,
             Description = p.Description,
             ModelNumber = p.ModelNumber,
@@ -116,10 +114,12 @@ public class JsonDataSeedService : ISeedService
             Bedrooms = p.Bedrooms,
             Bathrooms = p.Bathrooms,
             DeliveryDaysEstimate = p.DeliveryDaysEstimate,
-            IsActive = p.IsActive
+            IsActive = p.IsActive,
+            CreatedDate = DateTime.UtcNow
         }).ToList();
 
         _context.Products.AddRange(products);
+        await _context.SaveChangesAsync(); // Save to generate IDs
         _logger.LogInformation("Added {Count} products from JSON seed data", products.Count);
     }
 
@@ -147,7 +147,7 @@ public class JsonDataSeedService : ISeedService
 
         var customers = customersData.Select(c => new Customer
         {
-            Id = c.Id,
+            // Don't set Id - let database auto-generate
             FirstName = c.FirstName,
             LastName = c.LastName,
             Email = c.Email,
@@ -161,6 +161,7 @@ public class JsonDataSeedService : ISeedService
         }).ToList();
 
         _context.Customers.AddRange(customers);
+        await _context.SaveChangesAsync(); // Save to generate IDs
         _logger.LogInformation("Added {Count} customers from JSON seed data", customers.Count);
     }
 
@@ -186,11 +187,18 @@ public class JsonDataSeedService : ISeedService
             return;
         }
 
+        // Get actual customers and products to map IDs
+        var customers = await _context.Customers.ToListAsync();
+        var products = await _context.Products.ToListAsync();
+
         var orders = new List<Order>();
-        var orderItems = new List<OrderItem>();
 
         foreach (var orderData in ordersData)
         {
+            // Map to actual customer ID (using index based on original seed order)
+            var customerIndex = (orderData.CustomerId - 1) % customers.Count;
+            var actualCustomerId = customers[customerIndex].Id;
+
             // Calculate subtotal from items
             var subtotal = orderData.Items.Sum(item => item.UnitPrice * item.Quantity);
             var tax = subtotal * 0.085m; // 8.5% tax
@@ -199,30 +207,48 @@ public class JsonDataSeedService : ISeedService
 
             var order = new Order
             {
-                Id = orderData.Id,
+                // Don't set Id - let database auto-generate
                 OrderNumber = orderData.OrderNumber,
-                CustomerId = orderData.CustomerId,
+                CustomerId = actualCustomerId,
                 OrderDate = orderData.OrderDate,
                 Status = Enum.Parse<OrderStatus>(orderData.Status),
                 ShippingAddress = orderData.ShippingAddress,
                 ShippingCity = orderData.ShippingCity,
                 ShippingState = orderData.ShippingState,
                 ShippingZipCode = orderData.ShippingZip,
+                Region = customers[customerIndex].Region,
                 Subtotal = subtotal,
                 Tax = tax,
                 Shipping = shipping,
-                Total = total
+                Total = total,
+                LastUpdated = DateTime.UtcNow
             };
 
             orders.Add(order);
+        }
 
-            // Add order items
+        _context.Orders.AddRange(orders);
+        await _context.SaveChangesAsync(); // Save to generate order IDs
+
+        // Now add order items with correct order and product IDs
+        var orderItems = new List<OrderItem>();
+        var savedOrders = await _context.Orders.OrderBy(o => o.Id).ToListAsync();
+
+        for (int orderIndex = 0; orderIndex < ordersData.Count && orderIndex < savedOrders.Count; orderIndex++)
+        {
+            var orderData = ordersData[orderIndex];
+            var savedOrder = savedOrders[orderIndex];
+
             foreach (var itemData in orderData.Items)
             {
+                // Map to actual product ID (using index based on original seed order)
+                var productIndex = (itemData.ProductId - 1) % products.Count;
+                var actualProductId = products[productIndex].Id;
+
                 var orderItem = new OrderItem
                 {
-                    OrderId = orderData.Id,
-                    ProductId = itemData.ProductId,
+                    OrderId = savedOrder.Id,
+                    ProductId = actualProductId,
                     Quantity = itemData.Quantity,
                     UnitPrice = itemData.UnitPrice,
                     LineTotal = itemData.UnitPrice * itemData.Quantity
@@ -231,8 +257,8 @@ public class JsonDataSeedService : ISeedService
             }
         }
 
-        _context.Orders.AddRange(orders);
         _context.OrderItems.AddRange(orderItems);
+        await _context.SaveChangesAsync();
         _logger.LogInformation("Added {OrderCount} orders with {ItemCount} items from JSON seed data", orders.Count, orderItems.Count);
     }
 
@@ -258,14 +284,30 @@ public class JsonDataSeedService : ISeedService
             return;
         }
 
+        // Get actual customers and orders to map IDs
+        var customers = await _context.Customers.ToListAsync();
+        var orders = await _context.Orders.ToListAsync();
+
         foreach (var ticketData in supportTickets)
         {
+            // Map to actual customer ID (using index based on original seed order)
+            var customerIndex = (ticketData.CustomerId - 1) % customers.Count;
+            var actualCustomerId = customers[customerIndex].Id;
+
+            // Map to actual order ID if specified
+            int? actualOrderId = null;
+            if (ticketData.OrderId.HasValue && orders.Any())
+            {
+                var orderIndex = (ticketData.OrderId.Value - 1) % orders.Count;
+                actualOrderId = orders[orderIndex].Id;
+            }
+
             var supportTicket = new SupportTicket
             {
-                Id = ticketData.Id,
+                // Don't set Id - let database auto-generate
                 TicketNumber = ticketData.TicketNumber,
-                CustomerId = ticketData.CustomerId,
-                OrderId = ticketData.OrderId,
+                CustomerId = actualCustomerId,
+                OrderId = actualOrderId,
                 Subject = ticketData.Subject,
                 Description = ticketData.Description,
                 Status = (TicketStatus)ticketData.Status,
@@ -275,12 +317,13 @@ public class JsonDataSeedService : ISeedService
                 CreatedDate = DateTime.Parse(ticketData.CreatedDate),
                 ResolvedDate = !string.IsNullOrEmpty(ticketData.ResolvedDate) ? DateTime.Parse(ticketData.ResolvedDate) : null,
                 LastUpdated = DateTime.Parse(ticketData.LastUpdated),
-                Region = ticketData.Region
+                Region = customers[customerIndex].Region
             };
 
             _context.SupportTickets.Add(supportTicket);
         }
 
+        await _context.SaveChangesAsync();
         _logger.LogInformation($"Seeded {supportTickets.Count} support tickets");
     }
 }

@@ -5,34 +5,43 @@ Welcome to the Fabrikam Project documentation! This directory contains comprehen
 ## 📖 Quick Navigation
 
 ### 🚀 Getting Started
+
 - [**Project README**](../README.md) - Project overview and quick start
 - [**Contributing Guide**](../CONTRIBUTING.md) - How to contribute to the project
 - [**Development Workflow**](development/DEVELOPMENT-WORKFLOW.md) - Daily development process
 
 ### 🎬 Demos & Showcases
+
 - [**Demo Ready Summary**](demos/DEMO-READY-SUMMARY.md) - Complete demo preparation guide
+- [**Demo User Authentication Guide**](demos/DEMO-USER-AUTHENTICATION-GUIDE.md) - Demo user credentials and authentication testing
 - [**Copilot Demo Prompts**](demos/COPILOT-DEMO-PROMPTS.md) - Comprehensive 3-minute demo scenarios
 - [**Quick Demo Prompts**](demos/QUICK-DEMO-PROMPTS.md) - Copy-paste ready demo prompts
 - [**Copilot Studio Setup**](demos/Copilot-Studio-Agent-Setup-Guide.md) - MCP server integration guide
 - [**Demo Validation Script**](demos/Validate-Demo.ps1) - Automated demo readiness check
 
 ### 🚀 Deployment & Production
+
 - [**Deployment Guide**](deployment/DEPLOYMENT-GUIDE.md) - Azure deployment instructions
 - [**Release Guide**](deployment/RELEASE-GUIDE.md) - Release process and versioning
 - [**Production Testing**](deployment/PRODUCTION-TESTING-GUIDE.md) - Production environment validation
 
 ### 🛠️ Development & Testing
+
 - [**Development Workflow**](development/DEVELOPMENT-WORKFLOW.md) - Daily development process
+- [**Authentication Implementation Guide**](development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md) - Complete authentication infrastructure documentation
+- [**Authentication Lessons Learned**](development/AUTHENTICATION-LESSONS-LEARNED.md) - Implementation insights and best practices
 - [**Testing Strategy**](development/TESTING-STRATEGY.md) - Comprehensive testing approach
 - [**Project Testing Summary**](development/PROJECT-TESTING-SUMMARY.md) - Testing tools overview
 - [**Commit Checklist**](development/COMMIT-CHECKLIST.md) - Pre-commit validation steps
 - [**Asset Management Guide**](development/ASSET-MANAGEMENT-GUIDE.md) - Product asset organization and naming
 
 ### 🏗️ Architecture & Planning
+
 - [**API Architecture**](architecture/API-ARCHITECTURE.md) - Comprehensive API documentation and business context
 - [**Future Enhancements**](architecture/TODO-FUTURE-ENHANCEMENTS.md) - Roadmap and planned features
 
 ### 🎨 Visual Assets & Branding
+
 - [**Assets Documentation**](assets/README.md) - Visual assets and branding guidelines
 - [**Fabrikam Logo (JPG)**](assets/fabrikam.jpg) - Primary company logo for Copilot Studio
 - [**Fabrikam Logo (PNG)**](assets/Fabrikam.png) - Logo with transparency support
@@ -54,6 +63,7 @@ docs/
 │   ├── COPILOT-DEMO-PROMPTS.md
 │   ├── QUICK-DEMO-PROMPTS.md
 │   ├── DEMO-READY-SUMMARY.md
+│   ├── DEMO-USER-AUTHENTICATION-GUIDE.md
 │   ├── Copilot-Studio-Agent-Setup-Guide.md
 │   └── Validate-Demo.ps1
 ├── deployment/                  # Deployment and production guides
@@ -62,6 +72,8 @@ docs/
 │   └── PRODUCTION-TESTING-GUIDE.md
 ├── development/                 # Development workflow and testing
 │   ├── DEVELOPMENT-WORKFLOW.md
+│   ├── AUTHENTICATION-IMPLEMENTATION-GUIDE.md
+│   ├── AUTHENTICATION-LESSONS-LEARNED.md
 │   ├── TESTING-STRATEGY.md
 │   ├── PROJECT-TESTING-SUMMARY.md
 │   ├── COMMIT-CHECKLIST.md
@@ -74,25 +86,33 @@ docs/
 ## 🎯 Document Categories Explained
 
 ### 🎬 **Demos**
+
 Everything needed to showcase the Fabrikam MCP server's business intelligence capabilities:
+
 - Ready-to-use demo scripts and scenarios
 - Copilot Studio integration guides
 - Technical validation and setup instructions
 
-### 🚀 **Deployment** 
+### 🚀 **Deployment**
+
 Production deployment and release management:
+
 - Azure cloud deployment procedures
 - Release versioning and change management
 - Production environment testing and validation
 
 ### 🛠️ **Development**
+
 Daily development workflow and quality assurance:
+
 - Local development setup and testing tools
 - Code quality standards and testing strategies
 - Commit guidelines and validation checklists
 
 ### 🏗️ **Architecture**
+
 Technical design and future planning:
+
 - System architecture documentation
 - Feature roadmap and enhancement planning
 - Technical decision records and design patterns
@@ -100,11 +120,13 @@ Technical design and future planning:
 ## 🔗 Related Resources
 
 ### External Links
+
 - [GitHub Repository](https://github.com/davebirr/Fabrikam-Project)
 - [Azure Portal](https://portal.azure.com) (for deployment)
 - [Model Context Protocol](https://modelcontextprotocol.io/) (MCP documentation)
 
 ### Key Files in Repository Root
+
 - `README.md` - Project overview and setup
 - `CONTRIBUTING.md` - Contribution guidelines
 - `Test-Development.ps1` - Main testing script
@@ -121,6 +143,7 @@ Technical design and future planning:
 ## 📝 Documentation Standards
 
 When adding new documentation:
+
 - Use clear, descriptive headings with emojis for visual organization
 - Include practical examples and code snippets
 - Link to related documents and external resources
@@ -129,6 +152,6 @@ When adding new documentation:
 
 ---
 
-**Happy coding!** 🚀 
+**Happy coding!** 🚀
 
 For questions about documentation organization or suggestions for improvement, please see our [Contributing Guide](../CONTRIBUTING.md).

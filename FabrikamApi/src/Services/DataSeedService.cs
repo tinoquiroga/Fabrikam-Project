@@ -6,10 +6,10 @@ namespace FabrikamApi.Services;
 
 public class DataSeedService : ISeedService
 {
-    private readonly FabrikamDbContext _context;
+    private readonly FabrikamIdentityDbContext _context;
     private readonly ILogger<DataSeedService> _logger;
 
-    public DataSeedService(FabrikamDbContext context, ILogger<DataSeedService> logger)
+    public DataSeedService(FabrikamIdentityDbContext context, ILogger<DataSeedService> logger)
     {
         _context = context;
         _logger = logger;

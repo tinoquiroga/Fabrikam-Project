@@ -18,7 +18,7 @@
   "azure.subscriptionName": "MCAPS-Hybrid-REQ-59531-2023-davidb",
   "azure.tenantId": "16b3c013-d300-468d-ac64-7eda0820b6d3",
   "azure.tenantName": "Microsoft Non-Production (fpdo.microsoft.com)",
-  "azure.resourceGroup": "rg-fabrikam-dev-y32g",
+  "azure.resourceGroup": "rg-FabrikamAiDemo",
   "azure.instanceName": "fabrikam-y32g",
   "azure.instanceSuffix": "y32g",
   "azure.apiAppName": "fabrikam-api-dev-y32g",

@@ -1,5 +1,6 @@
 # Coordinated deployment workflow for Fabrikam monorepo
 # This workflow deploys both API and MCP services when core changes are made
+# Multi-instance compatible - uses repository variables instead of hardcoded values
 
 name: Deploy Fabrikam Full Stack
 
@@ -23,6 +24,15 @@ on:
         required: true
         default: true
         type: boolean
+
+env:
+  # Multi-instance configuration using repository variables
+  # Configure these in GitHub Settings → Secrets and Variables → Actions → Variables
+  API_APP_NAME: ${{ vars.AZURE_API_APP_NAME || 'fabrikam-api-dev' }}
+  MCP_APP_NAME: ${{ vars.AZURE_MCP_APP_NAME || 'fabrikam-mcp-dev' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || secrets.AZURE_RESOURCE_GROUP }}
+  API_DOMAIN: ${{ vars.API_DOMAIN || 'fabrikam-api-dev.azurewebsites.net' }}
+  MCP_DOMAIN: ${{ vars.MCP_DOMAIN || 'fabrikam-mcp-dev.azurewebsites.net' }}
 
 jobs:
   detect-changes:
@@ -124,16 +134,38 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7B45365BE95A4F148FB5FC53309D576A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F4B38BCC1A3C41DB87825D58D05171B2 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F6B88EEEE4B94A859DB59C0B1D8F3832 }}
+          # Use flexible authentication - supports both service principal and managed identity
+          client-id: ${{ secrets.AZURE_CLIENT_ID || secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy API to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "fabrikam-api-dev-izbD"
+          app-name: ${{ env.API_APP_NAME }}
           slot-name: "Production"
           package: .
+
+      - name: Verify API Deployment
+        run: |
+          echo "🔍 Verifying API deployment..."
+          # Wait for deployment to be ready
+          sleep 30
+          
+          # Test health endpoint
+          API_URL="https://${{ env.API_DOMAIN }}"
+          echo "Testing: ${API_URL}/health"
+          
+          # Retry logic for health check
+          for i in {1..5}; do
+            if curl -f -s "${API_URL}/health" > /dev/null; then
+              echo "✅ API health check passed"
+              break
+            else
+              echo "⏳ API not ready yet, attempt $i/5..."
+              sleep 15
+            fi
+          done
 
   deploy-mcp:
     runs-on: ubuntu-latest
@@ -151,16 +183,48 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8C8EF1B326A471D88D0808AB703A5EE }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9C449FA4736D46E6A0CFD35DC61B177A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B4519DE6CF4C4656B779761582012720 }}
+          # Use flexible authentication - supports both service principal and managed identity
+          client-id: ${{ secrets.AZURE_CLIENT_ID || secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+      - name: Configure MCP App Settings
+        run: |
+          echo "⚙️ Configuring MCP app settings..."
+          
+          # Set the API base URL for MCP to connect to API
+          az webapp config appsettings set \
+            --name ${{ env.MCP_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --settings "FabrikamApi__BaseUrl=https://${{ env.API_DOMAIN }}"
 
       - name: Deploy MCP to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "fabrikam-mcp-dev-izbD"
+          app-name: ${{ env.MCP_APP_NAME }}
           slot-name: "Production"
           package: .
+
+      - name: Verify MCP Deployment
+        run: |
+          echo "🔍 Verifying MCP deployment..."
+          # Wait for deployment to be ready
+          sleep 30
+          
+          # Test status endpoint
+          MCP_URL="https://${{ env.MCP_DOMAIN }}"
+          echo "Testing: ${MCP_URL}/status"
+          
+          # Retry logic for status check
+          for i in {1..5}; do
+            if curl -f -s "${MCP_URL}/status" > /dev/null; then
+              echo "✅ MCP status check passed"
+              break
+            else
+              echo "⏳ MCP not ready yet, attempt $i/5..."
+              sleep 15
+            fi
+          done
 
   deployment-summary:
     runs-on: ubuntu-latest
@@ -177,7 +241,17 @@ jobs:
           echo "  🤖 MCP Service: ${{ needs.detect-changes.outputs.should-deploy-mcp == 'true' && '✅ Deployed' || '⏭️ Skipped' }}"
           echo ""
           echo "🌐 **Application URLs:**"
-          echo "  📡 API: https://${{ vars.API_DOMAIN || 'fabrikam-api-dev.levelupcsp.com' }}"
-          echo "  🔌 MCP: https://${{ vars.MCP_DOMAIN || 'fabrikam-mcp-dev.levelupcsp.com' }}"
+          echo "  📡 API: https://${{ env.API_DOMAIN }}"
+          echo "  🔌 MCP: https://${{ env.MCP_DOMAIN }}"
           echo ""
-          echo "✨ Monorepo deployment completed successfully!"
+          echo "🏗️ **Instance Configuration:**"
+          echo "  📦 API App: ${{ env.API_APP_NAME }}"
+          echo "  📦 MCP App: ${{ env.MCP_APP_NAME }}"
+          echo "  🏷️ Resource Group: ${{ env.RESOURCE_GROUP }}"
+          echo ""
+          echo "✨ Multi-instance deployment completed successfully!"
+          echo ""
+          echo "💡 **Next Steps:**"
+          echo "  1. Verify applications are running at the URLs above"
+          echo "  2. Test MCP tools in VS Code with Copilot"
+          echo "  3. Run integration tests if configured"

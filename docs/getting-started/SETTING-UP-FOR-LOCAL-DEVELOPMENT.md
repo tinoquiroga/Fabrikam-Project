@@ -154,7 +154,7 @@ git config --global --list
 git config --global init.defaultBranch main
 
 # Enable credential storage (Windows Credential Manager)
-git config --global credential.helper manager-core
+git config --global credential.helper manager
 
 # Set line ending handling (important for cross-platform work)
 git config --global core.autocrlf true

@@ -20,7 +20,7 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
 
 ### Smart Resource Naming:
 - 📋 **Pattern**: `rg-fabrikam-{environment}-{suffix}`
-- 🔀 **Example**: `rg-fabrikam-dev-nf66`
+- 🔀 **Example**: `rg-fabrikam-dev-y32g`
 - ✅ **Benefits**: Unique isolation, easy identification
 
 ## 📋 Deployment Parameters

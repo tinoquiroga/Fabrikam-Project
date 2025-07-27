@@ -10,21 +10,21 @@
       "mcpUrl": "http://localhost:5000"
     },
     "azure": {
-      "apiUrl": "fabrikam-api-dev-nf66.azurewebsites.net",
-      "mcpUrl": "fabrikam-mcp-dev-nf66.azurewebsites.net"
+      "apiUrl": "fabrikam-api-dev-y32g.azurewebsites.net",
+      "mcpUrl": "fabrikam-mcp-dev-y32g.azurewebsites.net"
     }
   },
-  "azure.subscriptionId": "7e77b014-138f-4858-952b-76e75f0bbeb7",
-  "azure.subscriptionName": "MCPP Subscription",
-  "azure.tenantId": "3278c17c-6680-41c6-86bf-296981c37b94",
-  "azure.tenantName": "Roanoke Tech Hub, Inc.",
-  "azure.resourceGroup": "rg-fabrikam-test",
-  "azure.instanceName": "fabrikam-nf66",
-  "azure.instanceSuffix": "nf66",
-  "azure.apiAppName": "fabrikam-api-dev-nf66",
-  "azure.mcpAppName": "fabrikam-mcp-dev-nf66",
-  "azure.customDomainsEnabled": "true",
-  "azure.apiCustomDomain": "fabrikam-api-dev-nf66.levelupcsp.com",
-  "azure.mcpCustomDomain": "fabrikam-mcp-dev-nf66.levelupcsp.com"
+  "azure.subscriptionId": "1ae622b1-c33c-457f-a2bb-351fed78922f",
+  "azure.subscriptionName": "MCAPS-Hybrid-REQ-59531-2023-davidb",
+  "azure.tenantId": "16b3c013-d300-468d-ac64-7eda0820b6d3",
+  "azure.tenantName": "Microsoft Non-Production (fpdo.microsoft.com)",
+  "azure.resourceGroup": "rg-fabrikam-dev-y32g",
+  "azure.instanceName": "fabrikam-y32g",
+  "azure.instanceSuffix": "y32g",
+  "azure.apiAppName": "fabrikam-api-dev-y32g",
+  "azure.mcpAppName": "fabrikam-mcp-dev-y32g",
+  "azure.customDomainsEnabled": "false",
+  "azure.apiCustomDomain": "fabrikam-api-dev-y32g.azurewebsites.net",
+  "azure.mcpCustomDomain": "fabrikam-mcp-dev-y32g.azurewebsites.net"
 }
 

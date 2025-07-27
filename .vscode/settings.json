@@ -1,0 +1,30 @@
+{
+  "dotnet.defaultSolution": "Fabrikam.sln",
+  "omnisharp.enableAsyncCompletion": false,
+  "files.autoSave": "off",
+  "extensions.autoUpdate": false,
+  "github.copilot.chat.useModelContextProtocol": true,
+  "rest-client.environmentVariables": {
+    "local": {
+      "apiUrl": "https://localhost:7297",
+      "mcpUrl": "http://localhost:5000"
+    },
+    "azure": {
+      "apiUrl": "fabrikam-api-dev-nf66.azurewebsites.net",
+      "mcpUrl": "fabrikam-mcp-dev-nf66.azurewebsites.net"
+    }
+  },
+  "azure.subscriptionId": "7e77b014-138f-4858-952b-76e75f0bbeb7",
+  "azure.subscriptionName": "MCPP Subscription",
+  "azure.tenantId": "3278c17c-6680-41c6-86bf-296981c37b94",
+  "azure.tenantName": "Roanoke Tech Hub, Inc.",
+  "azure.resourceGroup": "rg-fabrikam-test",
+  "azure.instanceName": "fabrikam-nf66",
+  "azure.instanceSuffix": "nf66",
+  "azure.apiAppName": "fabrikam-api-dev-nf66",
+  "azure.mcpAppName": "fabrikam-mcp-dev-nf66",
+  "azure.customDomainsEnabled": "true",
+  "azure.apiCustomDomain": "fabrikam-api-dev-nf66.levelupcsp.com",
+  "azure.mcpCustomDomain": "fabrikam-mcp-dev-nf66.levelupcsp.com"
+}
+

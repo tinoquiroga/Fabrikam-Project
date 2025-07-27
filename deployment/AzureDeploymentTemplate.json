@@ -243,7 +243,7 @@
             },
             {
               "name": "ConnectionStrings__DefaultConnection",
-              "value": "[if(equals(parameters('databaseProvider'), 'SqlServer'), concat('Server=tcp:', reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';Persist Security Info=False;User ID=', parameters('sqlAdminUsername'), ';Password=', parameters('sqlAdminPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'), '')]"
+              "value": "[if(equals(parameters('databaseProvider'), 'SqlServer'), concat('@Microsoft.KeyVault(VaultName=', variables('keyVaultName'), ';SecretName=', variables('sqlConnectionSecretName'), ')'), '')]"
             },
             {
               "name": "Authentication__Strategy",
@@ -259,7 +259,7 @@
             },
             {
               "name": "Authentication__AspNetIdentity__Jwt__SecretKey",
-              "value": "[if(parameters('enableAuthentication'), base64(concat(uniqueString(resourceGroup().id), uniqueString(subscription().id), uniqueString(variables('suffix')))), '')]"
+              "value": "[if(parameters('enableAuthentication'), concat('@Microsoft.KeyVault(VaultName=', variables('keyVaultName'), ';SecretName=', variables('jwtSecretName'), ')'), '')]"
             },
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",

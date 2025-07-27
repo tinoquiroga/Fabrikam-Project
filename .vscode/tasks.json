@@ -1,0 +1,177 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🚀 Start API Server",
+            "type": "shell",
+            "command": "dotnet",
+            "args": ["run", "--project", "FabrikamApi/src/FabrikamApi.csproj", "--launch-profile", "https"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "options": {
+                "env": {
+                    "ASPNETCORE_ENVIRONMENT": "Development"
+                }
+            },
+            "runOptions": {
+                "runOn": "default"
+            },
+            "isBackground": true,
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "🤖 Start MCP Server", 
+            "type": "shell",
+            "command": "dotnet",
+            "args": ["run", "--project", "FabrikamMcp/src/FabrikamMcp.csproj", "--launch-profile", "http"],
+            "options": {
+                "env": {
+                    "ASPNETCORE_ENVIRONMENT": "Development"
+                }
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always", 
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "runOptions": {
+                "runOn": "default"
+            },
+            "isBackground": true,
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "🌐 Start Both Servers",
+            "dependsOrder": "parallel",
+            "dependsOn": [
+                "🚀 Start API Server",
+                "🤖 Start MCP Server"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "🏗️ Build Solution",
+            "type": "shell", 
+            "command": "dotnet",
+            "args": ["build", "Fabrikam.sln"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "� Quick Test",
+            "type": "shell",
+            "command": ".\\Test-Development.ps1",
+            "args": ["-Quick"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "🧪 Full Tests",
+            "type": "shell", 
+            "command": ".\\Test-Development.ps1",
+            "args": ["-Verbose"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared", 
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "👁️ Test with Visible Servers",
+            "type": "shell", 
+            "command": ".\\Test-Development.ps1",
+            "args": ["-Visible", "-Quick"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared", 
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "📊 Project Status",
+            "type": "shell",
+            "command": ".\\Manage-Project.ps1", 
+            "args": ["status"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "� Stop All Servers",
+            "type": "shell",
+            "command": ".\\Manage-Project.ps1",
+            "args": ["stop"],
+            "group": "build", 
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": true
+            }
+        },
+        {
+            "label": "🧹 Auto Cleanup Empty Files",
+            "type": "shell",
+            "command": ".\\scripts\\Clean-VSCodePlaceholders.ps1",
+            "args": [],
+            "group": "build",
+            "presentation": {
+                "echo": false,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

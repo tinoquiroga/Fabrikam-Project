@@ -15,6 +15,8 @@
 # Usage Examples:
 # .\Test-Development.ps1                    # Quick test with existing servers
 # .\Test-Development.ps1 -CleanBuild       # Stop servers, clean build, start fresh, test
+# .\Test-Development.ps1 -Visible          # Run servers in visible terminals to see output
+# .\Test-Development.ps1 -ApiOnly -Visible # Test API only with visible terminal output
 # .\Test-Development.ps1 -CleanArtifacts   # Clean build artifacts after testing (prevents VS Code memory issues)
 # .\Test-Development.ps1 -Production       # Test against Azure production endpoints with version check
 # .\Test-Development.ps1 -Production -Force # Test production without version check prompts
@@ -34,6 +36,7 @@ param(
     [switch]$CleanArtifacts,    # Clean build artifacts after testing (prevents VS Code memory issues)
     [switch]$Production,        # Test against Azure production endpoints
     [switch]$Force,             # Skip confirmation prompts
+    [switch]$Visible,           # Run servers in visible terminals instead of background jobs
     [int]$TimeoutSeconds = 30   # HTTP request timeout
 )
 
@@ -515,55 +518,113 @@ function Wait-ForServerStartup {
 function Start-ServersForTesting {
     Write-Header "Starting Servers for Testing"
     
-    if (-not $ApiOnly) {
-        Write-Info "🤖 Starting MCP Server in background..."
-        try {
-            $mcpJob = Start-Job -ScriptBlock {
-                param($Project, $WorkingDir)
-                Set-Location $WorkingDir
-                dotnet run --project $Project --launch-profile http --verbosity quiet
-            } -ArgumentList $McpProject, $PWD.Path
-            
-            # Wait for MCP server to be ready
-            if (Wait-ForServerStartup "$McpBaseUrl/status" "MCP Server" 15) {
-                Write-Success "✅ MCP Server started (Job ID: $($mcpJob.Id))"
+    if ($Visible) {
+        # Start servers in visible terminals
+        if (-not $ApiOnly) {
+            Write-Info "🤖 Starting MCP Server in visible terminal..."
+            try {
+                $mcpProcess = Start-Process -FilePath "powershell" -ArgumentList @(
+                    "-NoExit", 
+                    "-Command", 
+                    "Set-Location '$PWD'; Write-Host '🤖 Starting MCP Server...' -ForegroundColor Cyan; dotnet run --project $McpProject --launch-profile http"
+                ) -PassThru
+                
+                Write-Info "⏱️  Waiting for MCP Server to start..."
+                Start-Sleep -Seconds 3
+                
+                if (Wait-ForServerStartup "$McpBaseUrl/status" "MCP Server" 15) {
+                    Write-Success "✅ MCP Server started in visible terminal (PID: $($mcpProcess.Id))"
+                }
+                else {
+                    Write-Warning "⚠️ MCP Server may not be fully ready"
+                }
             }
-            else {
-                Write-Warning "⚠️ MCP Server may not be fully ready"
+            catch {
+                Write-Error "❌ Failed to start MCP Server: $($_.Exception.Message)"
             }
         }
-        catch {
-            Write-Error "❌ Failed to start MCP Server: $($_.Exception.Message)"
+        
+        if (-not $McpOnly) {
+            Write-Info "🌐 Starting API Server in visible terminal..."
+            try {
+                $apiProcess = Start-Process -FilePath "powershell" -ArgumentList @(
+                    "-NoExit", 
+                    "-Command", 
+                    "Set-Location '$PWD'; `$env:ASPNETCORE_ENVIRONMENT = 'Development'; Write-Host '🌐 Starting API Server...' -ForegroundColor Green; dotnet run --project $ApiProject --launch-profile https"
+                ) -PassThru
+                
+                Write-Info "⏱️  Waiting for API Server to start..."
+                Start-Sleep -Seconds 5
+                
+                if (Wait-ForServerStartup "$ApiBaseUrl/api/info" "API Server" 20) {
+                    Write-Success "✅ API Server started in visible terminal (PID: $($apiProcess.Id))"
+                }
+                else {
+                    Write-Warning "⚠️ API Server may not be fully ready"
+                }
+            }
+            catch {
+                Write-Error "❌ Failed to start API Server: $($_.Exception.Message)"
+            }
+        }
+        
+        return @{
+            ApiProcess = if (-not $McpOnly) { $apiProcess } else { $null }
+            McpProcess = if (-not $ApiOnly) { $mcpProcess } else { $null }
         }
     }
-    
-    if (-not $McpOnly) {
-        Write-Info "🌐 Starting API Server in background..."
-        try {
-            $apiJob = Start-Job -ScriptBlock {
-                param($Project, $WorkingDir)
-                Set-Location $WorkingDir
-                $env:ASPNETCORE_ENVIRONMENT = "Development"
-                # Use the https launch profile which is configured for both HTTPS and HTTP
-                dotnet run --project $Project --launch-profile https --verbosity quiet
-            } -ArgumentList $ApiProject, $PWD.Path
-            
-            # Wait for API server to be ready
-            if (Wait-ForServerStartup "$ApiBaseUrl/api/info" "API Server" 20) {
-                Write-Success "✅ API Server started (Job ID: $($apiJob.Id))"
+    else {
+        # Use original background job approach
+        if (-not $ApiOnly) {
+            Write-Info "🤖 Starting MCP Server in background..."
+            try {
+                $mcpJob = Start-Job -ScriptBlock {
+                    param($Project, $WorkingDir)
+                    Set-Location $WorkingDir
+                    dotnet run --project $Project --launch-profile http --verbosity quiet
+                } -ArgumentList $McpProject, $PWD.Path
+                
+                # Wait for MCP server to be ready
+                if (Wait-ForServerStartup "$McpBaseUrl/status" "MCP Server" 15) {
+                    Write-Success "✅ MCP Server started (Job ID: $($mcpJob.Id))"
+                }
+                else {
+                    Write-Warning "⚠️ MCP Server may not be fully ready"
+                }
             }
-            else {
-                Write-Warning "⚠️ API Server may not be fully ready"
+            catch {
+                Write-Error "❌ Failed to start MCP Server: $($_.Exception.Message)"
             }
         }
-        catch {
-            Write-Error "❌ Failed to start API Server: $($_.Exception.Message)"
+        
+        if (-not $McpOnly) {
+            Write-Info "🌐 Starting API Server in background..."
+            try {
+                $apiJob = Start-Job -ScriptBlock {
+                    param($Project, $WorkingDir)
+                    Set-Location $WorkingDir
+                    $env:ASPNETCORE_ENVIRONMENT = "Development"
+                    # Use the https launch profile which is configured for both HTTPS and HTTP
+                    dotnet run --project $Project --launch-profile https --verbosity quiet
+                } -ArgumentList $ApiProject, $PWD.Path
+                
+                # Wait for API server to be ready
+                if (Wait-ForServerStartup "$ApiBaseUrl/api/info" "API Server" 20) {
+                    Write-Success "✅ API Server started (Job ID: $($apiJob.Id))"
+                }
+                else {
+                    Write-Warning "⚠️ API Server may not be fully ready"
+                }
+            }
+            catch {
+                Write-Error "❌ Failed to start API Server: $($_.Exception.Message)"
+            }
         }
-    }
-    
-    return @{
-        ApiJob = if (-not $McpOnly) { $apiJob } else { $null }
-        McpJob = if (-not $ApiOnly) { $mcpJob } else { $null }
+        
+        return @{
+            ApiJob = if (-not $McpOnly) { $apiJob } else { $null }
+            McpJob = if (-not $ApiOnly) { $mcpJob } else { $null }
+        }
     }
 }
 
@@ -572,6 +633,7 @@ function Stop-TestJobs {
     
     Write-Header "Cleaning Up Test Environment"
     
+    # Handle background jobs
     if ($Jobs.ApiJob) {
         Write-Info "🌐 Stopping API Server job..."
         Stop-Job -Job $Jobs.ApiJob -ErrorAction SilentlyContinue
@@ -582,6 +644,33 @@ function Stop-TestJobs {
         Write-Info "🤖 Stopping MCP Server job..."
         Stop-Job -Job $Jobs.McpJob -ErrorAction SilentlyContinue
         Remove-Job -Job $Jobs.McpJob -Force -ErrorAction SilentlyContinue
+    }
+    
+    # Handle visible processes
+    if ($Jobs.ApiProcess -and -not $Jobs.ApiProcess.HasExited) {
+        Write-Info "🌐 Stopping API Server process..."
+        try {
+            $Jobs.ApiProcess.CloseMainWindow()
+            if (-not $Jobs.ApiProcess.WaitForExit(5000)) {
+                $Jobs.ApiProcess.Kill()
+            }
+        }
+        catch {
+            Write-Warning "⚠️ Could not cleanly stop API process: $($_.Exception.Message)"
+        }
+    }
+    
+    if ($Jobs.McpProcess -and -not $Jobs.McpProcess.HasExited) {
+        Write-Info "🤖 Stopping MCP Server process..."
+        try {
+            $Jobs.McpProcess.CloseMainWindow()
+            if (-not $Jobs.McpProcess.WaitForExit(5000)) {
+                $Jobs.McpProcess.Kill()
+            }
+        }
+        catch {
+            Write-Warning "⚠️ Could not cleanly stop MCP process: $($_.Exception.Message)"
+        }
     }
     
     # Also stop any lingering processes

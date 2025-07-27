@@ -12,7 +12,6 @@ publish/
 
 # ASP.NET Core specific
 *.user
-launchSettings.json
 appsettings.*.json
 !appsettings.json
 !appsettings.Development.json

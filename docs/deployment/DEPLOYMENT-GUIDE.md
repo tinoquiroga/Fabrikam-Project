@@ -91,13 +91,15 @@ Create Azure resources for each environment manually:
 # Set variables
 $environment = "dev"  # or "staging", "production"
 $location = "East US 2" # or "East US"
-$resourceGroup = "rg-fabrikam-$environment"
 $subscriptionId = "your-subscription-id-here"
 $customDomain = "levelupcsp.com"  # Replace with your custom domain
 
 # Generate random suffix for globally unique resource names (4 characters)
 $randomSuffix = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
 Write-Host "Using random suffix: $randomSuffix" -ForegroundColor Green
+
+# Create unique resource group name with suffix for better isolation
+$resourceGroup = "rg-fabrikam-$environment-$randomSuffix"
 
 # Configure Azure CLI to auto-install extensions without prompting
 az config set extension.use_dynamic_install=yes_without_prompt

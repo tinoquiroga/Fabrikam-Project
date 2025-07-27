@@ -37,6 +37,64 @@ dotnet --version
 # Should show: 9.0.x
 ```
 
+#### **2a. HTTPS Development Certificate Setup** (Required for HTTPS endpoints)
+
+The Fabrikam API runs on HTTPS by default (`https://localhost:7297`). You need to trust the ASP.NET Core development certificate to avoid browser warnings and connection issues.
+
+**🔐 Trust the Development Certificate:**
+
+```powershell
+# Trust the HTTPS development certificate
+dotnet dev-certs https --trust
+
+# You'll see a Windows security dialog - click "Yes" to trust the certificate
+```
+
+**✅ Verify HTTPS Certificate:**
+
+```powershell
+# Check certificate status
+dotnet dev-certs https --check --trust
+
+# Should show: "A trusted https certificate is available"
+```
+
+**🔧 Troubleshooting Certificate Issues:**
+
+If you see certificate warnings or connection errors:
+
+```powershell
+# Clear existing certificates and create new ones
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust
+
+# For persistent issues, reset completely:
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust --verbose
+```
+
+**🌐 Browser Testing:**
+
+After trusting the certificate, test in your browser:
+
+1. Navigate to: `https://localhost:7297` (when API server is running)
+2. Should show no security warnings
+3. Browser should show a "lock" icon indicating secure connection
+
+**⚠️ Common Certificate Issues:**
+
+- **"The ASP.NET Core developer certificate is not trusted"** - Run `dotnet dev-certs https --trust`
+- **Browser security warnings** - Certificate wasn't properly trusted
+- **API calls fail with SSL errors** - MCP server can't connect to API due to untrusted certificate
+- **VS Code REST client errors** - Certificate trust issues in development
+
+**💡 Why This Matters:**
+
+- **API Security**: Fabrikam API uses HTTPS for secure communication
+- **MCP Integration**: MCP server needs to trust the API certificate for tool calls
+- **Development Experience**: Eliminates browser warnings and connection errors
+- **Production Readiness**: Ensures HTTPS works correctly before deployment
+
 #### **3. Development Directory Setup**
 
 ```powershell
@@ -591,6 +649,52 @@ netstat -ano | findstr 7297
 taskkill /PID [PID_NUMBER] /F
 ```
 
+#### **HTTPS Certificate Issues**
+
+**Symptoms:**
+- "The ASP.NET Core developer certificate is not trusted" warning
+- Browser security warnings when accessing `https://localhost:7297`
+- API calls failing with SSL/TLS errors
+- MCP server unable to connect to API
+
+**Solutions:**
+
+```powershell
+# Basic certificate trust (try this first)
+dotnet dev-certs https --trust
+
+# If that doesn't work, reset certificates completely
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust
+
+# Verify certificate status
+dotnet dev-certs https --check --trust
+# Should show: "A trusted https certificate is available"
+
+# For persistent issues, use verbose mode
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust --verbose
+```
+
+**Alternative Solution - Use HTTP Instead:**
+
+If certificate issues persist, you can temporarily use HTTP:
+
+```powershell
+# Start API with HTTP profile instead
+dotnet run --project FabrikamApi\src\FabrikamApi.csproj --launch-profile http
+
+# Update MCP configuration to use HTTP
+# Edit FabrikamMcp/src/appsettings.Development.json:
+# "BaseUrl": "http://localhost:7296"  // Note port 7296 for HTTP
+```
+
+**Browser Testing:**
+After fixing certificates, test in browser:
+1. Navigate to `https://localhost:7297` (with API running)
+2. Should show no security warnings
+3. Lock icon should appear in address bar
+
 #### **Git Authentication Issues**
 
 ```powershell
@@ -612,6 +716,7 @@ Once you've completed this setup:
 
 ✅ **Development Environment**: VS Code with optimized settings  
 ✅ **Build System**: .NET 9.0 with all dependencies  
+✅ **HTTPS Certificate**: Developer certificate trusted for secure connections  
 ✅ **Source Control**: Git with proper remote configuration  
 ✅ **AI Tools**: GitHub Copilot with MCP integration  
 ✅ **Azure Tools**: CLI and development tools configured  

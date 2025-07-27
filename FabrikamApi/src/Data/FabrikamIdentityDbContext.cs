@@ -28,6 +28,9 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
     {
         base.OnModelCreating(modelBuilder);
 
+        // Determine if we're using InMemory database for conditional configuration
+        var isInMemory = Database.IsInMemory();
+
         // Configure ASP.NET Identity table names with "Fab" prefix to avoid conflicts
         modelBuilder.Entity<FabrikamUser>().ToTable("FabUsers");
         modelBuilder.Entity<FabrikamRole>().ToTable("FabRoles");
@@ -52,8 +55,17 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
                 .HasMaxLength(100)
                 .HasDefaultValue("email");
 
-            entity.Property(u => u.CreatedDate)
-                .HasDefaultValueSql("GETUTCDATE()");
+            // Use conditional default value configuration based on database provider
+            if (!isInMemory)
+            {
+                entity.Property(u => u.CreatedDate)
+                    .HasDefaultValueSql("GETUTCDATE()");
+            }
+            else
+            {
+                entity.Property(u => u.CreatedDate)
+                    .HasDefaultValue(DateTime.UtcNow);
+            }
 
             entity.Property(u => u.IsActive)
                 .HasDefaultValue(true);
@@ -76,8 +88,17 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
             entity.Property(r => r.Description)
                 .HasMaxLength(200);
 
-            entity.Property(r => r.CreatedDate)
-                .HasDefaultValueSql("GETUTCDATE()");
+            // Use conditional default value configuration
+            if (!isInMemory)
+            {
+                entity.Property(r => r.CreatedDate)
+                    .HasDefaultValueSql("GETUTCDATE()");
+            }
+            else
+            {
+                entity.Property(r => r.CreatedDate)
+                    .HasDefaultValue(DateTime.UtcNow);
+            }
 
             entity.Property(r => r.IsActive)
                 .HasDefaultValue(true);
@@ -92,8 +113,17 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
         // Configure FabrikamUserClaim extensions
         modelBuilder.Entity<FabrikamUserClaim>(entity =>
         {
-            entity.Property(c => c.GrantedDate)
-                .HasDefaultValueSql("GETUTCDATE()");
+            // Use conditional default value configuration
+            if (!isInMemory)
+            {
+                entity.Property(c => c.GrantedDate)
+                    .HasDefaultValueSql("GETUTCDATE()");
+            }
+            else
+            {
+                entity.Property(c => c.GrantedDate)
+                    .HasDefaultValue(DateTime.UtcNow);
+            }
 
             entity.Property(c => c.GrantedBy)
                 .HasMaxLength(256);
@@ -108,8 +138,17 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
         // Configure FabrikamUserRole audit extensions
         modelBuilder.Entity<FabrikamUserRole>(entity =>
         {
-            entity.Property(ur => ur.AssignedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
+            // Use conditional default value configuration
+            if (!isInMemory)
+            {
+                entity.Property(ur => ur.AssignedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+            }
+            else
+            {
+                entity.Property(ur => ur.AssignedAt)
+                    .HasDefaultValue(DateTime.UtcNow);
+            }
 
             entity.Property(ur => ur.AssignedBy)
                 .HasMaxLength(256);
@@ -133,34 +172,37 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
             .HasForeignKey(u => u.CustomerId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Configure decimal precision for financial fields
-        modelBuilder.Entity<Product>()
-            .Property(p => p.Price)
-            .HasPrecision(18, 2);
+        // Configure decimal precision for financial fields (conditional for SQL Server)
+        if (!isInMemory)
+        {
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasPrecision(18, 2);
 
-        modelBuilder.Entity<Order>()
-            .Property(o => o.Subtotal)
-            .HasPrecision(18, 2);
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Subtotal)
+                .HasPrecision(18, 2);
 
-        modelBuilder.Entity<Order>()
-            .Property(o => o.Tax)
-            .HasPrecision(18, 2);
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Tax)
+                .HasPrecision(18, 2);
 
-        modelBuilder.Entity<Order>()
-            .Property(o => o.Shipping)
-            .HasPrecision(18, 2);
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Shipping)
+                .HasPrecision(18, 2);
 
-        modelBuilder.Entity<Order>()
-            .Property(o => o.Total)
-            .HasPrecision(18, 2);
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Total)
+                .HasPrecision(18, 2);
 
-        modelBuilder.Entity<OrderItem>()
-            .Property(oi => oi.UnitPrice)
-            .HasPrecision(18, 2);
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasPrecision(18, 2);
 
-        modelBuilder.Entity<OrderItem>()
-            .Property(oi => oi.LineTotal)
-            .HasPrecision(18, 2);
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.LineTotal)
+                .HasPrecision(18, 2);
+        }
 
         // Configure business entity relationships
         modelBuilder.Entity<Order>()

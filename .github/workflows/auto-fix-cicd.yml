@@ -142,18 +142,7 @@ jobs:
             
             git add .github/workflows/
             
-            git commit -m "🤖 Auto-fix CI/CD workflows for monorepo structure
-
-🔧 Applied CIPP-inspired optimizations:
-- Fixed .NET build paths for monorepo structure  
-- Updated FabrikamApi project references
-- Updated FabrikamMcp project references
-- Enabled proper Azure App Service deployment
-
-✨ Following proven enterprise patterns from CIPP project
-🚀 Workflows now ready for successful deployment!
-
-Fixed ${{ env.FIXED_COUNT }} workflow(s) automatically."
+            git commit -m "🤖 Auto-fix CI/CD workflows for monorepo structure - Applied CIPP-inspired optimizations: Fixed .NET build paths, updated project references, enabled Azure deployment - Fixed ${{ env.FIXED_COUNT }} workflow(s) automatically"
             
             echo "📤 Pushing changes..."
             git push

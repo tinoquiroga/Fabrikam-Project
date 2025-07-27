@@ -91,35 +91,42 @@ Install these extensions for core .NET development:
 
 ```powershell
 # Core .NET Development
-code --install-extension ms-dotnettools.csdevkit
-code --install-extension ms-dotnettools.csharp
-code --install-extension ms-dotnettools.vscode-dotnet-runtime
+code --install-extension ms-dotnettools.csdevkit --force
+code --install-extension ms-dotnettools.csharp --force
+code --install-extension ms-dotnettools.vscode-dotnet-runtime --force
 
 # GitHub Copilot (Required for MCP development)
-code --install-extension github.copilot
-code --install-extension github.copilot-chat
+code --install-extension github.copilot --force
+code --install-extension github.copilot-chat --force
 
 # GitHub Integration
-code --install-extension github.vscode-pull-request-github
-code --install-extension github.vscode-github-actions
+code --install-extension github.vscode-pull-request-github --force
+code --install-extension github.vscode-github-actions --force
 
 # API Testing
-code --install-extension humao.rest-client
+code --install-extension humao.rest-client --force
 
 # Azure Development
-code --install-extension ms-azuretools.azure-dev
-code --install-extension ms-azuretools.vscode-bicep
-code --install-extension ms-azuretools.vscode-azure-github-copilot
+code --install-extension ms-azuretools.azure-dev --force
+code --install-extension ms-azuretools.vscode-bicep --force
+code --install-extension ms-azuretools.vscode-azure-github-copilot --force
 ```
 
 ### **Configuration Support** (Recommended)
 
 ```powershell
 # Development Quality of Life
-code --install-extension editorconfig.editorconfig
-code --install-extension ms-vscode.powershell
-code --install-extension redhat.vscode-yaml
+code --install-extension editorconfig.editorconfig --force
+code --install-extension ms-vscode.powershell --force
+code --install-extension redhat.vscode-yaml --force
 ```
+
+**💡 Extension Installation Notes:**
+
+- **`--force` flag**: Ensures latest version installation and overwrites any existing versions
+- **Auto-updates**: VS Code updates extensions automatically, but `--force` guarantees fresh installation
+- **Setup scenarios**: Especially useful for new workstations, corrupted extensions, or version conflicts
+- **CI/CD compatibility**: Makes setup scripts more reliable and reproducible
 
 ### **⚠️ Extensions to AVOID**
 
@@ -132,6 +139,79 @@ The project has identified extensions that cause UI freezes and performance issu
 ❌ ms-python.python               # Not needed for .NET development
 ❌ Heavy Azure extensions         # Only install specific ones listed above
 ```
+
+## ⚡ **Performance Optimization**
+
+### **Windows Defender Exclusions** (Highly Recommended)
+
+Windows Defender can significantly slow down .NET builds by scanning every compiled file. Add these exclusions for better performance:
+
+#### **Automatic Setup (Run as Administrator)**
+
+```powershell
+# Open PowerShell as Administrator and run:
+
+# Exclude your development folder (adjust path as needed)
+Add-MpPreference -ExclusionPath "C:\Dev"
+
+# Exclude common .NET build folders globally
+Add-MpPreference -ExclusionPath "$env:USERPROFILE\.nuget"
+Add-MpPreference -ExclusionPath "$env:PROGRAMFILES\dotnet"
+Add-MpPreference -ExclusionPath "$env:PROGRAMFILES(X86)\Microsoft Visual Studio"
+
+# Exclude common development processes
+Add-MpPreference -ExclusionProcess "dotnet.exe"
+Add-MpPreference -ExclusionProcess "MSBuild.exe"
+Add-MpPreference -ExclusionProcess "VBCSCompiler.exe"
+Add-MpPreference -ExclusionProcess "node.exe"
+Add-MpPreference -ExclusionProcess "Code.exe"
+
+# Verify exclusions
+Get-MpPreference | Select-Object -ExpandProperty ExclusionPath
+Get-MpPreference | Select-Object -ExpandProperty ExclusionProcess
+```
+
+#### **Manual Setup via Windows Security**
+
+If you prefer GUI setup:
+
+1. **Open Windows Security** → Virus & threat protection
+2. **Manage settings** under "Virus & threat protection settings"
+3. **Add exclusions** → Choose exclusion type:
+
+**Folder Exclusions:**
+
+- `C:\Dev` (or your development folder)
+- `%USERPROFILE%\.nuget`
+- `%PROGRAMFILES%\dotnet`
+
+**Process Exclusions:**
+
+- `dotnet.exe`
+- `MSBuild.exe`
+- `VBCSCompiler.exe`
+- `Code.exe`
+
+#### **Project-Specific Exclusions**
+
+For the Fabrikam project specifically:
+
+```powershell
+# Add Fabrikam project folder (adjust path)
+Add-MpPreference -ExclusionPath "C:\Dev\Fabrikam-Project"
+
+# Common .NET build patterns that get heavily scanned
+Add-MpPreference -ExclusionPath "C:\Dev\Fabrikam-Project\*\bin"
+Add-MpPreference -ExclusionPath "C:\Dev\Fabrikam-Project\*\obj"
+```
+
+**⚠️ Security Note:** Only exclude folders you trust. Development folders and .NET tools are generally safe, but be cautious with system-wide exclusions.
+
+### **Additional Performance Tips**
+
+- **SSD Storage**: Keep your development projects on SSD storage
+- **RAM**: 16GB+ recommended for smooth .NET 9 development
+- **Git**: Use Git for Windows with credential manager for faster operations
 
 ## 🏗️ **Model Context Protocol (MCP) Servers Setup**
 

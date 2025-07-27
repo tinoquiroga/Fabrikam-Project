@@ -37,7 +37,32 @@ dotnet --version
 # Should show: 9.0.x
 ```
 
-#### **3. Git & GitHub CLI**
+#### **3. Development Directory Setup**
+
+```powershell
+# Create a dedicated development directory
+New-Item -ItemType Directory -Path "C:\Dev" -Force
+
+# Navigate to your development directory
+cd "C:\Dev"
+
+# Configure the development directory as a safe directory for git
+# This prevents git security warnings and ownership issues
+git config --global --add safe.directory "C:\Dev"
+git config --global --add safe.directory "C:\Dev/*"
+
+# Verify safe directory configuration
+git config --global --get-all safe.directory
+```
+
+**📁 Directory Structure Best Practices:**
+
+- **`C:\Dev`** - Main development folder (avoid spaces in path)
+- **Short path** - Prevents Windows path length issues
+- **Dedicated location** - Separate from user documents/desktop
+- **Safe directory** - Allows git operations without ownership warnings
+
+#### **4. Git & GitHub CLI**
 
 ```powershell
 # Install Git
@@ -51,7 +76,83 @@ git --version
 gh --version
 ```
 
-#### **4. PowerShell 7**
+#### **4a. Git Configuration** (First-time setup)
+
+**Configure your identity:**
+
+```powershell
+# Set your name and email (use your GitHub account email)
+git config --global user.name "Your Full Name"
+git config --global user.email "your.email@domain.com"
+
+# Verify configuration
+git config --global --list
+```
+
+**Configure essential settings:**
+
+```powershell
+# Set default branch name to 'main'
+git config --global init.defaultBranch main
+
+# Enable credential storage (Windows Credential Manager)
+git config --global credential.helper manager-core
+
+# Set line ending handling (important for cross-platform work)
+git config --global core.autocrlf true
+
+# Set default pull behavior (recommended)
+git config --global pull.rebase false
+
+# Set default push behavior
+git config --global push.default simple
+
+# Enable colored output
+git config --global color.ui auto
+```
+
+**GitHub CLI Authentication:**
+
+```powershell
+# Authenticate with GitHub (opens browser)
+gh auth login
+
+# Follow prompts:
+# - Choose GitHub.com
+# - Choose HTTPS
+# - Authenticate via web browser
+# - Choose your preferred editor (VS Code)
+
+# Verify authentication
+gh auth status
+```
+
+**SSH Key Setup (Optional but Recommended):**
+
+```powershell
+# Generate SSH key (if you don't have one)
+ssh-keygen -t ed25519 -C "your.email@domain.com"
+
+# Start SSH agent
+Start-Service ssh-agent
+
+# Add SSH key to agent
+ssh-add ~/.ssh/id_ed25519
+
+# Copy public key to clipboard
+Get-Content ~/.ssh/id_ed25519.pub | Set-Clipboard
+
+# Then add the key to GitHub:
+# 1. Go to GitHub.com → Settings → SSH and GPG keys
+# 2. Click "New SSH key"
+# 3. Paste the key from clipboard
+# 4. Give it a descriptive title
+
+# Test SSH connection
+ssh -T git@github.com
+```
+
+#### **5. PowerShell 7**
 
 ```powershell
 # Install PowerShell 7 (for project automation scripts)
@@ -63,7 +164,7 @@ pwsh --version
 
 ### **Azure Development Tools**
 
-#### **5. Azure CLI**
+#### **6. Azure CLI**
 
 ```powershell
 # Install Azure CLI
@@ -73,7 +174,7 @@ winget install --exact Microsoft.AzureCLI
 az --version
 ```
 
-#### **6. Azure Developer CLI**
+#### **7. Azure Developer CLI**
 
 ```powershell
 # Install Azure Developer CLI (for azd deployment)
@@ -238,7 +339,19 @@ The Fabrikam project integrates with multiple MCP servers for AI-enhanced develo
 # Configure after repository setup (covered below)
 ```
 
-> **Note**: MCP servers integrate through VS Code and GitHub Copilot. The specific server configurations are included in the project's `.vscode/settings.json`.
+### **4. Custom Fabrikam MCP Server**
+
+```powershell
+# This is the project's own MCP server (FabrikamMcp)
+# Runs locally during development at http://localhost:5000
+# Configuration handled through GitHub Copilot or Claude Desktop
+```
+
+> **Important**: MCP servers are **NOT** configured in VS Code settings. They integrate through:
+>
+> - **GitHub Copilot**: Automatically detects available MCP servers
+> - **Claude Desktop**: Configured in Claude's settings (if using Claude)
+> - **Direct Integration**: The project's FabrikamMcp server runs independently
 
 ## 📁 **Repository Setup**
 

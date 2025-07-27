@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": {
+      "value": "FabrikamAIDemo"
+    },
+    "environment": {
+      "value": "dev"
+    },
+    "githubRepository": {
+      "value": "https://github.com/davebirr/Fabrikam-Project"
+    },
+    "skuName": {
+      "value": "B1"
+    },
+    "customDomain": {
+      "value": "levelupcsp.com"
+    },
+    "enableCustomDomains": {
+      "value": true
+    }
+  }
+}

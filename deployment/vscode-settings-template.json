@@ -1,0 +1,29 @@
+{
+  "dotnet.defaultSolution": "Fabrikam.sln",
+  "omnisharp.enableAsyncCompletion": false,
+  "files.autoSave": "off",
+  "extensions.autoUpdate": false,
+  "github.copilot.chat.useModelContextProtocol": true,
+  "rest-client.environmentVariables": {
+    "local": {
+      "apiUrl": "https://localhost:7297",
+      "mcpUrl": "http://localhost:5000"
+    },
+    "azure": {
+      "apiUrl": "{{API_URL}}",
+      "mcpUrl": "{{MCP_URL}}"
+    }
+  },
+  "azure.subscriptionId": "{{SUBSCRIPTION_ID}}",
+  "azure.subscriptionName": "{{SUBSCRIPTION_NAME}}",
+  "azure.tenantId": "{{TENANT_ID}}",
+  "azure.tenantName": "{{TENANT_NAME}}",
+  "azure.resourceGroup": "{{RESOURCE_GROUP}}",
+  "azure.instanceName": "{{INSTANCE_NAME}}",
+  "azure.instanceSuffix": "{{INSTANCE_SUFFIX}}",
+  "azure.apiAppName": "{{API_APP_NAME}}",
+  "azure.mcpAppName": "{{MCP_APP_NAME}}",
+  "azure.customDomainsEnabled": "{{CUSTOM_DOMAINS_ENABLED}}",
+  "azure.apiCustomDomain": "{{API_CUSTOM_DOMAIN}}",
+  "azure.mcpCustomDomain": "{{MCP_CUSTOM_DOMAIN}}"
+}

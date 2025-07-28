@@ -13,6 +13,22 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 - **Support partner training** with ready-to-deploy environments
 - **Showcase Model Context Protocol (MCP)** integration patterns
 
+## 🚀 **Status: Production Ready!**
+
+**✅ Live Deployment**: https://fabrikam-api-dev-y32g.azurewebsites.net  
+**✅ Authentication Complete**: 100% success rate with Azure Key Vault RBAC  
+**✅ Demo Ready**: 7 working demo users across all roles  
+**✅ Fully Tested**: Automated testing with CI/CD integration
+
+## 📚 **Quick Navigation**
+
+| Resource | Purpose | Status |
+|----------|---------|--------|
+| **[🚀 Deploy to Azure](docs/deployment/DEPLOY-TO-AZURE.md)** | One-click Azure deployment | ✅ Production Ready |
+| **[📚 Documentation Index](docs/DOCUMENTATION-INDEX.md)** | Complete documentation guide | ✅ Organized |
+| **[🎉 Authentication Complete](docs/development/AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)** | Implementation results | ✅ 100% Success |
+| **[🧪 Testing Guide](scripts/Test-Development.ps1)** | Automated testing | ✅ Local + Production |
+
 ## 🎬 Demo Video
 
 Watch the complete Fabrikam Project demonstration showcasing:
@@ -31,19 +47,24 @@ Watch the complete Fabrikam Project demonstration showcasing:
 
 ```powershell
 # 🚀 Start both servers from workspace root
-.\Manage-Project.ps1 start
+.\scripts\Manage-Project.ps1 start
 
-# 🧪 Test everything
-.\Test-Development.ps1 -Quick
+# 🧪 Test everything (convenient shortcuts available!)
+.\test.ps1 -Quick               # Root shortcut
+.\scripts\Test-Development.ps1 -Quick  # Full script
 
 # 📊 Check status
-.\Manage-Project.ps1 status
+.\scripts\Manage-Project.ps1 status
 ```
+
+**Testing Shortcuts**: For convenience, you can use the root-level shortcuts:
+- `.\test.ps1` - PowerShell wrapper for the main testing script (**Recommended**)
+- `.\test.bat` - Batch file wrapper for command prompt users
 
 ### **Option 1: Use Deployed Services** (Recommended)
 
-- **API**: https://fabrikam-api-dev.levelupcsp.com/mcp
-- **MCP**: https://fabrikam-mcp-dev.levelupcsp.com/mcp
+- **API**: https://fabrikam-api-dev-y32g.azurewebsites.net
+- **MCP**: wss://fabrikam-mcp-dev-y32g.azurewebsites.net  
 - **Copilot Studio**: See [Setup Guide](docs/demos/Copilot-Studio-Agent-Setup-Guide.md)
 
 ### **Option 2: Local Development**
@@ -78,7 +99,19 @@ Two integrated services providing complete business functionality:
 - **Intelligent Defaults**: Works without parameters for robust AI interactions
 - **Real-time Data**: Connects to live API for current business information
 
-## 📊 Business Data
+## � Authentication System
+
+**Complete ASP.NET Core Identity implementation with Azure integration:**
+
+- **JWT Token Management**: Secure authentication with access/refresh token lifecycle
+- **Role-Based Access Control**: Admin, Sales, Customer service roles with appropriate permissions  
+- **Azure Key Vault Integration**: RBAC-based secrets management with managed identity
+- **Demo User System**: 7 pre-configured users for immediate testing and demonstrations
+- **Production Deployment**: Fully tested in Azure App Service with 100% authentication success rate
+
+**🔗 [View Authentication Details](AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)**
+
+## �📊 Business Data
 
 Comprehensive sample data for realistic demonstrations:
 
@@ -94,33 +127,33 @@ Comprehensive sample data for realistic demonstrations:
 
 ```powershell
 # Health check
-curl https://fabrikam-api-dev.levelupcsp.com/health
+curl https://fabrikam-api-dev-y32g.azurewebsites.net/health
 
 # Sales analytics
-curl https://fabrikam-api-dev.levelupcsp.com/api/orders/analytics
+curl https://fabrikam-api-dev-y32g.azurewebsites.net/api/orders/analytics
 
 # Product inventory
-curl https://fabrikam-api-dev.levelupcsp.com/api/products/inventory
+curl https://fabrikam-api-dev-y32g.azurewebsites.net/api/products/inventory
 ```
 
 ### **MCP Integration**
 
 ```powershell
 # Server status
-curl https://fabrikam-mcp-dev.levelupcsp.com/status
+curl https://fabrikam-mcp-dev-y32g.azurewebsites.net/status
 
 # List available tools
-curl https://fabrikam-mcp-dev.levelupcsp.com/mcp
+curl https://fabrikam-mcp-dev-y32g.azurewebsites.net/mcp
 ```
 
 ## 📖 Documentation
 
 ### **Essential Guides**
 
-- [**Copilot Studio Setup**](Copilot-Studio-Agent-Setup-Guide.md) - Create your business AI assistant
-- [**Asset Management**](FabrikamApi/ASSET-MANAGEMENT-GUIDE.md) - Add images, blueprints, and files
-- [**Authentication Implementation**](AUTHENTICATION-IMPLEMENTATION-GUIDE.md) - Development workflow and methodology
-- [**Deployment Guide**](DEPLOYMENT-GUIDE.md) - Azure deployment instructions
+- [**Copilot Studio Setup**](docs/demos/Copilot-Studio-Agent-Setup-Guide.md) - Create your business AI assistant
+- [**Asset Management**](docs/development/ASSET-MANAGEMENT-GUIDE.md) - Add images, blueprints, and files
+- [**Authentication Implementation**](docs/development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md) - Development workflow and methodology
+- [**Deployment Guide**](docs/deployment/DEPLOYMENT-GUIDE.md) - Azure deployment instructions
 
 ## 📚 Documentation
 

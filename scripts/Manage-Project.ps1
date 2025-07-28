@@ -81,7 +81,7 @@ function Show-Status {
     }
     
     if ($status.McpRunning) {
-        Write-Success "🤖 MCP Server: Running (PID: $($status.McpProcess.Id)) → http://localhost:5000"
+        Write-Success "🤖 MCP Server: Running (PID: $($status.McpProcess.Id)) → https://localhost:5001"
     } else {
         Write-Warning "🤖 MCP Server: Not running"
     }
@@ -101,11 +101,11 @@ function Start-Projects {
             Write-Warning "🌐 API Server already running (PID: $($status.ApiProcess.Id))"
         } else {
             Write-Info "🌐 Starting API Server..."
-            Write-Host "Command: dotnet run --project $ApiProject" -ForegroundColor Gray
+            Write-Host "Command: dotnet run --project $ApiProject --launch-profile https" -ForegroundColor Gray
             Write-Info "🚀 API will be available at: https://localhost:7297"
             Write-Warning "⚠️ This will start in the current terminal. Use Ctrl+C to stop."
             Write-Host ""
-            Start-Process powershell -ArgumentList "-NoExit", "-Command", "dotnet run --project $ApiProject"
+            Start-Process powershell -ArgumentList "-NoExit", "-Command", "dotnet run --project $ApiProject --launch-profile https"
         }
     }
     
@@ -115,7 +115,7 @@ function Start-Projects {
         } else {
             Write-Info "🤖 Starting MCP Server..."
             Write-Host "Command: dotnet run --project $McpProject" -ForegroundColor Gray
-            Write-Info "🚀 MCP will be available at: http://localhost:5000"
+            Write-Info "🚀 MCP will be available at: https://localhost:5001"
             Write-Warning "⚠️ This will start in a new terminal. Use Ctrl+C to stop."
             Write-Host ""
             Start-Process powershell -ArgumentList "-NoExit", "-Command", "dotnet run --project $McpProject"
@@ -217,7 +217,7 @@ function Show-Help {
 
 🌐 ENDPOINTS:
     API:  https://localhost:7297 (HTTPS)
-    MCP:  http://localhost:5000  (HTTP)
+    MCP:  https://localhost:5001 (HTTPS)
 
 📁 WORKSPACE ROOT:
     Always run from: c:\Users\davidb\1Repositories\Fabrikam-Project

@@ -22,11 +22,14 @@
 # .\Test-Development.ps1 -Production -Force # Test production without version check prompts
 # .\Test-Development.ps1 -ApiOnly          # Test API endpoints only
 # .\Test-Development.ps1 -AuthOnly         # Test authentication endpoints only
+# .\Test-Development.ps1 -McpEnhanced      # Enhanced MCP testing with 13 business tools validation (Issue #12)
+# .\Test-Development.ps1 -McpEnhanced -Comprehensive # Full comprehensive MCP testing with performance validation
 # .\Test-Development.ps1 -Quick -Verbose   # Quick test with detailed output
 
 param(
     [switch]$ApiOnly,           # Test API endpoints only
     [switch]$McpOnly,           # Test MCP server only
+    [switch]$McpEnhanced,       # Test MCP with comprehensive business tool validation (Issue #12)
     [switch]$AuthOnly,          # Test authentication endpoints only
     [switch]$IntegrationOnly,   # Test integration between API and MCP
     [switch]$Quick,             # Run essential tests only (faster)
@@ -140,7 +143,7 @@ function Get-EndpointConfiguration {
     $settingsPath = ".vscode\settings.json"
     $defaultLocal = @{
         ApiBaseUrl  = "https://localhost:7297"
-        McpBaseUrl  = "http://localhost:5000"
+        McpBaseUrl  = "https://localhost:5001"
         Environment = "Local Development"
     }
     
@@ -270,6 +273,19 @@ $TestResults = @{
     IntegrationTests = @()
     TotalPassed      = 0
     TotalFailed      = 0
+}
+
+# Enhanced MCP Testing Support (Issue #12)
+if ($McpEnhanced) {
+    try {
+        . "$PSScriptRoot\testing\Test-Mcp-Enhanced.ps1"
+        Write-Debug "Loaded enhanced MCP testing module"
+    }
+    catch {
+        Write-Warning "Failed to load enhanced MCP testing module: $($_.Exception.Message)"
+        Write-Warning "Falling back to standard MCP testing"
+        $McpEnhanced = $false
+    }
 }
 
 # Global authentication state for tests
@@ -526,7 +542,7 @@ function Start-ServersForTesting {
                 $mcpProcess = Start-Process -FilePath "powershell" -ArgumentList @(
                     "-NoExit", 
                     "-Command", 
-                    "Set-Location '$PWD'; Write-Host '🤖 Starting MCP Server...' -ForegroundColor Cyan; dotnet run --project $McpProject --launch-profile http"
+                    "Set-Location '$PWD'; Write-Host '🤖 Starting MCP Server...' -ForegroundColor Cyan; dotnet run --project $McpProject --launch-profile https"
                 ) -PassThru
                 
                 Write-Info "⏱️  Waiting for MCP Server to start..."
@@ -544,7 +560,7 @@ function Start-ServersForTesting {
             }
         }
         
-        if (-not $McpOnly) {
+        if (-not $McpOnly -and -not $McpEnhanced) {
             Write-Info "🌐 Starting API Server in visible terminal..."
             try {
                 $apiProcess = Start-Process -FilePath "powershell" -ArgumentList @(
@@ -569,7 +585,7 @@ function Start-ServersForTesting {
         }
         
         return @{
-            ApiProcess = if (-not $McpOnly) { $apiProcess } else { $null }
+            ApiProcess = if (-not $McpOnly -and -not $McpEnhanced) { $apiProcess } else { $null }
             McpProcess = if (-not $ApiOnly) { $mcpProcess } else { $null }
         }
     }
@@ -581,7 +597,7 @@ function Start-ServersForTesting {
                 $mcpJob = Start-Job -ScriptBlock {
                     param($Project, $WorkingDir)
                     Set-Location $WorkingDir
-                    dotnet run --project $Project --launch-profile http --verbosity quiet
+                    dotnet run --project $Project --launch-profile https --verbosity quiet
                 } -ArgumentList $McpProject, $PWD.Path
                 
                 # Wait for MCP server to be ready
@@ -597,7 +613,7 @@ function Start-ServersForTesting {
             }
         }
         
-        if (-not $McpOnly) {
+        if (-not $McpOnly -and -not $McpEnhanced) {
             Write-Info "🌐 Starting API Server in background..."
             try {
                 $apiJob = Start-Job -ScriptBlock {
@@ -622,7 +638,7 @@ function Start-ServersForTesting {
         }
         
         return @{
-            ApiJob = if (-not $McpOnly) { $apiJob } else { $null }
+            ApiJob = if (-not $McpOnly -and -not $McpEnhanced) { $apiJob } else { $null }
             McpJob = if (-not $ApiOnly) { $mcpJob } else { $null }
         }
     }
@@ -1517,7 +1533,7 @@ if ($Production) {
     # Version comparison check
     Write-Host ""
     Write-Info "🔍 Checking if production is up-to-date..."
-    $devApiUrl = "http://localhost:7296"  # Local development URL for comparison
+    $devApiUrl = "https://localhost:7297"  # Local development URL for comparison
     $versionSyncOk = Test-ProductionVersion -DevApiUrl $devApiUrl -ProdApiUrl $ApiBaseUrl
     
     if (-not $versionSyncOk) {
@@ -1585,7 +1601,7 @@ else {
 # Wrap testing in try/finally to ensure cleanup
 try {
 
-    if (-not $McpOnly) {
+    if (-not $McpOnly -and -not $McpEnhanced) {
         Write-Host "`n🔍 API ENDPOINT TESTS" -ForegroundColor Cyan
         Write-Host "="*30 -ForegroundColor Cyan
     
@@ -1631,7 +1647,7 @@ try {
         # Test demo user authentication
         Test-DemoUserAuthentication -BaseUrl $ApiBaseUrl
     }
-    elseif (-not $McpOnly -and -not $Quick) {
+    elseif (-not $McpOnly -and -not $McpEnhanced -and -not $Quick) {
         Write-Host "`n🔐 AUTHENTICATION TESTS" -ForegroundColor Cyan
         Write-Host "="*30 -ForegroundColor Cyan
         
@@ -1646,41 +1662,57 @@ try {
         Write-Host "`n🔧 MCP SERVER TESTS" -ForegroundColor Cyan
         Write-Host "="*30 -ForegroundColor Cyan
     
-        # Basic connectivity and health check
-        Test-McpServerHealth
-        
-        # MCP Protocol Tests (only if not in Quick mode or if specifically testing MCP)
-        # Note: MCP protocol tests are complex due to Server-Sent Events format
-        # For now, we focus on connectivity and health checks
-        if (-not $Quick -or $McpOnly) {
-            Write-Debug "Advanced MCP protocol tests skipped in this version"
-            Write-Debug "Future enhancement: Full JSON-RPC protocol testing with SSE handling"
+        # Check if enhanced MCP testing is requested
+        if ($McpEnhanced) {
+            Write-Host "🚀 ENHANCED MCP TESTING (Issue #12)" -ForegroundColor Yellow
+            Write-Host "Testing 13 business tools with comprehensive validation" -ForegroundColor Yellow
             
-            # Add basic tool availability check without full protocol testing
-            try {
-                Write-Debug "Testing basic MCP endpoint availability..."
-                $mcpResponse = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Head -TimeoutSec 5 -ErrorAction SilentlyContinue
-                if ($mcpResponse.StatusCode -eq 405) {
-                    # 405 Method Not Allowed is expected for HEAD request to MCP endpoint
-                    Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (expects POST requests)"
-                }
-                else {
-                    Add-TestResult "McpTests" "MCP Endpoint Availability" $false "Unexpected response from MCP endpoint: $($mcpResponse.StatusCode)"
-                }
+            # Call enhanced MCP testing with comprehensive options
+            if ($Quick) {
+                Test-McpEnhanced -McpBaseUrl $McpBaseUrl -TimeoutSeconds $TimeoutSeconds -Quick -Verbose:$Verbose
             }
-            catch {
-                # Check if the exception is due to 405 Method Not Allowed
-                if ($_.Exception.Message -like "*405*" -or $_.Exception.Message -like "*Method Not Allowed*") {
-                    Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (405 Method Not Allowed is expected for HEAD requests)"
+            else {
+                Test-McpEnhanced -McpBaseUrl $McpBaseUrl -TimeoutSeconds $TimeoutSeconds -Comprehensive -Performance -Verbose:$Verbose
+            }
+        }
+        else {
+            # Standard MCP testing (existing functionality)
+            # Basic connectivity and health check
+            Test-McpServerHealth
+            
+            # MCP Protocol Tests (only if not in Quick mode or if specifically testing MCP)
+            # Note: MCP protocol tests are complex due to Server-Sent Events format
+            # For now, we focus on connectivity and health checks
+            if (-not $Quick -or $McpOnly -or $McpEnhanced) {
+                Write-Debug "Advanced MCP protocol tests skipped in this version"
+                Write-Debug "Future enhancement: Full JSON-RPC protocol testing with SSE handling"
+                
+                # Add basic tool availability check without full protocol testing
+                try {
+                    Write-Debug "Testing basic MCP endpoint availability..."
+                    $mcpResponse = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Head -TimeoutSec 5 -ErrorAction SilentlyContinue
+                    if ($mcpResponse.StatusCode -eq 405) {
+                        # 405 Method Not Allowed is expected for HEAD request to MCP endpoint
+                        Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (expects POST requests)"
+                    }
+                    else {
+                        Add-TestResult "McpTests" "MCP Endpoint Availability" $false "Unexpected response from MCP endpoint: $($mcpResponse.StatusCode)"
+                    }
                 }
-                else {
-                    Add-TestResult "McpTests" "MCP Endpoint Availability" $false "MCP endpoint not accessible: $($_.Exception.Message)"
+                catch {
+                    # Check if the exception is due to 405 Method Not Allowed
+                    if ($_.Exception.Message -like "*405*" -or $_.Exception.Message -like "*Method Not Allowed*") {
+                        Add-TestResult "McpTests" "MCP Endpoint Availability" $true "MCP endpoint accessible (405 Method Not Allowed is expected for HEAD requests)"
+                    }
+                    else {
+                        Add-TestResult "McpTests" "MCP Endpoint Availability" $false "MCP endpoint not accessible: $($_.Exception.Message)"
+                    }
                 }
             }
         }
     }
 
-    if (-not $ApiOnly -and -not $McpOnly) {
+    if (-not $ApiOnly -and -not $McpOnly -and -not $McpEnhanced) {
         Write-Host "`n🔄 INTEGRATION TESTS" -ForegroundColor Cyan
         Write-Host "="*30 -ForegroundColor Cyan
     

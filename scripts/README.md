@@ -31,6 +31,14 @@ These essential scripts stay in the project root for easy access:
 - **`Test-Development.ps1`** - Main comprehensive testing suite
 - **`Manage-Project.ps1`** - Primary project management (start/stop/status)
 
+**Convenient Shortcuts Available**:
+- **`test.ps1`** - PowerShell shortcut for `scripts\Test-Development.ps1` (**Recommended**)
+- **`test.bat`** - Batch file shortcut for command prompt users (use if PowerShell not available)
+
+Both shortcuts pass all parameters through to the main testing script.
+
+**Note**: The PowerShell shortcut (`test.ps1`) is recommended as it handles Unicode properly and has been fully tested.
+
 ## 📁 **Demo Scripts (in `docs/demos/`)**
 
 - **`Validate-Demo.ps1`** - Demo readiness validation (moved to `docs/demos/`)

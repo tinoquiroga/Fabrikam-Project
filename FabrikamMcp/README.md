@@ -51,7 +51,7 @@ The MCP server provides an API that follows the Model Context Protocol specifica
    ```bash
    dotnet run
    ```
-4. The MCP server will be available at `http://localhost:5000`
+4. The MCP server will be available at `https://localhost:5001`
 5. When you're done, press Ctrl+C in the terminal to stop the app
 
 ### Testing the Available Tools
@@ -71,7 +71,7 @@ The server provides these tools:
 
 1. **Add MCP Server** from command palette and add the URL to your running server's HTTP endpoint:
    ```
-   http://localhost:5000
+   https://localhost:5001
    ```
 2. **List MCP Servers** from command palette and start the server
 3. In Copilot chat agent mode, enter a prompt to trigger the tool:
@@ -95,7 +95,7 @@ You can ask things like:
 3. Set the transport type to `HTTP`
 4. Set the URL to your running server's HTTP endpoint and **Connect**:
    ```
-   http://localhost:5000
+   https://localhost:5001
    ```
 5. **List Tools**, click on a tool, and **Run Tool**
 
@@ -112,7 +112,7 @@ This MCP server includes business-specific tools that integrate with the Fabrika
 
 The MCP server connects to the FabrikamApi using the `FabrikamApi:BaseUrl` configuration setting:
 
-- **Development**: `http://localhost:5000` (configured in `appsettings.Development.json`)
+- **Development**: `https://localhost:5001` (configured in `appsettings.Development.json`)
 - **Production**: Set via environment variable `FabrikamApi__BaseUrl`
 
 ### Deployment with API Integration

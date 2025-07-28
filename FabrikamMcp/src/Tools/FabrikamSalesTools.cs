@@ -1,23 +1,26 @@
 using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Text.Json;
+using FabrikamMcp.Attributes;
+using FabrikamMcp.Services;
 using ModelContextProtocol.Server;
 
 namespace FabrikamMcp.Tools;
 
 [McpServerToolType]
-public class FabrikamSalesTools
+public class FabrikamSalesTools : AuthenticatedMcpToolBase
 {
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
-    public FabrikamSalesTools(HttpClient httpClient, IConfiguration configuration)
+    public FabrikamSalesTools(
+        HttpClient httpClient, 
+        IConfiguration configuration,
+        IAuthenticationService authService,
+        ILogger<FabrikamSalesTools> logger) 
+        : base(httpClient, configuration, authService, logger)
     {
-        _httpClient = httpClient;
-        _configuration = configuration;
     }
 
     [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists. When called without parameters, returns recent orders. For date filters, use YYYY-MM-DD format. If no results found with date filter, will show recent orders.")]
+    [McpAuthorize(McpRoles.Admin, McpRoles.Sales, McpRoles.CustomerService)]
     public async Task<object> GetOrders(
         int? orderId = null,
         string? status = null,
@@ -27,9 +30,18 @@ public class FabrikamSalesTools
         int page = 1,
         int pageSize = 20)
     {
+        // Validate authorization
+        if (!ValidateAuthorization(nameof(GetOrders)))
+        {
+            return CreateAuthenticationErrorResponse(nameof(GetOrders));
+        }
+
+        // Log tool usage
+        LogToolUsage(nameof(GetOrders), new { orderId, status, region, fromDate, toDate, page, pageSize });
+
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            var baseUrl = GetApiBaseUrl();
 
             // If orderId is provided, get specific order details
             if (orderId.HasValue)
@@ -285,8 +297,18 @@ public class FabrikamSalesTools
     }
 
     [McpServerTool, Description("Get sales analytics and summary data including total orders, revenue, average order value, and breakdowns by status and region.")]
+    [McpAuthorize(McpRoles.Admin, McpRoles.Sales)]
     public async Task<object> GetSalesAnalytics(string? fromDate = null, string? toDate = null)
     {
+        // Validate authorization
+        if (!ValidateAuthorization(nameof(GetSalesAnalytics)))
+        {
+            return CreateAuthenticationErrorResponse(nameof(GetSalesAnalytics));
+        }
+
+        // Log tool usage
+        LogToolUsage(nameof(GetSalesAnalytics), new { fromDate, toDate });
+
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
@@ -459,8 +481,18 @@ public class FabrikamSalesTools
     }
 
     [McpServerTool, Description("Get customers with optional filtering by region or specific customer ID. Use customerId for detailed customer info including order history and support tickets, or use region filter for customer lists. When called without parameters, returns all customers with pagination.")]
+    [McpAuthorize(McpRoles.Admin, McpRoles.Sales, McpRoles.CustomerService)]
     public async Task<object> GetCustomers(int? customerId = null, string? region = null, int page = 1, int pageSize = 20)
     {
+        // Validate authorization
+        if (!ValidateAuthorization(nameof(GetCustomers)))
+        {
+            return CreateAuthenticationErrorResponse(nameof(GetCustomers));
+        }
+
+        // Log tool usage
+        LogToolUsage(nameof(GetCustomers), new { customerId, region, page, pageSize });
+
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";

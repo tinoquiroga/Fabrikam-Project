@@ -7,17 +7,17 @@
   "rest-client.environmentVariables": {
     "local": {
       "apiUrl": "https://localhost:7297",
-      "mcpUrl": "https://localhost:5000"
+      "mcpUrl": "https://localhost:5001"
     },
     "azure": {
       "apiUrl": "https://fabrikam-api-dev-y32g.azurewebsites.net",
       "mcpUrl": "https://fabrikam-mcp-dev-y32g.azurewebsites.net"
     }
   },
-  "azure.subscriptionId": "1ae622b1-c33c-457f-a2bb-351fed78922f",
-  "azure.subscriptionName": "MCAPS-Hybrid-REQ-59531-2023-davidb",
-  "azure.tenantId": "16b3c013-d300-468d-ac64-7eda0820b6d3",
-  "azure.tenantName": "Microsoft Non-Production (fpdo.microsoft.com)",
+  "azure.subscriptionId": "7e77b014-138f-4858-952b-76e75f0bbeb7",
+  "azure.subscriptionName": "MCPP Subscription",
+  "azure.tenantId": "3278c17c-6680-41c6-86bf-296981c37b94",
+  "azure.tenantName": "roanoketechhub.com",
   "azure.resourceGroup": "rg-FabrikamAiDemo",
   "azure.instanceName": "fabrikam-y32g",
   "azure.instanceSuffix": "y32g",

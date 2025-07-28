@@ -2,7 +2,7 @@
 # This script adds new orders to the seed data and triggers a re-seed
 
 param(
-    [string]$ApiBaseUrl = "http://localhost:7296",
+    [string]$ApiBaseUrl = "https://localhost:7297",
     [string]$NewOrdersFile = "FabrikamApi\src\Data\SeedData\new-orders-2025.json",
     [string]$ExistingOrdersFile = "FabrikamApi\src\Data\SeedData\orders.json",
     [switch]$Production,

@@ -23,7 +23,7 @@ public class OrdersController : ControllerBase
     /// Get all orders with optional filtering
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetOrders(
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrders(
         string? status = null,
         string? region = null,
         DateTime? fromDate = null,
@@ -64,23 +64,23 @@ public class OrdersController : ControllerBase
             // Get total count for pagination
             var totalCount = await query.CountAsync();
 
-            // Apply pagination
+            // Apply pagination and map to DTO
             var orders = await query
                 .OrderByDescending(o => o.OrderDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(o => new
+                .Select(o => new OrderDto
                 {
-                    o.Id,
-                    o.OrderNumber,
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
                     Status = o.Status.ToString(),
-                    o.OrderDate,
-                    o.Total,
-                    Customer = new
+                    OrderDate = o.OrderDate,
+                    Total = o.Total,
+                    Customer = new OrderCustomerDto
                     {
-                        o.Customer.Id,
+                        Id = o.Customer.Id,
                         Name = $"{o.Customer.FirstName} {o.Customer.LastName}",
-                        o.Customer.Region
+                        Region = o.Customer.Region
                     }
                 })
                 .ToListAsync();
@@ -101,7 +101,7 @@ public class OrdersController : ControllerBase
     /// Get a specific order by ID
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<object>> GetOrder(int id)
+    public async Task<ActionResult<OrderDetailDto>> GetOrder(int id)
     {
         try
         {
@@ -116,40 +116,40 @@ public class OrdersController : ControllerBase
                 return NotFound($"Order with ID {id} not found");
             }
 
-            var result = new
+            var result = new OrderDetailDto
             {
-                order.Id,
-                order.OrderNumber,
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
                 Status = order.Status.ToString(),
-                order.OrderDate,
-                order.ShippedDate,
-                order.DeliveredDate,
-                order.Subtotal,
-                order.Tax,
-                order.Shipping,
-                order.Total,
-                Customer = new
+                OrderDate = order.OrderDate,
+                ShippedDate = order.ShippedDate,
+                DeliveredDate = order.DeliveredDate,
+                Subtotal = order.Subtotal,
+                Tax = order.Tax,
+                Shipping = order.Shipping,
+                Total = order.Total,
+                Customer = new OrderCustomerDto
                 {
-                    order.Customer.Id,
+                    Id = order.Customer.Id,
                     Name = $"{order.Customer.FirstName} {order.Customer.LastName}",
-                    order.Customer.Email,
-                    order.Customer.Phone,
-                    order.Customer.Region
+                    Email = order.Customer.Email,
+                    Phone = order.Customer.Phone,
+                    Region = order.Customer.Region
                 },
-                Items = order.OrderItems.Select(oi => new
+                Items = order.OrderItems.Select(oi => new OrderItemDetailDto
                 {
-                    oi.Id,
-                    Product = new
+                    Id = oi.Id,
+                    Product = new OrderItemProductDto
                     {
-                        oi.Product.Id,
-                        oi.Product.Name,
-                        oi.Product.Category
+                        Id = oi.Product.Id,
+                        Name = oi.Product.Name,
+                        Category = oi.Product.Category.ToString()
                     },
-                    oi.Quantity,
-                    oi.UnitPrice,
-                    oi.LineTotal,
-                    oi.CustomOptions
-                })
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    LineTotal = oi.LineTotal,
+                    CustomOptions = oi.CustomOptions
+                }).ToList()
             };
 
             return Ok(result);

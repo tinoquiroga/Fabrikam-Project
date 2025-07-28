@@ -30,7 +30,7 @@
             "label": "🤖 Start MCP Server", 
             "type": "shell",
             "command": "dotnet",
-            "args": ["run", "--project", "FabrikamMcp/src/FabrikamMcp.csproj", "--launch-profile", "http"],
+            "args": ["run", "--project", "FabrikamMcp/src/FabrikamMcp.csproj", "--launch-profile", "https"],
             "options": {
                 "env": {
                     "ASPNETCORE_ENVIRONMENT": "Development"

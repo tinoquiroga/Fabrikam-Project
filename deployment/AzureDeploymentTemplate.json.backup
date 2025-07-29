@@ -88,16 +88,23 @@
         "description": "Database provider choice: InMemory (quick demos, no persistence) or SqlServer (production-like, persistent data)"
       }
     },
+    "enableAuthentication": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable authentication and security features"
+      }
+    },
     "authenticationMode": {
       "type": "string",
-      "defaultValue": "JwtTokens",
+      "defaultValue": "GuidTracking",
       "allowedValues": [
-        "Disabled",
-        "JwtTokens", 
+        "GuidTracking",
+        "ApiKey", 
         "EntraExternalId"
       ],
       "metadata": {
-        "description": "Authentication mode for the Fabrikam demo platform. Disabled: GUID tracking only, no authentication barriers. JwtTokens: Each demo user registers and receives a secure JWT token for their AI agent/MCP client - tokens expire and need periodic refresh for security. EntraExternalId: Full OAuth 2.0 with Microsoft Entra External ID integration for enterprise identity."
+        "description": "Authentication mode for the Fabrikam demo platform. GuidTracking: User tracking without authentication barriers. ApiKey: Enterprise security with pre-shared keys. EntraExternalId: Full OAuth 2.0 with Microsoft identity platform."
       }
     },
     "enableUserTracking": {
@@ -168,12 +175,9 @@
     "sqlConnectionSecretName": "DefaultConnection",
     "keyVaultSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
     "keyVaultSecretsOfficerRoleId": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
-    "isAuthenticationEnabled": "[not(equals(parameters('authenticationMode'), 'Disabled'))]",
-    "isJwtMode": "[equals(parameters('authenticationMode'), 'JwtTokens')]",
-    "isEntraMode": "[equals(parameters('authenticationMode'), 'EntraExternalId')]",
+    "authenticationRequired": "[or(equals(parameters('authenticationMode'), 'ApiKey'), equals(parameters('authenticationMode'), 'EntraExternalId'))]",
     "demoApiKeyValue": "fabrikam-demo-2025-secure-key-enterprise",
-    "guidTrackingSalt": "fabrikam-guid-tracking-salt-2025",
-    "demoUserCredentials": "Demo users: admin@fabrikam.com/FabrikamDemo2025!, user@fabrikam.com/UserDemo2025!"
+    "guidTrackingSalt": "fabrikam-guid-tracking-salt-2025"
   },
   "resources": [
     {
@@ -291,11 +295,7 @@
             },
             {
               "name": "Authentication__Strategy",
-              "value": "[if(variables('isAuthenticationEnabled'), 'AspNetIdentity', 'Disabled')]"
-            },
-            {
-              "name": "Authentication__Mode",
-              "value": "[parameters('authenticationMode')]"
+              "value": "[if(parameters('enableAuthentication'), 'AspNetIdentity', 'Disabled')]"
             },
             {
               "name": "Authentication__AspNetIdentity__Jwt__Issuer",
@@ -307,7 +307,7 @@
             },
             {
               "name": "Authentication__AspNetIdentity__Jwt__SecretKey",
-              "value": "[if(variables('isAuthenticationEnabled'), concat('@Microsoft.KeyVault(VaultName=', variables('keyVaultName'), ';SecretName=', variables('jwtSecretName'), ')'), '')]"
+              "value": "[if(parameters('enableAuthentication'), concat('@Microsoft.KeyVault(VaultName=', variables('keyVaultName'), ';SecretName=', variables('jwtSecretName'), ')'), '')]"
             },
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
@@ -414,6 +414,7 @@
       }
     },
     {
+      "condition": "[parameters('enableAuthentication')]",
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2021-11-01-preview",
       "name": "[variables('keyVaultName')]",
@@ -437,7 +438,7 @@
       ]
     },
     {
-      "condition": "[equals(parameters('databaseProvider'), 'SqlServer')]",
+      "condition": "[and(parameters('enableAuthentication'), equals(parameters('databaseProvider'), 'SqlServer'))]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-11-01-preview",
       "name": "[concat(variables('keyVaultName'), '/', variables('sqlConnectionSecretName'))]",
@@ -450,6 +451,7 @@
       }
     },
     {
+      "condition": "[parameters('enableAuthentication')]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-11-01-preview",
       "name": "[concat(variables('keyVaultName'), '/', variables('jwtSecretName'))]",
@@ -461,10 +463,10 @@
       }
     },
     {
-      "condition": "[variables('isJwtMode')]",
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-11-01-preview",
-      "name": "[concat(variables('keyVaultName'), '/demo-api-key')]",
+      "condition": "[and(parameters('enableAuthentication'), equals(parameters('authenticationMode'), 'ApiKey'))]",
+      "type": "secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "demo-api-key",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
@@ -473,10 +475,10 @@
       }
     },
     {
-      "condition": "[variables('isEntraMode')]",
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-11-01-preview", 
-      "name": "[concat(variables('keyVaultName'), '/entra-client-id')]",
+      "condition": "[and(parameters('enableAuthentication'), equals(parameters('authenticationMode'), 'EntraExternalId'))]",
+      "type": "secrets",
+      "apiVersion": "2021-06-01-preview", 
+      "name": "entra-client-id",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
@@ -485,10 +487,10 @@
       }
     },
     {
-      "condition": "[variables('isEntraMode')]",
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-11-01-preview",
-      "name": "[concat(variables('keyVaultName'), '/entra-client-secret')]", 
+      "condition": "[and(parameters('enableAuthentication'), equals(parameters('authenticationMode'), 'EntraExternalId'))]",
+      "type": "secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "entra-client-secret", 
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
@@ -497,9 +499,10 @@
       }
     },
     {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-11-01-preview",
-      "name": "[concat(variables('keyVaultName'), '/guid-tracking-salt')]",
+      "condition": "[and(parameters('enableAuthentication'), parameters('enableUserTracking'))]",
+      "type": "secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "guid-tracking-salt",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       ],
@@ -508,18 +511,7 @@
       }
     },
     {
-      "condition": "[variables('isJwtMode')]",
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-11-01-preview",
-      "name": "[concat(variables('keyVaultName'), '/demo-user-credentials')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-      ],
-      "properties": {
-        "value": "[variables('demoUserCredentials')]"
-      }
-    },
-    {
+      "condition": "[parameters('enableAuthentication')]",
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "name": "[guid(resourceGroup().id, variables('apiAppName'), variables('keyVaultSecretsUserRoleId'))]",
@@ -535,6 +527,7 @@
       }
     },
     {
+      "condition": "[parameters('enableAuthentication')]",
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "name": "[guid(resourceGroup().id, variables('mcpAppName'), variables('keyVaultSecretsUserRoleId'))]",
@@ -550,6 +543,7 @@
       }
     },
     {
+      "condition": "[parameters('enableAuthentication')]",
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "name": "[guid(resourceGroup().id, parameters('deploymentUser'), variables('keyVaultSecretsOfficerRoleId'))]",
@@ -627,23 +621,15 @@
     },
     "keyVaultName": {
       "type": "string", 
-      "value": "[variables('keyVaultName')]"
-    },
-    "authenticationMode": {
-      "type": "string",
-      "value": "[parameters('authenticationMode')]"
+      "value": "[if(parameters('enableAuthentication'), variables('keyVaultName'), 'Not configured - authentication disabled')]"
     },
     "authenticationEnabled": {
       "type": "bool",
-      "value": "[variables('isAuthenticationEnabled')]"
-    },
-    "demoCredentials": {
-      "type": "string",
-      "value": "[if(variables('isJwtMode'), variables('demoUserCredentials'), 'No demo credentials - authentication disabled or using Entra External ID')]"
+      "value": "[parameters('enableAuthentication')]"
     },
     "deploymentInstructions": {
       "type": "string",
-      "value": "[concat('Resources created successfully! Database: ', parameters('databaseProvider'), ', Authentication: ', parameters('authenticationMode'), '. Key Vault: ', variables('keyVaultName'), '. Next: Set up GitHub Actions CI/CD for automated deployments.')]"
+      "value": "[concat('Resources created successfully! Database: ', parameters('databaseProvider'), ', Authentication: ', if(parameters('enableAuthentication'), 'Enabled', 'Disabled'), '. Next: Set up GitHub Actions CI/CD for automated deployments.')]"
     }
   }
 }

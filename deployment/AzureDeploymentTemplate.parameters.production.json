@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "baseName": {
-      "value": "FabrikamProductionDemo"
+      "value": "FabrikamProduction"
     },
     "environment": {
-      "value": "dev"
+      "value": "Production"
     },
     "githubRepository": {
       "value": "https://github.com/YOUR-USERNAME/Fabrikam-Project"
@@ -17,17 +17,23 @@
     "databaseProvider": {
       "value": "SqlServer"
     },
-    "enableAuthentication": {
+    "authenticationMode": {
+      "value": "EntraExternalId"
+    },
+    "enableUserTracking": {
       "value": true
     },
-    "sqlAdminUsername": {
-      "value": "fabrikamadmin"
+    "entraExternalIdTenant": {
+      "value": "YOUR-TENANT.onmicrosoft.com"
+    },
+    "entraExternalIdClientId": {
+      "value": "YOUR-CLIENT-ID-HERE"
     },
     "enableCustomDomains": {
       "value": false
     },
-    "customDomain": {
-      "value": ""
+    "sqlAdminUsername": {
+      "value": "fabrikamadmin"
     }
   }
 }

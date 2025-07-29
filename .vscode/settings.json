@@ -3,7 +3,6 @@
   "omnisharp.enableAsyncCompletion": false,
   "files.autoSave": "off",
   "extensions.autoUpdate": false,
-  "github.copilot.chat.useModelContextProtocol": true,
   "rest-client.environmentVariables": {
     "local": {
       "apiUrl": "https://localhost:7297",

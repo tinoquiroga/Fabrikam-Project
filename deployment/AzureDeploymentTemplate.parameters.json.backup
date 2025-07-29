@@ -3,34 +3,43 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "baseName": {
-      "value": "FabrikamQuickDemo"
+      "value": "FabrikamAIDemo"
     },
     "environment": {
-      "value": "Development"
+      "value": "dev"
     },
     "githubRepository": {
-      "value": "https://github.com/YOUR-USERNAME/Fabrikam-Project"
+      "value": "https://github.com/davebirr/Fabrikam-Project"
     },
     "skuName": {
-      "value": "F1"
+      "value": "B1"
+    },
+    "customDomain": {
+      "value": "levelupcsp.com"
+    },
+    "enableCustomDomains": {
+      "value": true
     },
     "databaseProvider": {
-      "value": "InMemory"
+      "value": "SqlServer"
+    },
+    "enableAuthentication": {
+      "value": true
     },
     "authenticationMode": {
-      "value": "Disabled"
+      "value": "ApiKey"
     },
     "enableUserTracking": {
       "value": true
     },
     "entraExternalIdTenant": {
-      "value": ""
+      "value": "YOUR-TENANT-NAME.onmicrosoft.com"
     },
     "entraExternalIdClientId": {
       "value": ""
     },
-    "enableCustomDomains": {
-      "value": false
+    "sqlAdminUsername": {
+      "value": "fabrikamadmin"
     }
   }
 }

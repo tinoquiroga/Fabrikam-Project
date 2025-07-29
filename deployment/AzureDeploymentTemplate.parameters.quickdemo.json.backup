@@ -6,7 +6,7 @@
       "value": "FabrikamQuickDemo"
     },
     "environment": {
-      "value": "Development"
+      "value": "dev"
     },
     "githubRepository": {
       "value": "https://github.com/YOUR-USERNAME/Fabrikam-Project"
@@ -17,8 +17,11 @@
     "databaseProvider": {
       "value": "InMemory"
     },
+    "enableAuthentication": {
+      "value": false
+    },
     "authenticationMode": {
-      "value": "Disabled"
+      "value": "GuidTracking"
     },
     "enableUserTracking": {
       "value": true

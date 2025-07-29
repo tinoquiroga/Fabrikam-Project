@@ -1,0 +1,225 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Key Vault, secrets, and role assignments for authentication and security"
+  },
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "keyVaultName": {
+      "type": "string"
+    },
+    "authenticationMode": {
+      "type": "string"
+    },
+    "databaseProvider": {
+      "type": "string"
+    },
+    "jwtSecretName": {
+      "type": "string"
+    },
+    "sqlConnectionSecretName": {
+      "type": "string"
+    },
+    "sqlServerFqdn": {
+      "type": "string"
+    },
+    "sqlDatabaseName": {
+      "type": "string"
+    },
+    "sqlAdminUsername": {
+      "type": "string"
+    },
+    "sqlAdminPassword": {
+      "type": "securestring"
+    },
+    "entraExternalIdClientId": {
+      "type": "string"
+    },
+    "deploymentUser": {
+      "type": "string"
+    },
+    "apiAppPrincipalId": {
+      "type": "string"
+    },
+    "mcpAppPrincipalId": {
+      "type": "string"
+    },
+    "resourceGroupId": {
+      "type": "string"
+    },
+    "subscriptionId": {
+      "type": "string"
+    },
+    "suffix": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "isJwtMode": "[equals(parameters('authenticationMode'), 'JwtTokens')]",
+    "isEntraMode": "[equals(parameters('authenticationMode'), 'EntraExternalId')]",
+    "keyVaultSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
+    "keyVaultSecretsOfficerRoleId": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
+    "demoApiKeyValue": "fabrikam-demo-2025-secure-key-enterprise",
+    "guidTrackingSalt": "fabrikam-guid-tracking-salt-2025",
+    "demoUserCredentials": "Demo users: admin@fabrikam.com/FabrikamDemo2025!, user@fabrikam.com/UserDemo2025!"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enableRbacAuthorization": true,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 7,
+        "publicNetworkAccess": "Enabled"
+      }
+    },
+    {
+      "condition": "[equals(parameters('databaseProvider'), 'SqlServer')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('sqlConnectionSecretName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[concat('Server=tcp:', parameters('sqlServerFqdn'), ',1433;Initial Catalog=', parameters('sqlDatabaseName'), ';Persist Security Info=False;User ID=', parameters('sqlAdminUsername'), ';Password=', parameters('sqlAdminPassword'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', parameters('jwtSecretName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[base64(concat(uniqueString(parameters('resourceGroupId')), uniqueString(parameters('subscriptionId')), uniqueString(parameters('suffix'))))]"
+      }
+    },
+    {
+      "condition": "[variables('isJwtMode')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/demo-api-key')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[variables('demoApiKeyValue')]"
+      }
+    },
+    {
+      "condition": "[variables('isEntraMode')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview", 
+      "name": "[concat(parameters('keyVaultName'), '/entra-client-id')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[parameters('entraExternalIdClientId')]"
+      }
+    },
+    {
+      "condition": "[variables('isEntraMode')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/entra-client-secret')]", 
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "PLACEHOLDER-SET-IN-AZURE-PORTAL"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/guid-tracking-salt')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[variables('guidTrackingSalt')]"
+      }
+    },
+    {
+      "condition": "[variables('isJwtMode')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/demo-user-credentials')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "value": "[variables('demoUserCredentials')]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(parameters('resourceGroupId'), parameters('apiAppPrincipalId'), variables('keyVaultSecretsUserRoleId'))]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsUserRoleId'))]",
+        "principalId": "[parameters('apiAppPrincipalId')]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(parameters('resourceGroupId'), parameters('mcpAppPrincipalId'), variables('keyVaultSecretsUserRoleId'))]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsUserRoleId'))]",
+        "principalId": "[parameters('mcpAppPrincipalId')]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(parameters('resourceGroupId'), parameters('deploymentUser'), variables('keyVaultSecretsOfficerRoleId'))]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('keyVaultSecretsOfficerRoleId'))]",
+        "principalId": "[parameters('deploymentUser')]",
+        "principalType": "User"
+      }
+    }
+  ],
+  "outputs": {
+    "keyVaultName": {
+      "type": "string",
+      "value": "[parameters('keyVaultName')]"
+    },
+    "demoCredentials": {
+      "type": "string",
+      "value": "[if(variables('isJwtMode'), variables('demoUserCredentials'), 'No demo credentials - authentication disabled or using Entra External ID')]"
+    }
+  }
+}

@@ -6,28 +6,31 @@
       "value": "FabrikamAIDemo"
     },
     "environment": {
-      "value": "dev"
+      "value": "Development"
     },
     "githubRepository": {
-      "value": "https://github.com/davebirr/Fabrikam-Project"
+      "value": "https://github.com/YOUR-USERNAME/Fabrikam-Project"
     },
     "skuName": {
       "value": "B1"
     },
-    "customDomain": {
-      "value": "levelupcsp.com"
+    "databaseProvider": {
+      "value": "InMemory"
+    },
+    "authenticationMode": {
+      "value": "JwtTokens"
+    },
+    "enableUserTracking": {
+      "value": true
+    },
+    "entraExternalIdTenant": {
+      "value": ""
+    },
+    "entraExternalIdClientId": {
+      "value": ""
     },
     "enableCustomDomains": {
-      "value": true
-    },
-    "databaseProvider": {
-      "value": "SqlServer"
-    },
-    "enableAuthentication": {
-      "value": true
-    },
-    "sqlAdminUsername": {
-      "value": "fabrikamadmin"
+      "value": false
     }
   }
 }

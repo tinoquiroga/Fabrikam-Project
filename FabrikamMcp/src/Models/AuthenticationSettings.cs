@@ -60,7 +60,86 @@ public class JwtSettings
 }
 
 /// <summary>
+/// Authentication mode enumeration for MCP server
+/// Enhanced security-by-default approach: service-to-service always secured
+/// </summary>
+public enum AuthenticationMode
+{
+    /// <summary>
+    /// GUID tracking with service JWT authentication
+    /// User provides GUID, MCP generates service JWT for API calls
+    /// </summary>
+    Disabled,
+
+    /// <summary>
+    /// JWT Bearer token authentication (standard for ASP.NET Core Identity)
+    /// User provides JWT, MCP forwards JWT for API calls
+    /// </summary>
+    BearerToken,
+
+    /// <summary>
+    /// Entra External ID (Azure B2C) OAuth 2.0 authentication
+    /// User provides OAuth token, MCP converts to JWT for API calls
+    /// </summary>
+    EntraExternalId
+}
+
+/// <summary>
+/// Microsoft GUID validation settings for Disabled authentication mode
+/// </summary>
+public class GuidValidationSettings
+{
+    /// <summary>
+    /// Microsoft GUID format pattern (standard GUID format with hyphens)
+    /// </summary>
+    public string GuidPattern { get; set; } = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
+
+    /// <summary>
+    /// Whether to reject empty GUIDs (00000000-0000-0000-0000-000000000000)
+    /// </summary>
+    public bool RejectEmptyGuid { get; set; } = true;
+
+    /// <summary>
+    /// Whether to validate GUID exists in user registration database
+    /// </summary>
+    public bool ValidateInDatabase { get; set; } = true;
+
+    /// <summary>
+    /// Cache duration for GUID validation results in minutes
+    /// </summary>
+    public int ValidationCacheMinutes { get; set; } = 60;
+}
+
+/// <summary>
+/// Service JWT settings for service-to-service authentication
+/// Always used regardless of user authentication mode
+/// </summary>
+public class ServiceJwtSettings
+{
+    /// <summary>
+    /// Service JWT expiration time in hours (default: 24)
+    /// </summary>
+    public int ExpirationHours { get; set; } = 24;
+
+    /// <summary>
+    /// Service identity name for JWT claims
+    /// </summary>
+    public string ServiceIdentity { get; set; } = "fabrikam-mcp-service";
+
+    /// <summary>
+    /// Whether to cache service JWTs (recommended: true)
+    /// </summary>
+    public bool EnableCaching { get; set; } = true;
+
+    /// <summary>
+    /// Cache refresh threshold in minutes before expiration
+    /// </summary>
+    public int CacheRefreshThresholdMinutes { get; set; } = 60;
+}
+
+/// <summary>
 /// Authentication settings for MCP server
+/// Enhanced security-by-default architecture
 /// </summary>
 public class AuthenticationSettings
 {
@@ -70,12 +149,39 @@ public class AuthenticationSettings
     public const string SectionName = "Authentication";
 
     /// <summary>
-    /// JWT token configuration
+    /// Authentication mode to use for user authentication
+    /// </summary>
+    public AuthenticationMode Mode { get; set; } = AuthenticationMode.BearerToken;
+
+    /// <summary>
+    /// JWT token configuration for user authentication
     /// </summary>
     public JwtSettings Jwt { get; set; } = new();
 
     /// <summary>
-    /// Whether authentication is required for MCP tools
+    /// Service JWT configuration for service-to-service authentication
+    /// Always enabled for API security
     /// </summary>
-    public bool RequireAuthentication { get; set; } = true;
+    public ServiceJwtSettings ServiceJwt { get; set; } = new();
+
+    /// <summary>
+    /// GUID validation settings for Disabled authentication mode
+    /// </summary>
+    public GuidValidationSettings GuidValidation { get; set; } = new();
+
+    /// <summary>
+    /// Whether to enable comprehensive audit logging
+    /// </summary>
+    public bool EnableAuditLogging { get; set; } = true;
+
+    /// <summary>
+    /// Whether user authentication is required (varies by mode)
+    /// Service-to-service authentication is always required
+    /// </summary>
+    public bool RequireUserAuthentication => Mode != AuthenticationMode.Disabled;
+
+    /// <summary>
+    /// Whether service-to-service authentication is required (always true)
+    /// </summary>
+    public bool RequireServiceAuthentication => true;
 }

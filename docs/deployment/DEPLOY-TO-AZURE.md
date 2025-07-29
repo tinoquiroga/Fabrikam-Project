@@ -55,7 +55,8 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
 ## 🔧 Recommended Resource Group Setup
 
 ### Before Deployment:
-1. **Create Resource Group** with unique suffix:
+1. **Open Azure Cloud Shell** in the Azure Portal (click the shell icon `>_` in the top toolbar)
+2. **Create Resource Group** with unique suffix:
    ```powershell
    # Generate 4-character suffix
    $suffix = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
@@ -64,14 +65,14 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
    az group create --name "rg-FabrikamAiDemo-$suffix" --location "East US 2"
    ```
 
-2. **Get your Azure User ID** for Key Vault access:
+3. **Get your Azure User ID** for Key Vault access:
    ```powershell
    # Get your user object ID (needed for Key Vault RBAC permissions)
    $userObjectId = az ad signed-in-user show --query id -o tsv
    Write-Host "Your User Object ID: $userObjectId"
    ```
 
-3. **Note both values** for the ARM template deployment
+4. **Note both values** for the ARM template deployment
 
 ### After Deployment:
 1. **Test the deployed API** endpoints

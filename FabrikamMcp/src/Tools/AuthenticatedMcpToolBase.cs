@@ -140,8 +140,29 @@ public abstract class AuthenticatedMcpToolBase
     /// </summary>
     protected void AddAuthenticationHeaders(HttpRequestMessage request)
     {
-        // Note: For API calls, we might want to forward the JWT token
-        // This would be implemented when we add API-to-API authentication
-        // For now, MCP authentication is separate from API authentication
+        // Get JWT token if available
+        var jwtToken = _authService.GetCurrentJwtToken();
+        if (!string.IsNullOrEmpty(jwtToken))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+            _logger.LogDebug("Added JWT authentication header to API request");
+        }
+        else
+        {
+            _logger.LogDebug("No JWT token available for API request");
+        }
+    }
+
+    /// <summary>
+    /// Create an authenticated HTTP client request with proper headers
+    /// </summary>
+    protected async Task<HttpResponseMessage> SendAuthenticatedRequest(string url, HttpMethod? method = null)
+    {
+        method ??= HttpMethod.Get;
+        
+        using var request = new HttpRequestMessage(method, url);
+        AddAuthenticationHeaders(request);
+        
+        return await _httpClient.SendAsync(request);
     }
 }

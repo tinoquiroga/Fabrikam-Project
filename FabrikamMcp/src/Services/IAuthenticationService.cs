@@ -38,4 +38,10 @@ public interface IAuthenticationService
     /// </summary>
     /// <returns>Authentication context</returns>
     AuthenticationContext CreateAuthenticationContext();
+
+    /// <summary>
+    /// Gets the current JWT token for forwarding to API calls
+    /// </summary>
+    /// <returns>JWT token if available, null otherwise</returns>
+    string? GetCurrentJwtToken();
 }

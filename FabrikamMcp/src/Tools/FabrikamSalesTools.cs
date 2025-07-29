@@ -46,7 +46,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
             // If orderId is provided, get specific order details
             if (orderId.HasValue)
             {
-                var orderResponse = await _httpClient.GetAsync($"{baseUrl}/api/orders/{orderId.Value}");
+                var orderResponse = await SendAuthenticatedRequest($"{baseUrl}/api/orders/{orderId.Value}");
 
                 if (orderResponse.IsSuccessStatusCode)
                 {
@@ -141,7 +141,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
             queryParams.Add($"pageSize={pageSize}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/orders{queryString}");
+            var response = await SendAuthenticatedRequest($"{baseUrl}/api/orders{queryString}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -164,7 +164,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
                     fallbackParams.Add($"pageSize={pageSize}");
 
                     var fallbackQueryString = "?" + string.Join("&", fallbackParams);
-                    var fallbackResponse = await _httpClient.GetAsync($"{baseUrl}/api/orders{fallbackQueryString}");
+                    var fallbackResponse = await SendAuthenticatedRequest($"{baseUrl}/api/orders{fallbackQueryString}");
 
                     if (fallbackResponse.IsSuccessStatusCode)
                     {
@@ -318,7 +318,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
             if (!string.IsNullOrEmpty(toDate)) queryParams.Add($"toDate={Uri.EscapeDataString(toDate)}");
 
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/orders/analytics{queryString}");
+            var response = await SendAuthenticatedRequest($"{baseUrl}/api/orders/analytics{queryString}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -500,7 +500,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
             // If customerId is provided, get specific customer details
             if (customerId.HasValue)
             {
-                var customerResponse = await _httpClient.GetAsync($"{baseUrl}/api/customers/{customerId.Value}");
+                var customerResponse = await SendAuthenticatedRequest($"{baseUrl}/api/customers/{customerId.Value}");
 
                 if (customerResponse.IsSuccessStatusCode)
                 {
@@ -582,7 +582,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
             queryParams.Add($"pageSize={pageSize}");
 
             var queryString = "?" + string.Join("&", queryParams);
-            var response = await _httpClient.GetAsync($"{baseUrl}/api/customers{queryString}");
+            var response = await SendAuthenticatedRequest($"{baseUrl}/api/customers{queryString}");
 
             if (response.IsSuccessStatusCode)
             {

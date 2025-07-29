@@ -1,5 +1,6 @@
 # Fabrikam Testing - MCP Server and Tools
 # Comprehensive testing for MCP server functionality, tools, and authentication
+# Supports: Disabled, JwtTokens, and EntraExternalId authentication modes
 
 # Import shared utilities
 . "$PSScriptRoot\Test-Shared.ps1"
@@ -13,6 +14,9 @@ function Test-McpServer {
     )
     
     Write-SectionHeader "MCP SERVER TESTS"
+    
+    # Initialize authentication mode detection for MCP testing
+    Write-Host "🔍 Initializing MCP testing with authentication mode: $($script:TestConfig.AuthenticationMode)" -ForegroundColor Cyan
     
     # Basic server health and connectivity
     Test-McpServerHealth -McpBaseUrl $McpBaseUrl -TimeoutSeconds $TimeoutSeconds
@@ -372,19 +376,35 @@ function Test-ToolExecution {
     )
     
     try {
+        # Get authentication-aware parameters for MCP calls
+        $authParams = Get-McpParameters -BaseParameters $Params
+        
+        # Show authentication mode context for debugging
+        if ($script:TestConfig.AuthenticationMode -eq "Disabled" -and $authParams.ContainsKey("userId")) {
+            Write-Host "   🆔 Using userId parameter for Disabled auth mode: $($authParams.userId)" -ForegroundColor Gray
+        } elseif ($script:TestConfig.AuthenticationMode -eq "JwtTokens") {
+            Write-Host "   🔐 Using JWT authentication mode (token in headers)" -ForegroundColor Gray
+        }
+        
         $toolCallRequest = @{
             jsonrpc = "2.0"
             id      = "test-tool-$($Tool.name)"
             method  = "tools/call"
             params  = @{
                 name      = $Tool.name
-                arguments = $Params
+                arguments = $authParams
             }
         } | ConvertTo-Json -Depth 4
         
         $headers = @{
             'Content-Type' = 'application/json'
             'Accept'       = 'text/event-stream'
+        }
+        
+        # Add authentication headers if needed (JWT mode)
+        $authHeaders = Get-AuthenticationHeaders
+        foreach ($key in $authHeaders.Keys) {
+            $headers[$key] = $authHeaders[$key]
         }
         
         $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $toolCallRequest -Headers $headers -TimeoutSec $TimeoutSeconds
@@ -565,19 +585,24 @@ function Test-UnauthenticatedAccess {
     )
     
     try {
+        # In Disabled mode, we need to provide userId parameter even for "unauthenticated" test
+        $baseParams = @{}
+        $authParams = Get-McpParameters -BaseParameters $baseParams
+        
         $toolCallRequest = @{
             jsonrpc = "2.0"
             id      = "test-unauth"
             method  = "tools/call"
             params  = @{
                 name      = "GetSalesAnalytics"
-                arguments = @{}
+                arguments = $authParams
             }
         } | ConvertTo-Json -Depth 4
         
         $headers = @{
             'Content-Type' = 'application/json'
             'Accept'       = 'text/event-stream'
+        }
         }
         
         $response = Invoke-WebRequest -Uri "$McpBaseUrl/mcp" -Method Post -Body $toolCallRequest -Headers $headers -TimeoutSec $TimeoutSeconds

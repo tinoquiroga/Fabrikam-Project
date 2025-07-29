@@ -2,19 +2,16 @@ using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ModelContextProtocol.Server;
+using FabrikamMcp.Services;
 
 namespace FabrikamMcp.Tools;
 
 [McpServerToolType]
-public class FabrikamBusinessIntelligenceTools
+public class FabrikamBusinessIntelligenceTools : AuthenticatedMcpToolBase
 {
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
-    public FabrikamBusinessIntelligenceTools(HttpClient httpClient, IConfiguration configuration)
+    public FabrikamBusinessIntelligenceTools(HttpClient httpClient, IConfiguration configuration, IAuthenticationService authenticationService, ILogger<FabrikamBusinessIntelligenceTools> logger)
+        : base(httpClient, configuration, authenticationService, logger)
     {
-        _httpClient = httpClient;
-        _configuration = configuration;
     }
 
     [McpServerTool, Description("Get comprehensive business dashboard with key metrics across sales, inventory, and customer service. Provides executive-level insights and performance indicators.")]
@@ -30,11 +27,11 @@ public class FabrikamBusinessIntelligenceTools
             var (fromDate, toDate) = GetDateRange(timeframe);
 
             // Fetch data from multiple APIs concurrently
-            var salesTask = _httpClient.GetAsync($"{baseUrl}/api/orders/analytics?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
-            var supportTask = _httpClient.GetAsync($"{baseUrl}/api/supporttickets/analytics?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
-            var productsTask = _httpClient.GetAsync($"{baseUrl}/api/products?pageSize=1000");
-            var ordersTask = _httpClient.GetAsync($"{baseUrl}/api/orders?pageSize=100");
-            var ticketsTask = _httpClient.GetAsync($"{baseUrl}/api/supporttickets?pageSize=100");
+            var salesTask = SendAuthenticatedRequest($"{baseUrl}/api/orders/analytics?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
+            var supportTask = SendAuthenticatedRequest($"{baseUrl}/api/supporttickets/analytics?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}");
+            var productsTask = SendAuthenticatedRequest($"{baseUrl}/api/products?pageSize=1000");
+            var ordersTask = SendAuthenticatedRequest($"{baseUrl}/api/orders?pageSize=100");
+            var ticketsTask = SendAuthenticatedRequest($"{baseUrl}/api/supporttickets?pageSize=100");
 
             await Task.WhenAll(salesTask, supportTask, productsTask, ordersTask, ticketsTask);
 

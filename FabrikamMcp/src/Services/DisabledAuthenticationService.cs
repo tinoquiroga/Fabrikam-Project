@@ -53,4 +53,12 @@ public class DisabledAuthenticationService : IAuthenticationService
             IsAuthenticated = false // Indicates this is a disabled auth context
         };
     }
+
+    /// <summary>
+    /// Returns null when authentication is disabled (no token needed)
+    /// </summary>
+    public string? GetCurrentJwtToken()
+    {
+        return null; // No token needed when authentication is disabled
+    }
 }

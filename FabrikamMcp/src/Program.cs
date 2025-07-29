@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,11 +17,27 @@ builder.Services.AddHttpClient();
 // Add HTTP context accessor for authentication
 builder.Services.AddHttpContextAccessor();
 
-// Configure JWT Authentication
+// Add memory cache for GUID validation caching
+builder.Services.AddMemoryCache();
+
+// Configure authentication settings
 var authSettings = builder.Configuration.GetSection(AuthenticationSettings.SectionName).Get<AuthenticationSettings>() ?? new AuthenticationSettings();
+builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection(AuthenticationSettings.SectionName));
+
+// Add Entity Framework with in-memory database (for development)
+builder.Services.AddDbContext<FabrikamDbContext>(options =>
+    options.UseInMemoryDatabase("FabrikamMcpDb"));
+
+// Register our services
+builder.Services.AddScoped<IUserRegistrationService, UserRegistrationService>();
+builder.Services.AddScoped<IServiceJwtService, ServiceJwtService>();
+
+// Add controllers for user registration endpoints
+builder.Services.AddControllers();
+
 var jwtSettings = authSettings.Jwt;
 
-if (!string.IsNullOrEmpty(jwtSettings.SecretKey) && authSettings.RequireAuthentication)
+if (authSettings.Mode == AuthenticationMode.BearerToken && !string.IsNullOrEmpty(jwtSettings.SecretKey))
 {
     builder.Services.AddAuthentication(options =>
     {
@@ -64,12 +82,26 @@ if (!string.IsNullOrEmpty(jwtSettings.SecretKey) && authSettings.RequireAuthenti
     // Add authorization services
     builder.Services.AddAuthorization();
     
-    // Add authentication service
-    builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+    // Add authentication service based on mode
+    switch (authSettings.Mode)
+    {
+        case AuthenticationMode.BearerToken:
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            break;
+        case AuthenticationMode.Disabled:
+            builder.Services.AddScoped<IAuthenticationService, DisabledAuthenticationService>();
+            break;
+        case AuthenticationMode.EntraExternalId:
+            // TODO: Add Entra External ID authentication service when implemented
+            builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+            break;
+        default:
+            throw new InvalidOperationException($"Unsupported authentication mode: {authSettings.Mode}");
+    }
 }
 else
 {
-    // Add a dummy authentication service when authentication is disabled
+    // Add a dummy authentication service when authentication is disabled or not configured
     builder.Services.AddScoped<IAuthenticationService, DisabledAuthenticationService>();
 }
 
@@ -109,11 +141,14 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 
 // Add authentication and authorization middleware
-if (authSettings.RequireAuthentication && !string.IsNullOrEmpty(jwtSettings.SecretKey))
+if (authSettings.RequireUserAuthentication && !string.IsNullOrEmpty(jwtSettings.SecretKey))
 {
     app.UseAuthentication();
     app.UseAuthorization();
 }
+
+// Map controllers for user registration endpoints
+app.MapControllers();
 
 // Map MCP endpoints to the standard /mcp path
 app.MapMcp("/mcp");
@@ -132,8 +167,8 @@ app.MapGet("/status", (IConfiguration configuration) =>
         Transport = "HTTP",
         Authentication = new
         {
-            Required = authConfig.RequireAuthentication,
-            Method = authConfig.RequireAuthentication ? "JWT Bearer Token" : "None",
+            Required = authConfig.RequireUserAuthentication,
+            Method = authConfig.RequireUserAuthentication ? "JWT Bearer Token" : "None",
             Issuer = authConfig.Jwt.Issuer,
             Audience = authConfig.Jwt.Audience
         },

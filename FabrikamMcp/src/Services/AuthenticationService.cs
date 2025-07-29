@@ -93,4 +93,25 @@ public class AuthenticationService : IAuthenticationService
 
         return context;
     }
+
+    /// <summary>
+    /// Gets the current JWT token for forwarding to API calls
+    /// </summary>
+    /// <returns>JWT token if available, null otherwise</returns>
+    public string? GetCurrentJwtToken()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return null;
+
+        // Try to get token from Authorization header
+        var authHeader = httpContext.Request.Headers.Authorization.FirstOrDefault();
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            return authHeader["Bearer ".Length..].Trim();
+        }
+
+        _logger.LogDebug("No JWT token found in current request context");
+        return null;
+    }
 }

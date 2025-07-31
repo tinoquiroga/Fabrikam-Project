@@ -114,4 +114,22 @@ public class AuthenticationService : IAuthenticationService
         _logger.LogDebug("No JWT token found in current request context");
         return null;
     }
+
+    /// <summary>
+    /// Gets the current JWT token for forwarding to API calls (async version)
+    /// </summary>
+    /// <returns>JWT token if available, null otherwise</returns>
+    public Task<string?> GetCurrentJwtTokenAsync()
+    {
+        return Task.FromResult(GetCurrentJwtToken());
+    }
+
+    /// <summary>
+    /// Sets the user GUID context (not applicable for full authentication mode)
+    /// </summary>
+    /// <param name="userGuid">User GUID for context</param>
+    public void SetUserGuidContext(string userGuid)
+    {
+        _logger.LogWarning("SetUserGuidContext called on full authentication service - this is only for disabled mode");
+    }
 }

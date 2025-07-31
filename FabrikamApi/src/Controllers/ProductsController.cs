@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
 using FabrikamContracts.DTOs.Products;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FabrikamApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "ApiAccess")] // SECURITY: Environment-aware authentication for all product endpoints
 public class ProductsController : ControllerBase
 {
     private readonly FabrikamIdentityDbContext _context;
@@ -41,6 +43,11 @@ public class ProductsController : ControllerBase
                 if (Enum.TryParse<ProductCategory>(category, true, out var categoryEnum))
                 {
                     query = query.Where(p => p.Category == categoryEnum);
+                }
+                else
+                {
+                    // If category is invalid, return empty result
+                    return Ok(new List<object>());
                 }
             }
 

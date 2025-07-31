@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
 using FabrikamContracts.DTOs.Orders;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FabrikamApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "ApiAccess")] // SECURITY: Environment-aware authentication for all order endpoints
 public class OrdersController : ControllerBase
 {
     private readonly FabrikamIdentityDbContext _context;

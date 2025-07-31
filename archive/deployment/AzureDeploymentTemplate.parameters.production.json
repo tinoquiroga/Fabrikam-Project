@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": {
+      "value": "FabrikamProduction"
+    },
+    "environment": {
+      "value": "Production"
+    },
+    "githubRepository": {
+      "value": "https://github.com/YOUR-USERNAME/Fabrikam-Project"
+    },
+    "skuName": {
+      "value": "B1"
+    },
+    "databaseProvider": {
+      "value": "SqlServer"
+    },
+    "authenticationMode": {
+      "value": "EntraExternalId"
+    },
+    "enableUserTracking": {
+      "value": true
+    },
+    "entraExternalIdTenant": {
+      "value": "YOUR-TENANT.onmicrosoft.com"
+    },
+    "entraExternalIdClientId": {
+      "value": "YOUR-CLIENT-ID-HERE"
+    },
+    "enableCustomDomains": {
+      "value": false
+    },
+    "sqlAdminUsername": {
+      "value": "fabrikamadmin"
+    }
+  }
+}

@@ -1,5 +1,11 @@
 # 🏗️ Fabrikam Modular Homes - Business AI Demonstration Platform
 
+> **🤖 GITHUB COPILOT: CRITICAL SERVER RULES** ⚠️  
+> **ALWAYS use VS Code tasks for servers**: `run_task(id: "🌐 Start Both Servers")`  
+> **NEVER use run_in_terminal for servers**: `dotnet run` commands break server management  
+> **Use separate terminals for commands**: `run_in_terminal(command: "curl...", isBackground: false)`  
+> **📖 Full Rules**: `COPILOT-SERVER-RULES.md` and `.copilot/instructions.md`
+
 > **🚨 MONOREPO STRUCTURE**: This is a multi-project .NET solution. See `.github/MONOREPO-GUIDE.md` for complete development guidance.
 
 > **🤖 GitHub Copilot Notice**: This project uses **automated CI/CD** with GitHub Actions. Every code change triggers testing and deployment. See `.github/copilot-cicd-context.md` for full pipeline details.
@@ -27,7 +33,7 @@ A comprehensive .NET-based business simulation platform designed for **Microsoft
 | **[🚀 Deploy to Azure](docs/deployment/DEPLOY-TO-AZURE.md)** | One-click Azure deployment | ✅ Production Ready |
 | **[📚 Documentation Index](docs/DOCUMENTATION-INDEX.md)** | Complete documentation guide | ✅ Organized |
 | **[🎉 Authentication Complete](docs/development/AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)** | Implementation results | ✅ 100% Success |
-| **[🧪 Testing Guide](scripts/Test-Development.ps1)** | Automated testing | ✅ Local + Production |
+| **[🧪 Testing Guide](test.ps1)** | Automated testing | ✅ Local + Production |
 
 ## 🎬 Demo Video
 
@@ -47,14 +53,13 @@ Watch the complete Fabrikam Project demonstration showcasing:
 
 ```powershell
 # 🚀 Start both servers from workspace root
-.\scripts\Manage-Project.ps1 start
+.\test.ps1 start
 
 # 🧪 Test everything (convenient shortcuts available!)
 .\test.ps1 -Quick               # Root shortcut
-.\scripts\Test-Development.ps1 -Quick  # Full script
 
 # 📊 Check status
-.\scripts\Manage-Project.ps1 status
+.\test.ps1 status
 ```
 
 **Testing Shortcuts**: For convenience, you can use the root-level shortcuts:

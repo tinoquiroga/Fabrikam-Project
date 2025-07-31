@@ -80,6 +80,39 @@ public abstract class AuthenticatedMcpToolBase
     }
 
     /// <summary>
+    /// Set GUID context for disabled authentication mode
+    /// </summary>
+    protected void SetGuidContext(string? userGuid)
+    {
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            _authService.SetUserGuidContext(userGuid);
+            _logger.LogDebug("Set GUID context for tool execution: {UserGuid}", userGuid);
+        }
+    }
+
+    /// <summary>
+    /// Validate and process user GUID parameter
+    /// </summary>
+    protected bool ValidateAndSetGuidContext(string? userGuid, string methodName)
+    {
+        if (string.IsNullOrWhiteSpace(userGuid))
+        {
+            _logger.LogWarning("No user GUID provided for {MethodName} in disabled authentication mode", methodName);
+            return false;
+        }
+
+        if (!Guid.TryParse(userGuid, out var guidValue) || guidValue == Guid.Empty)
+        {
+            _logger.LogWarning("Invalid GUID format provided for {MethodName}: {UserGuid}", methodName, userGuid);
+            return false;
+        }
+
+        SetGuidContext(userGuid);
+        return true;
+    }
+
+    /// <summary>
     /// Create an authentication-aware error response
     /// </summary>
     protected object CreateAuthenticationErrorResponse(string methodName)
@@ -138,10 +171,10 @@ public abstract class AuthenticatedMcpToolBase
     /// <summary>
     /// Create HTTP headers with authentication if available
     /// </summary>
-    protected void AddAuthenticationHeaders(HttpRequestMessage request)
+    protected async Task AddAuthenticationHeadersAsync(HttpRequestMessage request)
     {
-        // Get JWT token if available
-        var jwtToken = _authService.GetCurrentJwtToken();
+        // Get JWT token if available (async to support service JWT generation)
+        var jwtToken = await _authService.GetCurrentJwtTokenAsync();
         if (!string.IsNullOrEmpty(jwtToken))
         {
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
@@ -154,6 +187,14 @@ public abstract class AuthenticatedMcpToolBase
     }
 
     /// <summary>
+    /// Create HTTP headers with authentication if available (legacy sync version)
+    /// </summary>
+    protected void AddAuthenticationHeaders(HttpRequestMessage request)
+    {
+        AddAuthenticationHeadersAsync(request).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
     /// Create an authenticated HTTP client request with proper headers
     /// </summary>
     protected async Task<HttpResponseMessage> SendAuthenticatedRequest(string url, HttpMethod? method = null)
@@ -161,7 +202,7 @@ public abstract class AuthenticatedMcpToolBase
         method ??= HttpMethod.Get;
         
         using var request = new HttpRequestMessage(method, url);
-        AddAuthenticationHeaders(request);
+        await AddAuthenticationHeadersAsync(request);
         
         return await _httpClient.SendAsync(request);
     }

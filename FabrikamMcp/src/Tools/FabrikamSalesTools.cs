@@ -22,6 +22,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
     [McpServerTool, Description("Get orders with optional filtering by status, region, date range, or specific order ID. Use orderId for detailed order info, or use filters for order lists. When called without parameters, returns recent orders. For date filters, use YYYY-MM-DD format. If no results found with date filter, will show recent orders.")]
     [McpAuthorize(McpRoles.Admin, McpRoles.Sales, McpRoles.CustomerService)]
     public async Task<object> GetOrders(
+        string? userGuid = null,
         int? orderId = null,
         string? status = null,
         string? region = null,
@@ -30,6 +31,22 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
         int page = 1,
         int pageSize = 20)
     {
+        // Set GUID context for disabled authentication mode
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (!ValidateAndSetGuidContext(userGuid, nameof(GetOrders)))
+            {
+                return new
+                {
+                    error = new
+                    {
+                        code = 400,
+                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    }
+                };
+            }
+        }
+
         // Validate authorization
         if (!ValidateAuthorization(nameof(GetOrders)))
         {
@@ -37,7 +54,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
         }
 
         // Log tool usage
-        LogToolUsage(nameof(GetOrders), new { orderId, status, region, fromDate, toDate, page, pageSize });
+        LogToolUsage(nameof(GetOrders), new { userGuid, orderId, status, region, fromDate, toDate, page, pageSize });
 
         try
         {
@@ -298,8 +315,24 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
 
     [McpServerTool, Description("Get sales analytics and summary data including total orders, revenue, average order value, and breakdowns by status and region.")]
     [McpAuthorize(McpRoles.Admin, McpRoles.Sales)]
-    public async Task<object> GetSalesAnalytics(string? fromDate = null, string? toDate = null)
+    public async Task<object> GetSalesAnalytics(string? userGuid = null, string? fromDate = null, string? toDate = null)
     {
+        // Set GUID context for disabled authentication mode
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (!ValidateAndSetGuidContext(userGuid, nameof(GetSalesAnalytics)))
+            {
+                return new
+                {
+                    error = new
+                    {
+                        code = 400,
+                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    }
+                };
+            }
+        }
+
         // Validate authorization
         if (!ValidateAuthorization(nameof(GetSalesAnalytics)))
         {
@@ -482,8 +515,24 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
 
     [McpServerTool, Description("Get customers with optional filtering by region or specific customer ID. Use customerId for detailed customer info including order history and support tickets, or use region filter for customer lists. When called without parameters, returns all customers with pagination.")]
     [McpAuthorize(McpRoles.Admin, McpRoles.Sales, McpRoles.CustomerService)]
-    public async Task<object> GetCustomers(int? customerId = null, string? region = null, int page = 1, int pageSize = 20)
+    public async Task<object> GetCustomers(string? userGuid = null, int? customerId = null, string? region = null, int page = 1, int pageSize = 20)
     {
+        // Set GUID context for disabled authentication mode
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (!ValidateAndSetGuidContext(userGuid, nameof(GetCustomers)))
+            {
+                return new
+                {
+                    error = new
+                    {
+                        code = 400,
+                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    }
+                };
+            }
+        }
+
         // Validate authorization
         if (!ValidateAuthorization(nameof(GetCustomers)))
         {
@@ -491,7 +540,7 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
         }
 
         // Log tool usage
-        LogToolUsage(nameof(GetCustomers), new { customerId, region, page, pageSize });
+        LogToolUsage(nameof(GetCustomers), new { userGuid, customerId, region, page, pageSize });
 
         try
         {

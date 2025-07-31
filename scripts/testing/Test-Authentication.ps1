@@ -1,6 +1,6 @@
 # Test-Authentication.ps1 - Authentication-Specific Testing Module
 # Tests authentication workflows based on detected authentication mode
-# Supports: Disabled, JwtTokens, and EntraExternalId modes
+# Supports: Disabled, BearerToken, and EntraExternalId modes
 
 param(
     [string]$ApiBaseUrl = "https://localhost:7297",
@@ -34,9 +34,9 @@ function Test-Authentication {
             $disabledResults = Test-AuthenticationDisabled
             $testResults += $disabledResults
         }
-        "JwtTokens" {
-            $jwtResults = Test-JwtAuthentication
-            $testResults += $jwtResults
+        "BearerToken" {
+            $bearerResults = Test-BearerTokenAuthentication
+            $testResults += $bearerResults
         }
         "EntraExternalId" {
             $entraResults = Test-EntraExternalId
@@ -190,19 +190,19 @@ function Test-AuthenticationDisabled {
     return $testResults
 }
 
-function Test-JwtAuthentication {
-    Write-TestSection "Testing JWT Authentication Mode"
+function Test-BearerTokenAuthentication {
+    Write-TestSection "Testing Bearer Token Authentication Mode"
     
     $testResults = @()
     
-    # Initialize authentication for JWT mode
-    Write-TestSubsection "JWT Authentication Initialization"
+    # Initialize authentication for Bearer Token mode
+    Write-TestSubsection "Bearer Token Authentication Initialization"
     
     $authInitialized = Initialize-AuthenticationForMode
     if ($authInitialized) {
-        Write-Host "✅ JWT authentication initialized successfully" -ForegroundColor Green
+        Write-Host "✅ Bearer Token authentication initialized successfully" -ForegroundColor Green
         $testResults += @{
-            Test = "JWT Initialization"
+            Test = "Bearer Token Initialization"
             Status = "Pass"
             Type = "Auth Setup"
             Details = "Token obtained and ready"
@@ -519,8 +519,11 @@ function Start-AuthenticationTesting {
         "Disabled" {
             $testResults = Test-AuthenticationDisabled
         }
+        "BearerToken" {
+            $testResults = Test-BearerTokenAuthentication
+        }
         "JwtTokens" {
-            $testResults = Test-JwtAuthentication
+            $testResults = Test-BearerTokenAuthentication
         }
         "EntraExternalId" {
             $testResults = Test-EntraExternalId

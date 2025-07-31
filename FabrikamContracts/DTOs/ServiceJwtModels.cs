@@ -2,41 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FabrikamContracts.DTOs;
 
-/// <summary>
-/// Service JWT settings for MCP server authentication
-/// </summary>
-public class ServiceJwtSettings
-{
-    /// <summary>
-    /// Service name for JWT audience
-    /// </summary>
-    public string ServiceName { get; set; } = "FabrikamMcp";
-
-    /// <summary>
-    /// Service JWT secret key (different from user JWT)
-    /// </summary>
-    public string SecretKey { get; set; } = "";
-
-    /// <summary>
-    /// JWT issuer for service tokens
-    /// </summary>
-    public string Issuer { get; set; } = "FabrikamMcp";
-
-    /// <summary>
-    /// JWT audience for service tokens
-    /// </summary>
-    public string Audience { get; set; } = "FabrikamServices";
-
-    /// <summary>
-    /// Service token expiration in minutes
-    /// </summary>
-    public int ExpirationMinutes { get; set; } = 1440; // 24 hours
-
-    /// <summary>
-    /// Allowed authentication modes for service JWT
-    /// </summary>
-    public AuthenticationMode[] AllowedModes { get; set; } = { AuthenticationMode.Disabled };
-}
+// NOTE: ServiceJwtSettings moved to AuthenticationModels.cs for consolidation
 
 /// <summary>
 /// Request for service JWT token

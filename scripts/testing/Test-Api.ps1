@@ -1,5 +1,5 @@
 # Test-Api.ps1 - Authentication-Aware API Testing Module
-# Supports all authentication modes: Disabled, JwtTokens, EntraExternalId
+# Supports all authentication modes: Disabled, BearerToken, EntraExternalId
 
 param(
     [string]$ApiBaseUrl = "https://localhost:7297",
@@ -58,8 +58,8 @@ function Test-ApiEndpoints {
         $result = Test-EndpointWithAuth -Endpoint "/api/orders/analytics" -Description "Order Analytics (No Auth)"
         $testResults += $result
         
-    } elseif ($script:TestConfig.AuthenticationMode -eq "JwtTokens") {
-        Write-Host "🔐 Testing endpoints with JWT authentication..." -ForegroundColor Yellow
+    } elseif ($script:TestConfig.AuthenticationMode -eq "BearerToken" -or $script:TestConfig.AuthenticationMode -eq "JwtTokens") {
+        Write-Host "🔐 Testing endpoints with Bearer Token authentication..." -ForegroundColor Yellow
         
         # Test with authentication
         $result = Test-EndpointWithAuth -Endpoint "/api/customers" -Description "Get Customers (JWT Auth)"
@@ -165,7 +165,7 @@ function Test-ApiDataIntegrity {
             
             # Check first customer structure
             $firstCustomer = $customers[0]
-            if ($firstCustomer.id -and $firstCustomer.firstName -and $firstCustomer.lastName) {
+            if ($firstCustomer.id -and $firstCustomer.name -and $firstCustomer.email) {
                 Write-Host "✅ Customer data structure valid" -ForegroundColor Green
                 $integrityResults += @{ Test = "Customer Data Structure"; Status = "Pass"; Details = "Required fields present" }
             } else {
@@ -205,7 +205,7 @@ function Test-ApiDataIntegrity {
             
             # Check first order structure
             $firstOrder = $orders[0]
-            if ($firstOrder.id -and $firstOrder.customerId -and $firstOrder.orderDate) {
+            if ($firstOrder.id -and $firstOrder.customer -and $firstOrder.orderDate) {
                 Write-Host "✅ Order data structure valid" -ForegroundColor Green
                 $integrityResults += @{ Test = "Order Data Structure"; Status = "Pass"; Details = "Required fields present" }
             } else {

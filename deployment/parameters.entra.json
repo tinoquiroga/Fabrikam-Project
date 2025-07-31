@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "prod"
+    },
+    "location": {
+      "value": "East US"
+    },
+    "authenticationMode": {
+      "value": "EntraExternalId"
+    },
+    "enableUserTracking": {
+      "value": true
+    },
+    "entraExternalIdTenant": {
+      "value": "YOUR-TENANT-NAME"
+    },
+    "entraExternalIdClientId": {
+      "value": "YOUR-CLIENT-ID"
+    },
+    "entraExternalIdClientSecret": {
+      "value": "YOUR-CLIENT-SECRET"
+    },
+    "deploymentUserId": {
+      "value": "YOUR-USER-OBJECT-ID"
+    },
+    "appServiceSku": {
+      "value": "P1v3"
+    }
+  }
+}

@@ -1,20 +1,21 @@
 using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Text.Json;
+using FabrikamMcp.Services;
 using ModelContextProtocol.Server;
 
 namespace FabrikamMcp.Tools;
 
 [McpServerToolType]
-public class FabrikamCustomerServiceTools
+public class FabrikamCustomerServiceTools : AuthenticatedMcpToolBase
 {
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
-    public FabrikamCustomerServiceTools(HttpClient httpClient, IConfiguration configuration)
+    public FabrikamCustomerServiceTools(
+        HttpClient httpClient, 
+        IConfiguration configuration,
+        IAuthenticationService authService,
+        ILogger<FabrikamCustomerServiceTools> logger) 
+        : base(httpClient, configuration, authService, logger)
     {
-        _httpClient = httpClient;
-        _configuration = configuration;
     }
 
     // Temporarily disabled complex tools for build success
@@ -215,11 +216,20 @@ public class FabrikamCustomerServiceTools
     }
 
     [McpServerTool, Description("Get customer service analytics including ticket volume, resolution times, and breakdowns by status, priority, and category.")]
-    public async Task<string> GetCustomerServiceAnalytics(string? fromDate = null, string? toDate = null)
+    public async Task<string> GetCustomerServiceAnalytics(string? userGuid = null, string? fromDate = null, string? toDate = null)
     {
+        // Set GUID context for disabled authentication mode
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (!ValidateAndSetGuidContext(userGuid, nameof(GetCustomerServiceAnalytics)))
+            {
+                return $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+            }
+        }
+
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://localhost:7297";
+            var baseUrl = GetApiBaseUrl();
             var queryParams = new List<string>();
             
             if (!string.IsNullOrEmpty(fromDate)) queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate)}");

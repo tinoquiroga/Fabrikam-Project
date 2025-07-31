@@ -1,6 +1,6 @@
 # Fabrikam Testing - MCP Server and Tools
 # Comprehensive testing for MCP server functionality, tools, and authentication
-# Supports: Disabled, JwtTokens, and EntraExternalId authentication modes
+# Supports: Disabled, BearerToken, and EntraExternalId authentication modes
 
 # Import shared utilities
 . "$PSScriptRoot\Test-Shared.ps1"
@@ -382,8 +382,8 @@ function Test-ToolExecution {
         # Show authentication mode context for debugging
         if ($script:TestConfig.AuthenticationMode -eq "Disabled" -and $authParams.ContainsKey("userId")) {
             Write-Host "   🆔 Using userId parameter for Disabled auth mode: $($authParams.userId)" -ForegroundColor Gray
-        } elseif ($script:TestConfig.AuthenticationMode -eq "JwtTokens") {
-            Write-Host "   🔐 Using JWT authentication mode (token in headers)" -ForegroundColor Gray
+        } elseif ($script:TestConfig.AuthenticationMode -eq "BearerToken" -or $script:TestConfig.AuthenticationMode -eq "JwtTokens") {
+            Write-Host "   🔐 Using Bearer Token authentication mode (token in headers)" -ForegroundColor Gray
         }
         
         $toolCallRequest = @{

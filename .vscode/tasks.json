@@ -1,7 +1,10 @@
 {
     "version": "2.0.0",
+    "// GITHUB COPILOT - READ THIS": "Use run_task tool for all server management. NEVER use run_in_terminal with dotnet run commands!",
+    "// CRITICAL RULE": "VS Code tasks for servers, separate terminals for commands - see COPILOT-SERVER-RULES.md",
     "tasks": [
         {
+            "// GITHUB_COPILOT_INSTRUCTION": "Use run_task tool with this task ID to start API server - NEVER use run_in_terminal with dotnet run",
             "label": "🚀 Start API Server",
             "type": "shell",
             "command": "dotnet",
@@ -53,6 +56,7 @@
         },
         {
             "label": "🌐 Start Both Servers",
+            "type": "shell",
             "dependsOrder": "parallel",
             "dependsOn": [
                 "🚀 Start API Server",
@@ -61,6 +65,14 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
             }
         },
         {
@@ -82,7 +94,7 @@
         {
             "label": "� Quick Test",
             "type": "shell",
-            "command": ".\\Test-Development.ps1",
+            "command": ".\\test.ps1",
             "args": ["-Quick"],
             "group": "test",
             "presentation": {
@@ -97,7 +109,7 @@
         {
             "label": "🧪 Full Tests",
             "type": "shell", 
-            "command": ".\\Test-Development.ps1",
+            "command": ".\\test.ps1",
             "args": ["-Verbose"],
             "group": "test",
             "presentation": {
@@ -112,7 +124,7 @@
         {
             "label": "👁️ Test with Visible Servers",
             "type": "shell", 
-            "command": ".\\Test-Development.ps1",
+            "command": ".\\test.ps1",
             "args": ["-Visible", "-Quick"],
             "group": "test",
             "presentation": {
@@ -127,8 +139,8 @@
         {
             "label": "📊 Project Status",
             "type": "shell",
-            "command": ".\\Manage-Project.ps1", 
-            "args": ["status"],
+            "command": ".\\test.ps1", 
+            "args": ["-Status"],
             "group": "build",
             "presentation": {
                 "echo": true,
@@ -142,8 +154,8 @@
         {
             "label": "� Stop All Servers",
             "type": "shell",
-            "command": ".\\Manage-Project.ps1",
-            "args": ["stop"],
+            "command": ".\\test.ps1",
+            "args": ["-Stop"],
             "group": "build", 
             "presentation": {
                 "echo": true,

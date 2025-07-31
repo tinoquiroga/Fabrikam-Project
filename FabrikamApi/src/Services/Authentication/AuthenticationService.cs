@@ -60,6 +60,13 @@ public interface IAuthenticationService
     /// <param name="userId">User identifier</param>
     /// <returns>User information or null if not found</returns>
     Task<UserInfo?> GetUserInfoAsync(string userId);
+
+    /// <summary>
+    /// Gets user information by email address (for test token compatibility)
+    /// </summary>
+    /// <param name="email">Email address</param>
+    /// <returns>User information or null if not found</returns>
+    Task<UserInfo?> GetUserInfoByEmailAsync(string email);
 }
 
 /// <summary>
@@ -414,6 +421,41 @@ public class AuthenticationService : IAuthenticationService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting user info for user {UserId}", userId);
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<UserInfo?> GetUserInfoByEmailAsync(string email)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return null;
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var claims = await _userManager.GetClaimsAsync(user);
+
+            return new UserInfo
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                DisplayName = user.DisplayName,
+                Roles = roles.ToList(),
+                Permissions = claims.Select(c => c.Type).ToList(),
+                IsAdmin = user.IsAdmin,
+                CustomerId = user.CustomerId,
+                IsActive = user.IsActive
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user info for email {Email}", email);
             return null;
         }
     }

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using FabrikamApi.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FabrikamApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "Admin")] // SECURITY: Environment-aware admin authentication for data seeding operations
 public class SeedController : ControllerBase
 {
     private readonly JsonDataSeedService _jsonSeedService;

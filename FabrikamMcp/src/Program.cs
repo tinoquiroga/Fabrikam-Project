@@ -1,6 +1,7 @@
 using FabrikamMcp.Tools;
 using FabrikamMcp.Models;
 using FabrikamMcp.Services;
+using FabrikamContracts.DTOs; // Import consolidated authentication models
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol;

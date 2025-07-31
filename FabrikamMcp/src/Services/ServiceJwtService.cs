@@ -1,4 +1,5 @@
 using FabrikamContracts.DTOs;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -79,30 +80,30 @@ public class ServiceJwtService : IServiceJwtService
         
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, userGuid.ToString()),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new(JwtRegisteredClaimNames.Iss, _jwtSettings.Issuer),
-            new(JwtRegisteredClaimNames.Aud, _jwtSettings.Audience),
-            new("fabrikam_auth_mode", mode.ToString()),
-            new("fabrikam_service_jwt", "true")
+            new Claim(JwtRegisteredClaimNames.Sub, userGuid.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new Claim(JwtRegisteredClaimNames.Iss, _jwtSettings.Issuer),
+            new Claim(JwtRegisteredClaimNames.Aud, _jwtSettings.Audience),
+            new Claim("fabrikam_auth_mode", mode.ToString()),
+            new Claim("fabrikam_service_jwt", "true")
         };
 
         // Add user-specific claims if available
         if (user != null)
         {
             if (!string.IsNullOrEmpty(user.Name))
-                claims.Add(new("name", user.Name));
+                claims.Add(new Claim("name", user.Name));
             
             if (!string.IsNullOrEmpty(user.Email))
-                claims.Add(new("email", user.Email));
+                claims.Add(new Claim("email", user.Email));
             
-            claims.Add(new("auth_mode", user.AuthenticationMode.ToString()));
+            claims.Add(new Claim("auth_mode", user.AuthenticationMode.ToString()));
         }
 
         // Add session ID if provided
         if (!string.IsNullOrEmpty(sessionId))
-            claims.Add(new("fabrikam_session_id", sessionId));
+            claims.Add(new Claim("fabrikam_session_id", sessionId));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -146,7 +147,7 @@ public class ServiceJwtService : IServiceJwtService
             }
 
             // Validate the user GUID still exists in our system
-            var userGuidClaim = principal.FindFirst("sub")?.Value;
+            var userGuidClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? principal.FindFirst("sub")?.Value;
             if (Guid.TryParse(userGuidClaim, out var userGuid))
             {
                 var userExists = await _userRegistrationService.ValidateUserGuidAsync(userGuid);
@@ -186,7 +187,7 @@ public class ServiceJwtService : IServiceJwtService
         if (principal == null)
             return null;
 
-        var userGuidClaim = principal.FindFirst("sub")?.Value;
+        var userGuidClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? principal.FindFirst("sub")?.Value;
         
         return Guid.TryParse(userGuidClaim, out var userGuid) ? userGuid : null;
     }

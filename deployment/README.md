@@ -1,271 +1,301 @@
-# 🚀 Fabrikam AI Demo - One-Click Azure Deployment
+# Fabrikam API Azure Deployment
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Fmain%2Fdeployment%2FAzureDeploymentTemplate.json)
+This folder contains the Azure deployment templates and scripts for the Fabrikam API with support for three authentication modes:
 
-## ⚡ **Quick Start: 15-Minute Setup**
+- **Disabled**: GUID tracking only, no authentication barriers
+- **BearerToken**: JWT token-based authentication  
+- **EntraExternalId**: OAuth 2.0 with Microsoft Entra External ID
 
-**📋 Want the fastest path to a working demo? Follow our [Deployment Checklist](DEPLOYMENT-CHECKLIST.md)**
+## Quick Start
 
-The checklist walks you through:
-- ✅ **5 min**: Deploy infrastructure (click button above)
-- ✅ **5 min**: Configure automatic CI/CD via Azure Portal  
-- ✅ **5 min**: Verify everything works and start developing
+### Prerequisites
 
-**For detailed technical information, continue reading below.**
+1. **Azure CLI** - [Install Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+2. **Azure Subscription** - With appropriate permissions to create resources
+3. **PowerShell** - For deployment scripts
 
----
-
-## 🎯 What This Deploys
-
-This ARM template creates a complete Fabrikam AI Demo environment with:
-
-- ✅ **FabrikamApi** - REST API service for modular homes business operations
-- ✅ **FabrikamMcp** - Model Context Protocol server for AI integrations  
-- ✅ **Application Insights** - Monitoring and telemetry for both services
-- ✅ **Log Analytics** - Centralized logging workspace
-- ✅ **App Service Plans** - Hosting infrastructure for web applications
-
-## 🏗️ Resource Naming Convention
-
-All resources are created with a unique 4-character suffix to ensure global uniqueness:
-
-```
-Instance Suffix: [4 random characters, e.g., "k3m9"]
-
-Resource Group: rg-fabrikamAIDemo-k3m9
-API Service: fabrikam-api-dev-k3m9
-MCP Service: fabrikam-mcp-dev-k3m9
-App Insights: appi-api-dev-k3m9, appi-mcp-dev-k3m9
-```
-
-## 📋 Prerequisites
-
-- **Azure Subscription** with Contributor access
-- **GitHub Account** (for CI/CD setup after deployment)
-- **GitHub Fork** of this repository (recommended for your own deployments)
-
-## 🎛️ Deployment Parameters
-
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| **baseName** | Base name for all resources | `FabrikamAIDemo` | 3-15 characters |
-| **environment** | Deployment environment | `dev` | `dev`, `staging`, `prod` |
-| **githubRepository** | Your GitHub repository URL | Fork URL | Your fork URL |
-| **githubToken** | GitHub PAT for CI/CD | Empty | Optional for setup |
-| **location** | Azure region | Resource Group location | Any Azure region |
-| **skuName** | App Service pricing tier | `B1` | `F1`, `B1`, `B2`, `S1`, `S2`, `P1v2`, `P2v2` |
-
-## 🚀 Quick Deployment Options
-
-### Option 1: One-Click Deployment (Recommended)
-Click the "Deploy to Azure" button above and fill in the parameters in the Azure portal.
-
-### Option 2: Azure CLI Deployment
-```bash
-# Clone and navigate to repository
-git clone https://github.com/davebirr/Fabrikam-Project.git
-cd Fabrikam-Project
-
-# Create resource group
-az group create --name "rg-fabrikam-demo" --location "East US 2"
-
-# Deploy template
-az deployment group create \
-  --resource-group "rg-fabrikam-demo" \
-  --template-file "deployment/AzureDeploymentTemplate.json" \
-  --parameters "deployment/AzureDeploymentTemplate.parameters.json"
-```
-
-### Option 3: PowerShell Deployment
-```powershell
-# Create resource group
-New-AzResourceGroup -Name "rg-fabrikam-demo" -Location "East US 2"
-
-# Deploy template
-New-AzResourceGroupDeployment `
-  -ResourceGroupName "rg-fabrikam-demo" `
-  -TemplateFile "deployment/AzureDeploymentTemplate.json" `
-  -TemplateParameterFile "deployment/AzureDeploymentTemplate.parameters.json"
-```
-
-## 📊 Post-Deployment Steps
-
-After successful deployment, you'll receive these outputs:
-
-```json
-{
-  "apiUrl": "https://fabrikam-api-dev-k3m9.azurewebsites.net",
-  "mcpUrl": "https://fabrikam-mcp-dev-k3m9.azurewebsites.net",
-  "apiHealthCheck": "https://fabrikam-api-dev-k3m9.azurewebsites.net/health",
-  "mcpHealthCheck": "https://fabrikam-mcp-dev-k3m9.azurewebsites.net/status",
-  "instanceSuffix": "k3m9"
-}
-```
-
-### Next Steps:
-
-1. **📝 Note Your Instance Suffix** - You'll need this for CI/CD setup
-2. **🔄 Set Up GitHub Actions** - Follow the [CI/CD Setup Guide](../docs/deployment/DEPLOYMENT-GUIDE.md#github-repository-setup)
-3. **🧪 Test Health Endpoints** - Verify services are running
-4. **🚀 Deploy Your Code** - Use GitHub Actions to deploy your application code
-
-## 🛠️ CI/CD Setup After Deployment
-
-### **🎯 Recommended: Azure Portal Setup** (Like CIPP)
-**The user-friendly approach that avoids CLI security restrictions:**
-
-```
-1. 🍴 Fork the repository on GitHub
-2. 🔗 Use Azure Portal Deployment Center  
-3. 📱 Point-and-click configuration
-4. ✅ Automatic GitHub Actions setup
-```
-
-**📖 See [Portal CI/CD Setup Guide](PORTAL-CICD-SETUP.md) for step-by-step instructions**
-
-### **⚡ Alternative: PowerShell Setup** (Advanced Users)
-For users comfortable with command-line tools:
+### Login to Azure
 
 ```powershell
-# 1. Configure VS Code settings
-.\deployment\Configure-VSCodeSettings.ps1 -ResourceGroup "your-resource-group"
-
-# 2. Set up GitHub Actions (requires GitHub PAT)
-.\deployment\Setup-GitHubActions.ps1 `
-  -ResourceGroup "your-resource-group" `
-  -GitHubRepository "https://github.com/YOUR-USERNAME/Fabrikam-Project" `
-  -GitHubToken "ghp_your_token_here" `
-  -SetupFork
+az login
+az account set --subscription "YOUR_SUBSCRIPTION_ID"
 ```
 
-**📖 See [CI/CD Strategy Guide](CI-CD-STRATEGY.md) for complete automation details**
+### Simple Deployment (Disabled Mode)
 
-### **🔄 Fork-and-Sync Pattern Benefits**
-Both approaches enable the **professional demo pattern** where:
-- ✅ **Demo users fork** your repository
-- ✅ **Get upstream updates** automatically  
-- ✅ **Maintain custom configs** in their fork
-- ✅ **Deploy independently** to their Azure instance
+For quick demos and testing without authentication:
 
-## 🔧 Customization Options
-
-### Environment-Specific Deployments
-Deploy multiple environments by changing the `environment` parameter:
-
-```bash
-# Development
-az deployment group create --parameters environment=dev
-
-# Staging  
-az deployment group create --parameters environment=staging
-
-# Production
-az deployment group create --parameters environment=prod
-```
-
-### Scaling Options
-Adjust the `skuName` parameter based on your needs:
-
-| SKU | Description | Use Case |
-|-----|-------------|----------|
-| `F1` | Free tier | Development/Testing |
-| `B1` | Basic tier | Small workloads |
-| `B2` | Basic tier | Medium workloads |
-| `S1` | Standard tier | Production workloads |
-| `P1v2` | Premium tier | High-performance production |
-
-## 🔍 Resource Details
-
-### What Gets Created:
-
-#### **API Service (fabrikam-api-{env}-{suffix})**
-- **Runtime**: .NET 9.0 on Linux
-- **Features**: Application Insights, HTTPS only, Always On (non-F1)
-- **Purpose**: REST API for modular homes business operations
-
-#### **MCP Service (fabrikam-mcp-{env}-{suffix})**  
-- **Runtime**: .NET 9.0 on Linux
-- **Features**: Application Insights, HTTPS only, Auto-configured to API
-- **Purpose**: Model Context Protocol server for AI integrations
-
-#### **Monitoring Stack**
-- **Log Analytics Workspace**: Centralized logging (30-day retention)
-- **Application Insights**: Performance monitoring and telemetry
-- **Managed Identity**: Secure access between services
-
-## 🚨 Troubleshooting
-
-### Common Issues:
-
-#### **Deployment Fails**
-- Check Azure subscription permissions (need Contributor role)
-- Verify all required providers are registered
-- Try different Azure region if resources unavailable
-
-#### **Resource Names Already Taken**
-- The unique suffix should prevent this, but if it occurs:
-- Delete the resource group and try again
-- The new deployment will generate a different suffix
-
-#### **GitHub Integration Issues**
-- Ensure you have Admin access to the GitHub repository
-- Generate a GitHub Personal Access Token if needed
-- Check that repository contains the correct folder structure
-
-### **Getting Help**
-- Check the [detailed deployment guide](../docs/deployment/DEPLOYMENT-GUIDE.md)
-- Review Azure Portal deployment logs
-- Test health endpoints after deployment
-- Verify Application Insights telemetry
-
-## 🎉 Success Validation
-
-After deployment, validate everything is working:
-
-```bash
-# Check API health
-curl https://fabrikam-api-dev-{your-suffix}.azurewebsites.net/health
-
-# Check MCP status  
-curl https://fabrikam-mcp-dev-{your-suffix}.azurewebsites.net/status
-
-# Verify Application Insights data
-# (Check Azure Portal → Application Insights → Live Metrics)
-```
-
-## � Setting Up CI/CD (Recommended Next Step)
-
-The ARM template deploys infrastructure only. For a complete demo environment, set up GitHub Actions CI/CD:
-
-### **Quick CI/CD Setup**
 ```powershell
-# 1. Configure VS Code settings
-.\deployment\Configure-VSCodeSettings.ps1 -ResourceGroup "your-resource-group"
-
-# 2. Set up GitHub Actions (requires GitHub PAT)
-.\deployment\Setup-GitHubActions.ps1 `
-  -ResourceGroup "your-resource-group" `
-  -GitHubRepository "https://github.com/YOUR-USERNAME/Fabrikam-Project" `
-  -GitHubToken "ghp_your_token_here" `
-  -SetupFork
+.\deployment\Deploy-FabrikamApi.ps1 -AuthenticationMode Disabled -EnvironmentName dev
 ```
 
-### **Fork-and-Sync Pattern**
-This setup enables the **professional demo pattern** where:
-- ✅ **Demo users fork** your repository
-- ✅ **Get upstream updates** automatically  
-- ✅ **Maintain custom configs** in their fork
-- ✅ **Deploy independently** to their Azure instance
+### JWT Token Authentication Deployment
 
-**📖 See [CI/CD Strategy Guide](CI-CD-STRATEGY.md) for complete details**
+For API key-based authentication:
 
-## �📖 Related Documentation
+```powershell
+.\deployment\Deploy-FabrikamApi.ps1 -AuthenticationMode BearerToken -EnvironmentName prod
+```
 
-- [Detailed Deployment Guide](../docs/deployment/DEPLOYMENT-GUIDE.md)
-- [CI/CD Setup Instructions](../docs/deployment/DEPLOYMENT-GUIDE.md#ci-cd-workflows)
-- [Architecture Overview](../docs/architecture/SYSTEM-ARCHITECTURE.md)
-- [Development Guide](../docs/development/DEVELOPMENT-GUIDE.md)
+### Entra External ID OAuth Deployment
 
----
+For enterprise OAuth 2.0 authentication:
 
-**🎯 Ready to deploy? Click the "Deploy to Azure" button at the top of this README!**
+```powershell
+.\deployment\Deploy-FabrikamApi.ps1 `
+    -AuthenticationMode EntraExternalId `
+    -EnvironmentName prod `
+    -EntraExternalIdTenant "yourcompany.onmicrosoft.com" `
+    -EntraExternalIdClientId "12345678-1234-1234-1234-123456789012"
+```
+
+The script will prompt for the client secret securely.
+
+## Authentication Modes
+
+### 1. Disabled Mode
+
+- **Use Case**: Demos, testing, development
+- **Security**: GUID-based user tracking only
+- **Resources**: Basic App Service, Key Vault, monitoring
+- **Configuration**: No additional setup required
+
+### 2. BearerToken Mode  
+
+- **Use Case**: Production APIs with custom authentication
+- **Security**: JWT tokens with HMAC SHA-256 signing
+- **Resources**: App Service + JWT signing key in Key Vault
+- **Configuration**: JWT settings automatically configured
+
+### 3. EntraExternalId Mode
+
+- **Use Case**: Enterprise integration with Microsoft identity
+- **Security**: OAuth 2.0 with Microsoft Entra External ID
+- **Resources**: App Service + B2C configuration + OAuth endpoints
+- **Configuration**: Requires Entra External ID tenant setup
+
+## Entra External ID Setup
+
+### Prerequisites
+
+1. **Entra External ID Tenant**: Create a B2C or External ID tenant
+2. **App Registration**: Register your application in the tenant
+3. **Client Secret**: Generate a client secret for the app
+
+### Step-by-Step Setup
+
+1. **Create Entra External ID Tenant**
+   - Go to [Azure Portal](https://portal.azure.com)
+   - Create a new Entra External ID tenant
+   - Note the tenant domain (e.g., `contoso.onmicrosoft.com`)
+
+2. **Register Application**
+   - In your Entra tenant, go to App Registrations
+   - Create a new registration
+   - Note the Application (client) ID
+   - Generate a client secret
+
+3. **Configure Redirect URIs**
+   - After deployment, add these redirect URIs to your app registration:
+   - `https://your-app-name.azurewebsites.net/signin-oidc`
+   - `https://your-app-name.azurewebsites.net/auth/callback`
+
+4. **Deploy with Parameters**
+   ```powershell
+   .\deployment\Deploy-FabrikamApi.ps1 `
+       -AuthenticationMode EntraExternalId `
+       -EnvironmentName prod `
+       -EntraExternalIdTenant "contoso.onmicrosoft.com" `
+       -EntraExternalIdClientId "your-client-id"
+   ```
+
+## Architecture
+
+### Resource Structure
+
+```
+Subscription
+└── Resource Group (rg-fabrikam-{environment})
+    ├── App Service Plan (plan-{unique-id})
+    ├── App Service (app-{unique-id}) 
+    ├── Key Vault (kv-{unique-id})
+    ├── Application Insights (appi-{unique-id})
+    ├── Log Analytics Workspace (log-{unique-id})
+    └── Managed Identity (id-{unique-id})
+```
+
+### Key Vault Secrets by Mode
+
+#### Disabled Mode
+- `guid-tracking-salt`: Salt for GUID generation
+
+#### BearerToken Mode  
+- `guid-tracking-salt`: Salt for GUID generation
+- `jwt-secret-key`: HMAC signing key for JWT tokens
+
+#### EntraExternalId Mode
+- `guid-tracking-salt`: Salt for GUID generation
+- `entra-client-id`: OAuth application client ID
+- `entra-client-secret`: OAuth client secret
+- `entra-tenant-id`: Entra tenant domain
+- `entra-authority-url`: OAuth authority endpoint
+- `entra-well-known-endpoint`: OIDC configuration endpoint
+- `entra-jwks-uri`: Token validation keys endpoint
+
+## Deployment Scripts
+
+### Deploy-FabrikamApi.ps1
+
+Main deployment script with the following parameters:
+
+- **Required Parameters**:
+  - `-AuthenticationMode`: Disabled, BearerToken, or EntraExternalId
+  - `-EnvironmentName`: Environment identifier (dev, prod, staging)
+
+- **Optional Parameters**:
+  - `-Location`: Azure region (default: East US)
+  - `-SubscriptionId`: Azure subscription ID
+  - `-ResourceGroupName`: Custom resource group name
+  - `-AppServiceSku`: App Service pricing tier (default: B1)
+
+- **EntraExternalId Parameters**:
+  - `-EntraExternalIdTenant`: Tenant domain
+  - `-EntraExternalIdClientId`: Application client ID
+  - `-EntraExternalIdClientSecret`: Client secret (SecureString)
+
+- **Options**:
+  - `-WhatIf`: Show what would be deployed without actually deploying
+  - `-Verbose`: Enable verbose output
+
+## Configuration Files
+
+### azure.yaml
+
+Azure Developer CLI configuration for streamlined deployment:
+
+```yaml
+name: fabrikam-api-demo
+infra:
+  provider: bicep
+  path: deployment/bicep
+services:
+  fabrikamapi:
+    project: ./FabrikamApi/src
+    host: appservice
+    language: dotnet
+```
+
+### Parameters Files
+
+- `parameters.dev.json`: Development environment defaults
+- `parameters.entra.json`: EntraExternalId production template
+
+## Bicep Templates
+
+### main.bicep
+
+Main template that orchestrates resource deployment based on authentication mode.
+
+### resources.bicep  
+
+Core Azure resources with authentication-aware configuration:
+- App Service with mode-specific app settings
+- Key Vault with role-based access
+- Monitoring and diagnostics
+- Managed identity for secure resource access
+
+### entra-resources.bicep
+
+EntraExternalId-specific resources:
+- OAuth 2.0 endpoint configuration
+- B2C tenant settings
+- OIDC well-known endpoints
+
+## Monitoring and Diagnostics
+
+All deployments include:
+
+- **Application Insights**: Application performance monitoring
+- **Log Analytics**: Centralized logging
+- **Diagnostic Settings**: App Service logs and metrics
+- **Health Checks**: `/health` endpoint monitoring
+
+## Security Features
+
+### All Modes
+- HTTPS only
+- TLS 1.2 minimum
+- Managed identity for Azure resource access
+- Key Vault for secrets management
+- RBAC for resource permissions
+
+### BearerToken Mode
+- JWT token validation
+- HMAC SHA-256 signing
+- Configurable token expiration
+- Audience and issuer validation
+
+### EntraExternalId Mode
+- OAuth 2.0 token validation
+- OIDC discovery
+- Automatic token refresh
+- Claims mapping to application roles
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Deployment Permission Errors**
+   - Ensure you have Contributor role on the subscription
+   - Verify Azure CLI is logged in: `az account show`
+
+2. **Key Vault Access Issues**
+   - The deployment script automatically assigns Key Vault permissions
+   - If manual setup is needed, assign "Key Vault Secrets Officer" role
+
+3. **EntraExternalId Authentication Failures**
+   - Verify redirect URIs are configured in app registration
+   - Check client secret hasn't expired
+   - Ensure tenant domain is correct
+
+4. **App Service Configuration Issues**
+   - Check Application Insights connection string
+   - Verify managed identity has Key Vault access
+   - Review app settings in Azure Portal
+
+### Logs and Monitoring
+
+- **Application Logs**: Available in Application Insights
+- **Deployment Logs**: Check Azure Portal deployment history
+- **App Service Logs**: Available in Log Analytics workspace
+
+## Cost Optimization
+
+### Development (B1 SKU)
+- Estimated cost: ~$13-15/month
+- Suitable for demos and testing
+
+### Production (P1v3 SKU)  
+- Estimated cost: ~$75-85/month
+- Includes auto-scaling and high availability
+
+### Free Tier (F1 SKU)
+- Free for limited usage
+- Suitable for initial testing only
+
+## Next Steps
+
+After successful deployment:
+
+1. **Test the API**: Access the Swagger UI at `https://your-app.azurewebsites.net/swagger`
+2. **Configure Monitoring**: Set up alerts in Application Insights
+3. **Set Up CI/CD**: Configure GitHub Actions for automated deployment
+4. **Security Review**: Review CORS settings and authentication configuration
+5. **Performance Testing**: Use Azure Load Testing for performance validation
+
+## Support
+
+For issues and questions:
+- Review the deployment logs in Azure Portal
+- Check Application Insights for runtime errors
+- Consult the main project README for API-specific documentation

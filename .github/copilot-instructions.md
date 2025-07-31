@@ -1,4 +1,44 @@
-# 🏗️ Fabrikam Projec## 📋 Project Overview
+# 🏗️ Fabrikam Project - GitHub Copilot Development Instructions
+
+## 🚨 **CRITICAL: GitHub Copilot Server Management Rules**
+
+**⚠️ ALWAYS FOLLOW THESE RULES TO AVOID BREAKING SERVERS ⚠️**
+
+### **🎯 Rule #1: Use VS Code Tasks for Servers**
+```markdown
+✅ DO: Use `run_task` tool for server management
+❌ DON'T: Use `run_in_terminal` with `dotnet run` commands
+
+Correct pattern:
+- Start: run_task("🌐 Start Both Servers")
+- Stop: run_task("🛑 Stop All Servers") 
+- Status: run_task("📊 Project Status")
+```
+
+### **🎯 Rule #2: Use Separate Terminals for Commands**
+```markdown
+✅ DO: Use `run_in_terminal` (isBackground: false) for testing commands
+❌ DON'T: Run commands in server terminals (stops servers)
+
+Safe commands in separate terminals:
+- curl -k https://localhost:7297/api/info
+- Invoke-RestMethod -SkipCertificateCheck
+- ./test.ps1 -Quick
+- dotnet test
+```
+
+### **🎯 Rule #3: Never Mix Servers and Commands**
+```markdown
+DEDICATED SERVER TERMINALS: Only for servers (via VS Code tasks)
+COMMAND TERMINALS: Only for testing/commands (via run_in_terminal)
+NEVER run commands where servers are running!
+```
+
+**📖 Full Strategy**: `docs/development/GITHUB-COPILOT-SERVER-STRATEGY.md`
+
+---
+
+## 📋 Project Overview
 
 This is a .NET 9.0 business simulation platform with two main components:
 
@@ -446,19 +486,52 @@ public async Task GetProduct_WithInvalidId_ReturnsNotFound()
 - ✅ Include relevant context (IDs, parameters, operation types)
 - ✅ Never log sensitive information (passwords, API keys)
 
-## 🧪 Testing Infrastructure
+## � GitHub Copilot Server Management Strategy
+
+**CRITICAL: Use VS Code Tasks for server management, separate terminals for commands**
+
+### **✅ CORRECT Server Management Pattern**
+
+```markdown
+**For Server Management** (GitHub Copilot should ALWAYS use VS Code Tasks):
+1. Start servers: Use `run_task` tool with "🌐 Start Both Servers"
+2. Check status: Use `run_task` tool with "📊 Project Status"  
+3. Stop servers: Use `run_task` tool with "🛑 Stop All Servers"
+4. NEVER use: `dotnet run` commands directly in terminals
+
+**For Commands** (GitHub Copilot should use separate terminals):
+1. Use `run_in_terminal` tool with `isBackground: false` for commands
+2. Safe commands: curl, Invoke-RestMethod, ./test.ps1, dotnet test
+3. NEVER run commands in server terminals (breaks servers)
+```
+
+### **Available VS Code Tasks**
+
+| Task Name | Purpose | When to Use |
+|-----------|---------|-------------|
+| 🚀 Start API Server | Start API on port 7297 | Individual API testing |
+| 🤖 Start MCP Server | Start MCP on ports 5000/5001 | Individual MCP testing |
+| 🌐 Start Both Servers | Start both servers parallel | Full stack testing |
+| 🛑 Stop All Servers | Stop all running servers | Cleanup/restart |
+| 🏗️ Build Solution | Build entire solution | Before starting servers |
+| ⚡ Quick Test | Fast health check | Quick validation |
+| 🧪 Full Tests | Comprehensive testing | Full validation |
+
+**📖 Full Strategy**: See `docs/development/GITHUB-COPILOT-SERVER-STRATEGY.md`
+
+## �🧪 Testing Infrastructure
 
 This project includes a comprehensive testing infrastructure. Use these tools during development:
 
 ### **Automated Testing Scripts**
 
-- **`Test-Development.ps1`** - Main development testing script
+- **`test.ps1`** - Main development testing script
 
   ```powershell
-  .\Test-Development.ps1 -Quick     # Fast health check
-  .\Test-Development.ps1 -ApiOnly   # API endpoint testing
-  .\Test-Development.ps1 -McpOnly   # MCP tool testing
-  .\Test-Development.ps1 -Verbose   # Full detailed testing
+  .\test.ps1 -Quick     # Fast health check
+  .\test.ps1 -ApiOnly   # API endpoint testing
+  .\test.ps1 -McpOnly   # MCP tool testing
+  .\test.ps1 -Verbose   # Full detailed testing
   ```
 
 - **`Fix-Verification.ps1`** - Quick verification after fixes
@@ -605,13 +678,13 @@ When adding new API endpoints, follow this checklist:
 
    - Add HTTP request to `api-tests.http`
    - Add test case to `FabrikamTests/Api/`
-   - Update `Test-Development.ps1` if needed
+   - Update `test.ps1` if needed
 
 3. **Validate with Testing**:
 
    ```powershell
    # Test new endpoint
-   .\Test-Development.ps1 -ApiOnly
+   .\test.ps1 -ApiOnly
    ```
 
 4. **Update Documentation**:
@@ -676,7 +749,7 @@ When adding new MCP tools, follow this pattern:
 2. **Add Testing**:
 
    - Create test in `FabrikamTests/Mcp/`
-   - Test with `.\Test-Development.ps1 -McpOnly`
+   - Test with `.\test.ps1 -McpOnly`
    - Verify in Copilot
 
 3. **Follow MCP Patterns**:
@@ -717,7 +790,7 @@ When changing DTOs or data schemas:
 
    ```powershell
    # Test all layers
-   .\Test-Development.ps1 -Verbose
+   .\test.ps1 -Verbose
 
    # Run unit tests
    dotnet test FabrikamTests/
@@ -734,14 +807,14 @@ Always run this testing sequence after making changes:
 
 ```powershell
 # 1. Quick validation
-.\Test-Development.ps1 -Quick
+.\test.ps1 -Quick
 
 # 2. Category-specific testing
-.\Test-Development.ps1 -ApiOnly    # For API changes
-.\Test-Development.ps1 -McpOnly    # For MCP changes
+.\test.ps1 -ApiOnly    # For API changes
+.\test.ps1 -McpOnly    # For MCP changes
 
 # 3. Full integration testing
-.\Test-Development.ps1 -Verbose
+.\test.ps1 -Verbose
 
 # 4. Unit test validation
 dotnet test FabrikamTests/

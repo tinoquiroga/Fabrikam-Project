@@ -1,4 +1,5 @@
 using FabrikamContracts.DTOs.Orders;
+using System.Text.Json.Serialization;
 
 namespace FabrikamContracts.DTOs.Support;
 
@@ -11,56 +12,67 @@ public class SupportTicketListItemDto
     /// <summary>
     /// Ticket ID - matches API property 'id'
     /// </summary>
+    [JsonPropertyName("id")]
     public int Id { get; set; }
 
     /// <summary>
     /// Ticket number - matches API property 'ticketNumber'
     /// </summary>
+    [JsonPropertyName("ticketNumber")]
     public string TicketNumber { get; set; } = string.Empty;
 
     /// <summary>
-    /// Ticket subject - matches API property 'subject'
+    /// Ticket subject - matches API property 'title'
     /// </summary>
+    [JsonPropertyName("title")]
     public string Subject { get; set; } = string.Empty;
 
     /// <summary>
     /// Ticket status - matches API property 'status'
     /// </summary>
+    [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
 
     /// <summary>
     /// Ticket priority - matches API property 'priority'
     /// </summary>
+    [JsonPropertyName("priority")]
     public string Priority { get; set; } = string.Empty;
 
     /// <summary>
     /// Ticket category - matches API property 'category'
     /// </summary>
+    [JsonPropertyName("category")]
     public string Category { get; set; } = string.Empty;
 
     /// <summary>
     /// Customer information - matches API property 'customer'
     /// </summary>
+    [JsonPropertyName("customer")]
     public SupportCustomerDto Customer { get; set; } = new();
 
     /// <summary>
     /// Assigned to - matches API property 'assignedTo'
     /// </summary>
+    [JsonPropertyName("assignedTo")]
     public string? AssignedTo { get; set; }
 
     /// <summary>
     /// Created date - matches API property 'createdDate'
     /// </summary>
+    [JsonPropertyName("createdDate")]
     public DateTime CreatedDate { get; set; }
 
     /// <summary>
     /// Resolved date - matches API property 'resolvedDate'
     /// </summary>
+    [JsonPropertyName("resolvedDate")]
     public DateTime? ResolvedDate { get; set; }
 
     /// <summary>
     /// Region - matches API property 'region'
     /// </summary>
+    [JsonPropertyName("region")]
     public string? Region { get; set; }
 }
 

@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
 using FabrikamContracts.DTOs.Customers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FabrikamApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "ApiAccess")] // SECURITY: Environment-aware authentication for all customer endpoints
 public class CustomersController : ControllerBase
 {
     private readonly FabrikamIdentityDbContext _context;
@@ -150,6 +152,85 @@ public class CustomersController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving customer {CustomerId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    /// <summary>
+    /// Get customer analytics and summary data
+    /// </summary>
+    [HttpGet("analytics")]
+    public async Task<ActionResult<CustomerAnalyticsDto>> GetCustomersAnalytics(
+        string? region = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        try
+        {
+            var query = _context.Customers.AsQueryable();
+
+            // Apply region filter
+            if (!string.IsNullOrEmpty(region))
+            {
+                query = query.Where(c => c.Region == region);
+            }
+
+            // Apply date filters
+            if (startDate.HasValue)
+            {
+                query = query.Where(c => c.CreatedDate >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                query = query.Where(c => c.CreatedDate <= endDate.Value);
+            }
+
+            var customers = await query
+                .Include(c => c.Orders)
+                .ToListAsync();
+
+            // Calculate active customers (those with orders)
+            var activeCustomers = customers.Count(c => c.Orders.Any());
+
+            var analytics = new CustomerAnalyticsDto
+            {
+                TotalCustomers = customers.Count,
+                ActiveCustomers = activeCustomers,
+                TotalRevenue = customers.SelectMany(c => c.Orders).Sum(o => o.Total),
+                AverageOrderValue = customers.SelectMany(c => c.Orders).Any() 
+                    ? customers.SelectMany(c => c.Orders).Average(o => o.Total) 
+                    : 0,
+                RegionalBreakdown = customers
+                    .GroupBy(c => c.Region ?? "Unknown")
+                    .Select(g => new CustomerRegionalBreakdownDto
+                    {
+                        Region = g.Key,
+                        CustomerCount = g.Count(),
+                        Revenue = g.SelectMany(c => c.Orders).Sum(o => o.Total)
+                    })
+                    .OrderByDescending(x => x.Revenue)
+                    .ToList(),
+                TopCustomers = customers
+                    .Select(c => new TopCustomerDto
+                    {
+                        Id = c.Id,
+                        Name = $"{c.FirstName} {c.LastName}",
+                        Email = c.Email,
+                        Region = c.Region ?? "Unknown",
+                        TotalSpent = c.Orders.Sum(o => o.Total),
+                        OrderCount = c.Orders.Count
+                    })
+                    .Where(c => c.TotalSpent > 0)
+                    .OrderByDescending(c => c.TotalSpent)
+                    .Take(10)
+                    .ToList()
+            };
+
+            return Ok(analytics);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving customer analytics");
             return StatusCode(500, "Internal server error");
         }
     }

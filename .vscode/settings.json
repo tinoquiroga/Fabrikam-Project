@@ -1,7 +1,11 @@
 {
+  "// GITHUB_COPILOT_CRITICAL_RULES": "ALWAYS use run_task for servers, NEVER run_in_terminal with dotnet run - See docs/development/COPILOT-SERVER-RULES.md",
+  "// SERVER_TASKS": "🌐 Start Both Servers, 🛑 Stop All Servers, 📊 Project Status",
+  "// SAFE_COMMANDS": "curl, Invoke-RestMethod, ./test.ps1, dotnet test (use run_in_terminal with isBackground:false)",
   "dotnet.defaultSolution": "Fabrikam.sln",
   "omnisharp.enableAsyncCompletion": false,
   "files.autoSave": "off",
+  "chat.mcp.discovery.enabled": false,
   "extensions.autoUpdate": false,
   "rest-client.environmentVariables": {
     "local": {

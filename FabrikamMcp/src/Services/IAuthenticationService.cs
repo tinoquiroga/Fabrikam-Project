@@ -44,4 +44,16 @@ public interface IAuthenticationService
     /// </summary>
     /// <returns>JWT token if available, null otherwise</returns>
     string? GetCurrentJwtToken();
+
+    /// <summary>
+    /// Gets the current JWT token for forwarding to API calls (async version)
+    /// </summary>
+    /// <returns>JWT token if available, null otherwise</returns>
+    Task<string?> GetCurrentJwtTokenAsync();
+
+    /// <summary>
+    /// Sets the user GUID context for disabled authentication mode
+    /// </summary>
+    /// <param name="userGuid">User GUID for context</param>
+    void SetUserGuidContext(string userGuid);
 }

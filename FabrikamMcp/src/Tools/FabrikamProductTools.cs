@@ -1,24 +1,26 @@
 using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Text.Json;
+using FabrikamMcp.Services;
 using ModelContextProtocol.Server;
 
 namespace FabrikamMcp.Tools;
 
 [McpServerToolType]
-public class FabrikamProductTools
+public class FabrikamProductTools : AuthenticatedMcpToolBase
 {
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
-    public FabrikamProductTools(HttpClient httpClient, IConfiguration configuration)
+    public FabrikamProductTools(
+        HttpClient httpClient, 
+        IConfiguration configuration,
+        IAuthenticationService authService,
+        ILogger<FabrikamProductTools> logger) 
+        : base(httpClient, configuration, authService, logger)
     {
-        _httpClient = httpClient;
-        _configuration = configuration;
     }
 
     [McpServerTool, Description("Get product catalog with optional filtering by category, price range, stock status, or specific product ID. Use productId for detailed product info, or use filters for product lists. When called without parameters, returns all active products.")]
     public async Task<object> GetProducts(
+        string? userGuid = null,
         int? productId = null,
         string? category = null,
         bool? inStock = null,
@@ -27,6 +29,22 @@ public class FabrikamProductTools
         int page = 1,
         int pageSize = 20)
     {
+        // Set GUID context for disabled authentication mode
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (!ValidateAndSetGuidContext(userGuid, nameof(GetProducts)))
+            {
+                return new
+                {
+                    error = new
+                    {
+                        code = 400,
+                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    }
+                };
+            }
+        }
+
         try
         {
             var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev.levelupcsp.com";
@@ -223,12 +241,29 @@ public class FabrikamProductTools
 
     [McpServerTool, Description("Get product analytics including inventory levels, sales performance, and category breakdowns. Provides insights into product performance and stock management.")]
     public async Task<object> GetProductAnalytics(
+        string? userGuid = null,
         string? category = null,
         bool includeOutOfStock = true)
     {
+        // Set GUID context for disabled authentication mode
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (!ValidateAndSetGuidContext(userGuid, nameof(GetProductAnalytics)))
+            {
+                return new
+                {
+                    error = new
+                    {
+                        code = 400,
+                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    }
+                };
+            }
+        }
+
         try
         {
-            var baseUrl = _configuration["FabrikamApi:BaseUrl"] ?? "https://fabrikam-api-dev.levelupcsp.com";
+            var baseUrl = GetApiBaseUrl();
 
             // Get all products for analytics
             var queryParams = new List<string> { "pageSize=1000" }; // Get all products

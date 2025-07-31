@@ -2,6 +2,7 @@ using FabrikamApi.Data;
 using FabrikamApi.Services;
 using FabrikamApi.Services.Authentication;
 using FabrikamApi.Models.Authentication;
+using FabrikamApi.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -143,7 +144,6 @@ if (!string.IsNullOrEmpty(jwtSettings.SecretKey))
 }
 
 // Add authentication services
-builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 // Add data seeding services - JSON as primary, hardcoded as fallback
@@ -168,18 +168,8 @@ builder.Services.AddScoped<ISeedService>(provider =>
     };
 });
 
-// Add authorization services
-builder.Services.AddAuthorization(options =>
-{
-    // Define custom authorization policies
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Administrator"));
-    options.AddPolicy("RequireManagerRole", policy => policy.RequireRole("Administrator", "Manager"));
-    options.AddPolicy("RequireUserRole", policy => policy.RequireRole("Administrator", "Manager", "User"));
-
-    // Custom claim-based policies
-    options.AddPolicy("CanManageUsers", policy => policy.RequireClaim("permission", "manage-users"));
-    options.AddPolicy("CanViewReports", policy => policy.RequireClaim("permission", "view-reports"));
-});
+// Add environment-aware authorization services
+builder.Services.ConfigureEnvironmentAwareAuthentication(builder.Configuration, builder.Environment);
 
 // Configure OpenAPI/Swagger
 builder.Services.AddOpenApi();

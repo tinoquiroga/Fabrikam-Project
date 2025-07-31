@@ -1,5 +1,5 @@
 # Test-Shared.ps1 - Enhanced Authentication-Aware Testing Utilities
-# Supports Disabled, JwtTokens, and EntraExternalId authentication modes
+# Supports Disabled, BearerToken, and EntraExternalId authentication modes
 
 # Enhanced test configuration with authentication detection
 $script:TestConfig = @{
@@ -62,6 +62,15 @@ function Detect-AuthenticationMode {
                 Write-Host "   🔓 Authentication is DISABLED - Using GUID-based identification" -ForegroundColor Yellow
                 Write-Host "   📝 MCP calls will require userId GUID parameter" -ForegroundColor Gray
             }
+            "BearerToken" {
+                Write-Host "   🔐 Bearer Token Authentication is ENABLED" -ForegroundColor Yellow
+                if ($response.endpoints) {
+                    Write-Host "   📋 Available endpoints:" -ForegroundColor Gray
+                    $response.endpoints.PSObject.Properties | ForEach-Object {
+                        Write-Host "      $($_.Name): $($_.Value)" -ForegroundColor Gray
+                    }
+                }
+            }
             "JwtTokens" {
                 Write-Host "   🔐 JWT Authentication is ENABLED" -ForegroundColor Yellow
                 if ($response.endpoints) {
@@ -84,8 +93,8 @@ function Detect-AuthenticationMode {
     }
     catch {
         Write-Host "⚠️  Could not detect authentication mode: $($_.Exception.Message)" -ForegroundColor Yellow
-        Write-Host "   Assuming JwtTokens mode for compatibility" -ForegroundColor Gray
-        $script:TestConfig.AuthenticationMode = "JwtTokens"
+        Write-Host "   Assuming BearerToken mode for compatibility" -ForegroundColor Gray
+        $script:TestConfig.AuthenticationMode = "BearerToken"
         $script:TestConfig.IsEnabled = $true
         $script:TestConfig.RequiresToken = $true
         return $false
@@ -136,6 +145,10 @@ function Get-AuthenticationToken {
     if ($script:TestConfig.AuthenticationMode -eq "EntraExternalId") {
         Write-Host "⚠️  EntraExternalId authentication not yet implemented in tests" -ForegroundColor Yellow
         return $null
+    }
+    
+    if ($script:TestConfig.AuthenticationMode -eq "BearerToken") {
+        return Get-JwtToken
     }
     
     if ($script:TestConfig.AuthenticationMode -eq "JwtTokens") {
@@ -311,6 +324,14 @@ function Get-AuthenticationHeaders {
             # No authentication headers needed for Disabled mode
             return @{}
         }
+        "BearerToken" {
+            if ($script:TestConfig.TestToken) {
+                return @{ "Authorization" = "Bearer $($script:TestConfig.TestToken)" }
+            } else {
+                Write-Host "⚠️  Bearer Token mode but no token available" -ForegroundColor Yellow
+                return @{}
+            }
+        }
         "JwtTokens" {
             if ($script:TestConfig.TestToken) {
                 return @{ "Authorization" = "Bearer $($script:TestConfig.TestToken)" }
@@ -339,6 +360,10 @@ function Get-McpParameters {
             $BaseParameters["userId"] = Get-TestUserId
             return $BaseParameters
         }
+        "BearerToken" {
+            # Bearer Token mode uses token in headers, no additional parameters needed
+            return $BaseParameters
+        }
         "JwtTokens" {
             # JWT mode uses token in headers, no additional parameters needed
             return $BaseParameters
@@ -362,8 +387,8 @@ function Initialize-AuthenticationForMode {
             Write-Host "   Test User ID: $testUserId" -ForegroundColor Gray
             return $true
         }
-        "JwtTokens" {
-            Write-Host "🔐 Initializing for JWT authentication mode..." -ForegroundColor Yellow
+        "BearerToken" {
+            Write-Host "🔐 Initializing for Bearer Token authentication mode..." -ForegroundColor Yellow
             return (Get-JwtToken) -ne $null
         }
         "EntraExternalId" {
@@ -392,6 +417,17 @@ function Test-AuthenticationMode {
             Write-Host ""
             Write-Host "✅ Disabled mode: API should accept requests without authentication" -ForegroundColor Green
             Write-Host "📝 MCP calls should include userId parameter: $(Get-TestUserId)" -ForegroundColor Gray
+        }
+        "BearerToken" {
+            if ($script:TestConfig.TestToken) {
+                Write-Host "   Token: Available (length: $($script:TestConfig.TestToken.Length))" -ForegroundColor White
+                Write-Host ""
+                Write-Host "✅ Bearer Token mode: Authentication token ready" -ForegroundColor Green
+            } else {
+                Write-Host "   Token: Not available" -ForegroundColor Red
+                Write-Host ""
+                Write-Host "❌ Bearer Token mode: No authentication token" -ForegroundColor Red
+            }
         }
         "JwtTokens" {
             if ($script:TestConfig.TestToken) {

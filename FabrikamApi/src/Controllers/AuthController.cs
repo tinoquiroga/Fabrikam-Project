@@ -188,7 +188,7 @@ public class AuthController : ControllerBase
     /// <response code="400">Invalid password data</response>
     /// <response code="401">Unauthorized access</response>
     [HttpPost("change-password")]
-    [Authorize]
+    [Authorize(Policy = "ApiAccess")]
     [ProducesResponseType(typeof(object), 200)]
     [ProducesResponseType(typeof(string), 400)]
     [ProducesResponseType(typeof(string), 401)]
@@ -318,7 +318,7 @@ public class AuthController : ControllerBase
     /// <response code="401">Unauthorized access</response>
     /// <response code="404">User not found</response>
     [HttpGet("me")]
-    [Authorize]
+    [Authorize(Policy = "ApiAccess")]
     [ProducesResponseType(typeof(UserInfo), 200)]
     [ProducesResponseType(typeof(string), 401)]
     [ProducesResponseType(typeof(string), 404)]
@@ -336,8 +336,18 @@ public class AuthController : ControllerBase
             var userInfo = await _authenticationService.GetUserInfoAsync(userId);
             if (userInfo == null)
             {
-                _logger.LogWarning("User information not found for user {UserId}", userId);
-                return NotFound("User not found");
+                // Fallback: If ID lookup fails, try email lookup (for test tokens)
+                var email = User.FindFirst(ClaimTypes.Email)?.Value;
+                if (!string.IsNullOrEmpty(email) && email == userId) // Only if the userId is actually an email
+                {
+                    userInfo = await _authenticationService.GetUserInfoByEmailAsync(email);
+                }
+
+                if (userInfo == null)
+                {
+                    _logger.LogWarning("User information not found for user {UserId}", userId);
+                    return NotFound("User not found");
+                }
             }
 
             _logger.LogDebug("Retrieved user information for user {UserId}", userId);
@@ -356,7 +366,7 @@ public class AuthController : ControllerBase
     /// <returns>Success status</returns>
     /// <response code="200">Logout successful</response>
     [HttpPost("logout")]
-    [Authorize]
+    [Authorize(Policy = "ApiAccess")]
     [ProducesResponseType(typeof(object), 200)]
     public ActionResult Logout()
     {

@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using FabrikamApi.Data;
 using FabrikamApi.Models;
 using FabrikamContracts.DTOs.Support;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FabrikamApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = "ApiAccess")] // SECURITY: Environment-aware authentication for all support ticket endpoints
 public class SupportTicketsController : ControllerBase
 {
     private readonly FabrikamIdentityDbContext _context;
@@ -57,6 +59,11 @@ public class SupportTicketsController : ControllerBase
                 if (statusEnums.Any())
                 {
                     query = query.Where(t => statusEnums.Contains(t.Status));
+                }
+                else
+                {
+                    // If no valid statuses were parsed, return empty result
+                    return Ok(new List<SupportTicketListItemDto>());
                 }
             }
 

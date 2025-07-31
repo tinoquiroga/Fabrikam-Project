@@ -20,6 +20,8 @@
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
     <PackageReference Include="Moq" Version="4.20.69" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.7" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FabrikamApi\src\FabrikamApi.csproj" />
     <ProjectReference Include="..\FabrikamMcp\src\FabrikamMcp.csproj" />
+    <ProjectReference Include="..\FabrikamContracts\FabrikamContracts.csproj" />
   </ItemGroup>
 
 </Project>

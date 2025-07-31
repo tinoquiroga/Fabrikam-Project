@@ -28,11 +28,11 @@ This directory contains utility scripts for development, testing, and data manag
 
 These essential scripts stay in the project root for easy access:
 
-- **`Test-Development.ps1`** - Main comprehensive testing suite
+- **`Test-Development-Modular.ps1`** - Main comprehensive testing suite
 - **`Manage-Project.ps1`** - Primary project management (start/stop/status)
 
 **Convenient Shortcuts Available**:
-- **`test.ps1`** - PowerShell shortcut for `scripts\Test-Development.ps1` (**Recommended**)
+- **`test.ps1`** - PowerShell shortcut for `scripts\Test-Development-Modular.ps1` (**Recommended**)
 - **`test.bat`** - Batch file shortcut for command prompt users (use if PowerShell not available)
 
 Both shortcuts pass all parameters through to the main testing script.
@@ -48,7 +48,7 @@ Both shortcuts pass all parameters through to the main testing script.
 ### **Development Workflow**
 ```powershell
 # Daily development testing (root level)
-.\Test-Development.ps1 -Quick
+.\test.ps1 -Quick
 
 # After making fixes (utility scripts)
 .\scripts\Fix-Verification.ps1
@@ -72,7 +72,7 @@ Both shortcuts pass all parameters through to the main testing script.
 
 These utility scripts complement the main project scripts:
 
-- **`Test-Development.ps1`** - Comprehensive testing and CI/CD integration
+- **`Test-Development-Modular.ps1`** - Comprehensive testing and CI/CD integration
 - **`Manage-Project.ps1`** - Server lifecycle management and project operations
 - **`docs/demos/Validate-Demo.ps1`** - Demo environment validation
 

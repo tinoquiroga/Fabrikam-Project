@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using FabrikamContracts.DTOs;
 
 namespace FabrikamApi.Controllers;
 
@@ -9,11 +10,15 @@ public class InfoController : ControllerBase
 {
     private readonly ILogger<InfoController> _logger;
     private readonly IConfiguration _configuration;
+    private readonly AuthenticationSettings _authSettings;
+    private readonly IWebHostEnvironment _environment;
 
-    public InfoController(ILogger<InfoController> logger, IConfiguration configuration)
+    public InfoController(ILogger<InfoController> logger, IConfiguration configuration, AuthenticationSettings authSettings, IWebHostEnvironment environment)
     {
         _logger = logger;
         _configuration = configuration;
+        _authSettings = authSettings;
+        _environment = environment;
     }
 
     /// <summary>
@@ -25,38 +30,37 @@ public class InfoController : ControllerBase
         var buildTime = GetBuildTime();
         var authMode = GetAuthenticationMode();
         
-        var apiInfo = new
+        // Use proper DTO following C# best practices
+        var apiInfo = new ApiInfoResponse
         {
-            Name = "Fabrikam Modular Homes API",
+            ApplicationName = "Fabrikam Modular Homes API",
             Version = "1.0.0",
-            BuildTime = buildTime,
-            Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production",
-            Description = "API for managing modular home business operations including sales, inventory, and customer service",
-            Documentation = "/swagger",
-            Authentication = new
-            {
-                Mode = authMode,
-                Description = GetAuthenticationDescription(authMode),
-                Endpoints = GetAuthenticationEndpoints(authMode)
-            },
-            Endpoints = new
-            {
-                Customers = "/api/customers",
-                Orders = "/api/orders", 
-                Products = "/api/products",
-                SupportTickets = "/api/supporttickets",
-                Authentication = authMode != "Disabled" ? "/api/auth" : null,
-                Health = "/health"
-            },
-            BusinessModules = new[]
-            {
-                "Sales - Manage customer orders and track sales performance",
-                "Inventory - Monitor product stock levels and availability", 
-                "Customer Service - Handle support tickets and customer inquiries"
-            }
+            BuildDate = buildTime,
+            Environment = _environment.EnvironmentName,
+            DatabaseStatus = "Connected"
         };
 
         return Ok(apiInfo);
+    }
+
+    /// <summary>
+    /// Get health status of the API
+    /// </summary>
+    [HttpGet("health")]
+    public IActionResult GetHealth()
+    {
+        var healthInfo = new
+        {
+            status = "Healthy",
+            timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            services = new
+            {
+                database = "Connected",
+                api = "Running"
+            }
+        };
+
+        return Ok(healthInfo);
     }
 
     /// <summary>
@@ -98,31 +102,8 @@ public class InfoController : ControllerBase
 
     private string GetAuthenticationMode()
     {
-        // Check for explicit authentication mode configuration
-        var authMode = _configuration["Authentication:Mode"] ?? 
-                      Environment.GetEnvironmentVariable("FABRIKAM_AUTH_MODE");
-        
-        if (!string.IsNullOrEmpty(authMode))
-        {
-            return authMode;
-        }
-
-        // Auto-detect based on configuration
-        var jwtSecretKey = _configuration["Authentication:AspNetIdentity:Jwt:SecretKey"];
-        var entraSettings = _configuration["Authentication:EntraExternalId:ClientId"];
-        
-        if (!string.IsNullOrEmpty(entraSettings))
-        {
-            return "EntraExternalId";
-        }
-        else if (!string.IsNullOrEmpty(jwtSecretKey))
-        {
-            return "JwtTokens";
-        }
-        else
-        {
-            return "Disabled";
-        }
+        // Use the configured authentication settings to ensure consistency
+        return _authSettings.Mode.ToString();
     }
 
     private string GetAuthenticationDescription(string mode)
@@ -130,6 +111,7 @@ public class InfoController : ControllerBase
         return mode switch
         {
             "Disabled" => "Authentication is disabled. All endpoints are publicly accessible.",
+            "BearerToken" => "JWT token-based authentication using ASP.NET Core Identity. Tokens expire and require refresh.",
             "JwtTokens" => "JWT token-based authentication using ASP.NET Core Identity. Tokens expire and require refresh.",
             "EntraExternalId" => "Azure Entra External ID authentication for external users and applications.",
             _ => "Unknown authentication mode"
@@ -141,6 +123,13 @@ public class InfoController : ControllerBase
         return mode switch
         {
             "Disabled" => null,
+            "BearerToken" => new
+            {
+                Register = "/api/auth/register",
+                Login = "/api/auth/login", 
+                Refresh = "/api/auth/refresh",
+                DemoCredentials = "/api/auth/demo-credentials"
+            },
             "JwtTokens" => new
             {
                 Register = "/api/auth/register",
@@ -164,11 +153,11 @@ public class InfoController : ControllerBase
             // Get the build time from the assembly
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
             var fileInfo = new FileInfo(assembly.Location);
-            return fileInfo.LastWriteTimeUtc.ToString("yyyy-MM-dd HH:mm:ss UTC");
+            return fileInfo.LastWriteTimeUtc.ToString("yyyy-MM-ddTHH:mm:ssZ"); // ISO 8601 format for better parsing
         }
         catch
         {
-            return "Unknown";
+            return DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"); // Fallback to current time in ISO format
         }
     }
 }

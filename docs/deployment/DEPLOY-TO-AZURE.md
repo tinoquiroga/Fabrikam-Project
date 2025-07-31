@@ -1,10 +1,33 @@
-# 🚀 Deploy to Azure - Key Vault Enhanced Template
+# 🚀 Deploy to Azure - Three Authentication Modes
 
-## Quick Deployment
+## 🎯 Choose Your Authentication Mode
 
-Click the button below to deploy the enhanced Fabrikam platform with Key Vault integration:
+The Fabrikam Platform supports three authentication modes to fit different use cases:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Fmain%2Fdeployment%2FAzureDeploymentTemplate.json)
+### 🔓 **Disabled Mode** - Quick Demos
+- **Best for**: POCs, demos, rapid testing
+- **Security**: GUID-based user tracking only
+- **Deploy**: [![Deploy Disabled Mode](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+
+### 🔐 **BearerToken Mode** - JWT Authentication  
+- **Best for**: Production APIs, secure demos
+- **Security**: JWT tokens with Key Vault secrets
+- **Deploy**: [![Deploy JWT Mode](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+
+### 🏢 **EntraExternalId Mode** - Enterprise OAuth
+- **Best for**: Enterprise integration, SSO scenarios  
+- **Security**: OAuth 2.0 with Microsoft Entra External ID
+- **Deploy**: [![Deploy Entra Mode](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+
+## 📋 Authentication Mode Comparison
+
+| Feature | Disabled | BearerToken | EntraExternalId |
+|---------|----------|-------------|-----------------|
+| **Setup Time** | ⚡ Instant | 🔧 5 minutes | 🏢 15-30 minutes |
+| **Security Level** | 🔓 Basic tracking | 🔐 JWT tokens | 🏢 Enterprise OAuth |
+| **User Management** | 📝 GUID only | 👤 Registration required | 🏢 Azure AD integration |
+| **Best For** | Demos, POCs | Production APIs | Enterprise SSO |
+| **Prerequisites** | None | None | Entra External ID tenant |
 
 ## 🔐 Key Features
 
@@ -25,15 +48,61 @@ Click the button below to deploy the enhanced Fabrikam platform with Key Vault i
 - 🔀 **Example**: `rg-FabrikamAiDemo-y32g` (matches your actual deployment pattern)
 - ✅ **Benefits**: Unique isolation, easy identification
 
-## 📋 Deployment Parameters
+## � Deployment Parameters by Mode
 
-| Parameter | Description | Options | Recommended |
-|-----------|-------------|---------|-------------|
-| **Database Provider** | Database backend choice | InMemory, SqlServer | InMemory (demo), SqlServer (prod) |
-| **Enable Authentication** | JWT authentication system | true, false | true |
-| **Environment** | Deployment environment | dev, staging, prod | dev |
-| **SKU Name** | App Service pricing tier | F1, B1, B2, S1, S2 | B1 |
-| **Deployment User** | Your Azure user object ID | (auto-detected) | Required for Key Vault access |
+### 🔓 Disabled Mode Parameters
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| **authenticationMode** | `Disabled` | No authentication barriers |
+| **enableUserTracking** | `true` | GUID-based tracking |
+| **Database Provider** | `InMemory` or `SqlServer` | Choose based on persistence needs |
+
+### 🔐 BearerToken Mode Parameters  
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| **authenticationMode** | `BearerToken` | JWT token authentication |
+| **enableUserTracking** | `true` | User session tracking |
+| **Database Provider** | `SqlServer` recommended | For user registration storage |
+
+### 🏢 EntraExternalId Mode Parameters
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| **authenticationMode** | `EntraExternalId` | OAuth 2.0 with Entra External ID |
+| **entraExternalIdTenant** | `yourcompany.onmicrosoft.com` | Your Entra External ID tenant domain |
+| **entraExternalIdClientId** | `12345678-1234-1234-1234-123456789012` | Application client ID from Entra |
+| **Database Provider** | `SqlServer` recommended | For OAuth user data storage |
+
+## 🏢 EntraExternalId Setup Prerequisites
+
+Before deploying with EntraExternalId mode, you need:
+
+### 1. Create Entra External ID Tenant
+```bash
+# Option 1: Use existing Azure AD B2C tenant
+# Option 2: Create new Entra External ID tenant in Azure Portal
+# Go to: Azure Portal > Microsoft Entra ID > External Identities > Overview
+```
+
+### 2. Register Your Application
+1. In your Entra tenant: **App registrations** > **New registration**
+2. **Name**: `Fabrikam-API-Demo`
+3. **Supported account types**: Accounts in any organizational directory and personal Microsoft accounts
+4. **Redirect URI**: Leave empty (will be set after deployment)
+5. **Register** and note the **Application (client) ID**
+
+### 3. Create Client Secret  
+1. In your app registration: **Certificates & secrets** > **New client secret**
+2. **Description**: `Fabrikam-Demo-Secret`
+3. **Expires**: 6 months (for demos)
+4. **Add** and **copy the secret value immediately** (you can't see it again)
+
+### 4. Configure After Deployment
+After deploying, you'll need to update your app registration:
+1. **Redirect URIs**: Add these to your app registration:
+   - `https://your-api-app-name.azurewebsites.net/signin-oidc`
+   - `https://your-api-app-name.azurewebsites.net/.auth/login/aad/callback`
+2. **API permissions**: Configure as needed for your tenant
+3. **Token configuration**: Add optional claims if required
 
 ## 🏗️ What Gets Deployed
 

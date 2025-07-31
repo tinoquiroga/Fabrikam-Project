@@ -522,9 +522,6 @@ function Start-AuthenticationTesting {
         "BearerToken" {
             $testResults = Test-BearerTokenAuthentication
         }
-        "JwtTokens" {
-            $testResults = Test-BearerTokenAuthentication
-        }
         "EntraExternalId" {
             $testResults = Test-EntraExternalId
         }

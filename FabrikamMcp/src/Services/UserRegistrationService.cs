@@ -49,6 +49,7 @@ public class UserRegistrationService : IUserRegistrationService
     private readonly ILogger<UserRegistrationService> _logger;
     private readonly IMemoryCache _cache;
     private readonly FabrikamContracts.DTOs.GuidValidationSettings _guidSettings;
+    private readonly FabrikamContracts.DTOs.AuthenticationSettings _authSettings;
 
     public UserRegistrationService(
         FabrikamDbContext context,
@@ -60,6 +61,7 @@ public class UserRegistrationService : IUserRegistrationService
         _logger = logger;
         _cache = cache;
         _guidSettings = authSettings.Value.GuidValidation;
+        _authSettings = authSettings.Value;
     }
 
     /// <summary>
@@ -176,7 +178,7 @@ public class UserRegistrationService : IUserRegistrationService
             Roles = string.Join(",", principal.FindAll("role").Select(c => c.Value)),
             LastLoginDate = DateTime.UtcNow,
             RegistrationDate = DateTime.UtcNow,
-            AuthenticationMode = FabrikamContracts.DTOs.AuthenticationMode.BearerToken
+            AuthenticationMode = _authSettings.Mode // Use the actual configured authentication mode
         };
         
         await _context.AuthenticatedUsers.AddAsync(user);

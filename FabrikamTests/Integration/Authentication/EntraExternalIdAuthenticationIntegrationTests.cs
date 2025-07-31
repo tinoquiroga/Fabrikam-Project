@@ -7,34 +7,18 @@ using System.Text;
 using System.Text.Json;
 using FabrikamApi;
 using FabrikamContracts.DTOs;
+using FabrikamTests.Helpers;
 
 namespace FabrikamTests.Integration.Authentication;
 
-public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<EntraExternalIdTestApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly EntraExternalIdTestApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
 
-    public EntraExternalIdAuthenticationIntegrationTests(WebApplicationFactory<Program> factory)
+    public EntraExternalIdAuthenticationIntegrationTests(EntraExternalIdTestApplicationFactory<Program> factory)
     {
-        _factory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureAppConfiguration(config =>
-            {
-                config.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Authentication:Mode"] = "EntraExternalId",
-                    ["Authentication:EntraExternalId:TenantId"] = "test-tenant.onmicrosoft.com",
-                    ["Authentication:EntraExternalId:ClientId"] = "test-client-id",
-                    ["Authentication:EntraExternalId:ClientSecret"] = "test-client-secret",
-                    ["Authentication:EntraExternalId:Authority"] = "https://test-tenant.b2clogin.com/test-tenant.onmicrosoft.com/v2.0",
-                    ["Authentication:EntraExternalId:Scopes:0"] = "openid",
-                    ["Authentication:EntraExternalId:Scopes:1"] = "profile",
-                    ["Authentication:EntraExternalId:Scopes:2"] = "email"
-                });
-            });
-        });
-
+        _factory = factory;
         _client = _factory.CreateClient();
     }
 
@@ -330,7 +314,7 @@ public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<WebAp
             // Arrange
             var factory = _factory.WithWebHostBuilder(builder =>
             {
-                builder.ConfigureAppConfiguration(config =>
+                builder.ConfigureAppConfiguration((context, config) =>
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string?>
                     {

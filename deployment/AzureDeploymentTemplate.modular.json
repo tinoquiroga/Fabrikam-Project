@@ -90,14 +90,14 @@
     },
     "authenticationMode": {
       "type": "string",
-      "defaultValue": "JwtTokens",
+      "defaultValue": "BearerToken",
       "allowedValues": [
         "Disabled",
-        "JwtTokens", 
+        "BearerToken", 
         "EntraExternalId"
       ],
       "metadata": {
-        "description": "Authentication mode for the Fabrikam demo platform. Disabled: GUID tracking only, no authentication barriers. JwtTokens: Each demo user registers and receives a secure JWT token for their AI agent/MCP client - tokens expire and need periodic refresh for security. EntraExternalId: Full OAuth 2.0 with Microsoft Entra External ID integration for enterprise identity."
+        "description": "Authentication mode for the Fabrikam demo platform. Disabled: GUID tracking only, no authentication barriers. BearerToken: Each demo user registers and receives a secure JWT token for their AI agent/MCP client - tokens expire and need periodic refresh for security. EntraExternalId: Full OAuth 2.0 with Microsoft Entra External ID integration for enterprise identity."
       }
     },
     "enableUserTracking": {
@@ -174,7 +174,7 @@
     "jwtSecretName": "FabrikamJwtSecret",
     "sqlConnectionSecretName": "DefaultConnection",
     "isAuthenticationEnabled": "[not(equals(parameters('authenticationMode'), 'Disabled'))]",
-    "isJwtMode": "[equals(parameters('authenticationMode'), 'JwtTokens')]",
+    "isJwtMode": "[equals(parameters('authenticationMode'), 'BearerToken')]",
     "isEntraMode": "[equals(parameters('authenticationMode'), 'EntraExternalId')]",
     "moduleBaseUri": "[uri(parameters('_artifactsLocation'), 'modules/')]"
   },

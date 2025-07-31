@@ -58,7 +58,7 @@
     }
   },
   "variables": {
-    "isJwtMode": "[equals(parameters('authenticationMode'), 'JwtTokens')]",
+    "isJwtMode": "[equals(parameters('authenticationMode'), 'BearerToken')]",
     "isEntraMode": "[equals(parameters('authenticationMode'), 'EntraExternalId')]",
     "keyVaultSecretsUserRoleId": "4633458b-17de-408a-b874-0445c86b69e6",
     "keyVaultSecretsOfficerRoleId": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",

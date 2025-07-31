@@ -22,15 +22,22 @@ public class EntraExternalIdAuthenticationServiceTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockLogger = new Mock<ILogger<EntraExternalIdAuthenticationService>>();
 
-        // Setup configuration
+        // Setup configuration with proper hierarchy
         var entraSection = new Mock<IConfigurationSection>();
         entraSection.Setup(x => x["TenantId"]).Returns("test-tenant");
         entraSection.Setup(x => x["ClientId"]).Returns("test-client-id");
         entraSection.Setup(x => x["ClientSecret"]).Returns("test-secret");
         entraSection.Setup(x => x["Authority"]).Returns("https://test-tenant.b2clogin.com/test-tenant.onmicrosoft.com/v2.0");
+        entraSection.Setup(x => x.Value).Returns((string?)null);
+        entraSection.Setup(x => x.Key).Returns("EntraExternalId");
+        entraSection.Setup(x => x.Path).Returns("Authentication:EntraExternalId");
 
         _mockConfiguration.Setup(x => x.GetSection("Authentication:EntraExternalId"))
             .Returns(entraSection.Object);
+
+        // Ensure the configuration section exists for validation
+        _mockConfiguration.Setup(x => x.GetSection("Authentication"))
+            .Returns(Mock.Of<IConfigurationSection>());
 
         _service = new EntraExternalIdAuthenticationService(
             _mockBaseAuthService.Object,

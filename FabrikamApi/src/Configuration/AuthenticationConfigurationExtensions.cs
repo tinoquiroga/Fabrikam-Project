@@ -37,6 +37,13 @@ public static class AuthenticationConfigurationExtensions
         var logger = serviceProvider.GetService<ILogger<Program>>();
         logger?.LogInformation("Configuring authentication mode: {AuthenticationMode}", authenticationMode);
 
+        // Register AuthenticationSettings as a service
+        var authSettings = new FabrikamContracts.DTOs.AuthenticationSettings
+        {
+            Mode = authenticationMode
+        };
+        services.AddSingleton(authSettings);
+
         switch (authenticationMode)
         {
             case ContractAuthMode.Disabled:
@@ -65,14 +72,26 @@ public static class AuthenticationConfigurationExtensions
     {
         // Check explicit configuration first
         var modeString = configuration.GetValue<string>("Authentication:Mode");
+        
+        // Debug logging to see what's happening
+        var serviceProvider = new ServiceCollection().AddLogging().BuildServiceProvider();
+        var logger = serviceProvider.GetService<ILogger<Program>>();
+        logger?.LogInformation("DEBUG: Configuration Authentication:Mode = '{ModeString}'", modeString ?? "null");
+        
         if (!string.IsNullOrEmpty(modeString) && Enum.TryParse<ContractAuthMode>(modeString, true, out var explicitMode))
         {
+            logger?.LogInformation("DEBUG: Successfully parsed to {ExplicitMode}", explicitMode);
             return explicitMode;
         }
 
+        logger?.LogInformation("DEBUG: Parse failed, using environment-aware default for environment '{Environment}'", environment.EnvironmentName);
+        
         // Use environment-aware defaults
         var authSettings = new FabrikamContracts.DTOs.AuthenticationSettings();
-        return authSettings.Mode; // This uses the environment-aware default logic
+        var defaultMode = authSettings.Mode;
+        logger?.LogInformation("DEBUG: Environment-aware default is {DefaultMode}", defaultMode);
+        
+        return defaultMode;
     }
 
     /// <summary>
@@ -89,10 +108,17 @@ public static class AuthenticationConfigurationExtensions
             options.DefaultPolicy = new AuthorizationPolicyBuilder()
                 .RequireAssertion(_ => true) // Allow all requests
                 .Build();
+
+            // ApiAccess policy allows all requests in disabled mode
+            options.AddPolicy("ApiAccess", policy =>
+                policy.RequireAssertion(_ => true)); // Allow all requests
         });
 
         // Add a service to handle GUID tracking
         services.AddScoped<IGuidTrackingService, GuidTrackingService>();
+        
+        // Add regular authentication service (but policies allow all requests)
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
     }
 
     /// <summary>
@@ -106,6 +132,9 @@ public static class AuthenticationConfigurationExtensions
         {
             throw new InvalidOperationException("JWT SecretKey is required for BearerToken authentication mode");
         }
+
+        // Configure JWT settings for dependency injection
+        services.Configure<ApiJwtSettings>(configuration.GetSection(ApiJwtSettings.SectionName));
 
         services.AddAuthentication(options =>
         {
@@ -150,6 +179,7 @@ public static class AuthenticationConfigurationExtensions
         
         // Register JWT-specific services
         services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
     }
 
     /// <summary>
@@ -157,7 +187,7 @@ public static class AuthenticationConfigurationExtensions
     /// </summary>
     private static void ConfigureEntraExternalIdAuthentication(IServiceCollection services, IConfiguration configuration)
     {
-        var entraSettings = configuration.GetSection("Authentication:EntraExternalId").Get<EntraExternalIdSettings>();
+        var entraSettings = configuration.GetSection("Authentication:EntraExternalId").Get<ContractEntraSettings>();
         
         if (entraSettings == null)
         {
@@ -227,6 +257,7 @@ public static class AuthenticationConfigurationExtensions
         
         // Register EntraExternalId-specific services
         services.AddScoped<IEntraExternalIdAuthenticationService, EntraExternalIdAuthenticationService>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
     }
 
     /// <summary>
@@ -241,8 +272,12 @@ public static class AuthenticationConfigurationExtensions
                 .RequireAuthenticatedUser()
                 .Build();
 
+            // Main API access policy - requires authenticated user
+            options.AddPolicy("ApiAccess", policy => policy.RequireAuthenticatedUser());
+
             // Role-based policies
-            options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin")); // Primary admin policy
+            options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin")); // Alias for backward compatibility
             options.AddPolicy("SalesOrAdmin", policy => policy.RequireRole("Sales", "Admin"));
             options.AddPolicy("CustomerServiceOrAdmin", policy => policy.RequireRole("CustomerService", "Admin"));
             options.AddPolicy("AuthenticatedUser", policy => policy.RequireAuthenticatedUser());

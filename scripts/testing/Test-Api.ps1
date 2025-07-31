@@ -58,7 +58,7 @@ function Test-ApiEndpoints {
         $result = Test-EndpointWithAuth -Endpoint "/api/orders/analytics" -Description "Order Analytics (No Auth)"
         $testResults += $result
         
-    } elseif ($script:TestConfig.AuthenticationMode -eq "BearerToken" -or $script:TestConfig.AuthenticationMode -eq "JwtTokens") {
+    } elseif ($script:TestConfig.AuthenticationMode -eq "BearerToken") {
         Write-Host "🔐 Testing endpoints with Bearer Token authentication..." -ForegroundColor Yellow
         
         # Test with authentication

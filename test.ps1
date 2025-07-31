@@ -61,7 +61,7 @@ if ($Help) {
     Write-Host ""
     Write-Host "Modular Architecture Benefits:" -ForegroundColor Cyan
     Write-Host "  ✅ Focused, maintainable test modules with full server management"
-    Write-Host "  ✅ Authentication-aware testing (Disabled, JwtTokens, EntraExternalId)"
+    Write-Host "  ✅ Authentication-aware testing (Disabled, BearerToken, EntraExternalId)"
     Write-Host "  ✅ Automatic server lifecycle management (build, start, stop, cleanup)"
     Write-Host "  ✅ GitHub Copilot-friendly code structure"
     Write-Host "  ✅ Comprehensive MCP tool validation"

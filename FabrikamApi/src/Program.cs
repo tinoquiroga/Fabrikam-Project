@@ -96,55 +96,10 @@ builder.Services.AddIdentity<FabrikamUser, FabrikamRole>(options =>
 .AddEntityFrameworkStores<FabrikamIdentityDbContext>()
 .AddDefaultTokenProviders();
 
-// Configure JWT Authentication
-var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+// Authentication configuration is now handled by ConfigureEnvironmentAwareAuthentication
+// which supports three modes: Disabled, BearerToken (JWT), and EntraExternalId (OAuth 2.0)
 
-if (!string.IsNullOrEmpty(jwtSettings.SecretKey))
-{
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.SaveToken = true;
-        options.RequireHttpsMetadata = false; // Set to true in production
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = jwtSettings.ValidateIssuer,
-            ValidateAudience = jwtSettings.ValidateAudience,
-            ValidateLifetime = jwtSettings.ValidateLifetime,
-            ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-            ClockSkew = TimeSpan.FromMinutes(jwtSettings.ClockSkewInMinutes)
-        };
-
-        // Configure JWT events for better error handling
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogWarning("JWT Authentication failed: {Exception}", context.Exception.Message);
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogDebug("JWT token validated for user: {User}", context.Principal?.Identity?.Name);
-                return Task.CompletedTask;
-            }
-        };
-    });
-}
-
-// Add authentication services
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+// Authentication services are now configured in ConfigureEnvironmentAwareAuthentication
 
 // Add data seeding services - JSON as primary, hardcoded as fallback
 builder.Services.AddScoped<JsonDataSeedService>();

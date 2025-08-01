@@ -24,7 +24,7 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release --project FabrikamMcp/src/FabrikamMcp.csproj
+        run: dotnet build FabrikamMcp/src/FabrikamMcp.csproj --configuration Release
 
       - name: dotnet publish
         run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp

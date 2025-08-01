@@ -25,16 +25,21 @@ az group create --name $resourceGroupName --location "East US 2"
 $userObjectId = az ad signed-in-user show --query id -o tsv
 
 # Display the values you need for deployment
-Write-Host ""
-Write-Host "===============================================" -ForegroundColor Green
-Write-Host "✅ SETUP COMPLETE - Copy these values:" -ForegroundColor Green
-Write-Host "===============================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "📋 Resource Group Name: $resourceGroupName" -ForegroundColor Yellow
-Write-Host "👤 Your User Object ID: $userObjectId" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "� Use these values in the ARM template deployment below" -ForegroundColor Cyan
-Write-Host "===============================================" -ForegroundColor Green
+$message = @"
+
+===============================================
+✅ SETUP COMPLETE - Copy these values:
+===============================================
+
+Use these values in the ARM template deployment below:
+
+$resourceGroupName
+$userObjectId
+
+===============================================
+"@
+
+Write-Host $message -ForegroundColor Green
 ```
 
 ## 🚀 Deploy to Azure

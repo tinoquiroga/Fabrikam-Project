@@ -24,10 +24,10 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release --project FabrikamApi/src/FabrikamApi.csproj
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -51,9 +51,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E4AB804AFB564FBC9B9BA981C4A4908F }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_FA585D2C15CA492898D55479452B0891 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_34F234B537E64D7EBB20288C1751B0E9 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E4AB804AFB564FBC9B9BA981C4A4908F || secrets.AZUREAPPSERVICE_CLIENTID_RXNMCW || secrets.AZUREAPPSERVICE_CLIENTID_DISABLED }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_FA585D2C15CA492898D55479452B0891 || secrets.AZUREAPPSERVICE_TENANTID_RXNMCW || secrets.AZUREAPPSERVICE_TENANTID_DISABLED }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_34F234B537E64D7EBB20288C1751B0E9 || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_RXNMCW || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_DISABLED }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp

@@ -4,17 +4,17 @@ This document tracks our active Azure deployments for testing the three authenti
 
 ## 📋 Active Test Deployments
 
-### 🔓 **Disabled Mode** - Legacy 4-character suffix
-- **Suffix**: `nvxk` (4-character mixed-case - legacy pattern)
+### 🔓 **Disabled Mode** - rxnmcw (6-character suffix)
+- **Suffix**: `rxnmcw` (6-character lowercase - new pattern)
 - **Authentication Mode**: `Disabled`
-- **Resource Group**: `rg-fabrikam-development-nvxk` (if following new pattern)
-- **API URL**: `https://fabrikam-api-development-nvxk.azurewebsites.net`
-- **MCP URL**: `https://fabrikam-mcp-development-nvxk.azurewebsites.net`
-- **Status**: ⚠️ Uses old 4-character suffix pattern
+- **Resource Group**: `rg-fabrikam-development-rxnmcw`
+- **API URL**: `https://fabrikam-api-development-rxnmcw.azurewebsites.net`
+- **MCP URL**: `https://fabrikam-mcp-development-rxnmcw.azurewebsites.net`
+- **Status**: ✅ Fixed workflows, ready for testing
 - **Notes**: 
-  - Deployed before 6-character lowercase improvements
-  - May need redeployment with new pattern for consistency
-  - Workflows need manual fixes (project paths, auth fallbacks)
+  - Uses improved 6-character lowercase suffix
+  - Workflows manually fixed with project paths and auth fallbacks
+  - GUID-based user tracking for quick demos and POCs
 
 ### 🔐 **BearerToken Mode** - New 6-character suffix
 - **Suffix**: `xmrbiq` (6-character lowercase - new pattern)
@@ -38,56 +38,30 @@ This document tracks our active Azure deployments for testing the three authenti
 
 | Deployment | API Workflow | MCP Workflow | Issues Fixed |
 |------------|--------------|--------------|---------------|
-| **nvxk** (Disabled) | ❌ Needs fixes | ❌ Needs fixes | Project paths, auth fallbacks |
+| **rxnmcw** (Disabled) | ✅ Fixed | ✅ Fixed | Project paths, auth fallbacks |
 | **xmrbiq** (BearerToken) | ✅ Fixed | ✅ Fixed | Complete |
 | **gcpm** (Test) | ✅ Fixed | ✅ Fixed | Complete |
 
-## 🚨 nvxk Deployment Concerns
+## � Merge-Ready Testing Status
 
-### Issue: Legacy 4-Character Suffix
-The `nvxk` deployment uses the old 4-character mixed-case suffix pattern. This could cause:
+**Goal**: Validate all three authentication modes work correctly before merging `feature/phase-1-authentication` → `main`
 
-1. **Naming Inconsistency**: Other deployments use 6-character lowercase
-2. **Higher Collision Risk**: 1 in 1.6M vs 1 in 308M collision probability
-3. **Pattern Mismatch**: ARM template now expects 6-character lowercase
+| Authentication Mode | Status | Deployment Ready | Testing Status |
+|-------------------|---------|------------------|----------------|
+| **Disabled** | ✅ Active | rxnmcw ready | Ready to test |
+| **BearerToken** | ✅ Active | xmrbiq ready | Ready to test |
+| **EntraExternalId** | 📋 Planned | TBD | Pending deployment |
 
-### Recommendation: 
-**Option A**: Keep for testing legacy compatibility
-**Option B**: Redeploy with new 6-character pattern for consistency
+## 🎯 Testing Priorities for Main Branch Merge
 
-## 🛠️ Required Workflow Fixes for nvxk
+1. **Disabled Mode (rxnmcw)**: ✅ Ready for immediate testing
+2. **BearerToken Mode (xmrbiq)**: ✅ Ready for immediate testing
+3. **EntraExternalId Mode**: 📅 Deploy after Disabled/BearerToken validation
 
-Both `nvxk` workflows need the same fixes applied to `xmrbiq`:
+## 🛠️ Workflow Status Summary
 
-1. **Project-specific build paths**:
-   ```yaml
-   # Current (broken)
-   run: dotnet build --configuration Release
-   
-   # Fixed
-   run: dotnet build FabrikamApi/src/FabrikamApi.csproj --configuration Release
-   ```
-
-2. **Authentication fallback patterns**:
-   ```yaml
-   # Current (single secret)
-   client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_SPECIFIC }}
-   
-   # Fixed (with fallbacks)
-   client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_SPECIFIC || secrets.AZURE_CLIENT_ID || secrets.AZUREAPPSERVICE_CLIENTID }}
-   ```
-
-## 📊 Testing Strategy
-
-1. **Keep nvxk** for legacy suffix testing (fix workflows)
-2. **Use xmrbiq** for BearerToken authentication testing
-3. **Deploy new** EntraExternalId with 6-character suffix
-4. **Compare results** across all three modes
-
-## 🎯 Next Actions
-
-- [ ] Fix nvxk workflows (apply same fixes as xmrbiq)
-- [ ] Test BearerToken mode with xmrbiq deployment
-- [ ] Decide on nvxk: keep legacy or redeploy with new pattern
-- [ ] Deploy EntraExternalId mode with 6-character suffix
-- [ ] Document testing results for each authentication mode
+| Deployment | API Workflow | MCP Workflow | Notes |
+|------------|--------------|--------------|-------|
+| **rxnmcw** (Disabled) | ✅ Fixed & Ready | ✅ Fixed & Ready | Merge-ready |
+| **xmrbiq** (BearerToken) | ✅ Fixed & Ready | ✅ Fixed & Ready | Merge-ready |
+| **gcpm** (Dev/Test) | ✅ Fixed & Ready | ✅ Fixed & Ready | Reference implementation |

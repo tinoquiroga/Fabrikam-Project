@@ -5,37 +5,45 @@
 **⚠️ Important**: You must create a resource group before deploying. This ensures proper resource naming and isolation.
 
 ### Step 1: Open Azure Cloud Shell
+
 1. Go to [Azure Portal](https://portal.azure.com)
 2. Click the Cloud Shell icon (`>_`) in the top toolbar
 
-### Step 2: Create Resource Group with Unique Suffix
+### Step 2: Run the Setup Script
+
+Copy and paste this complete script to create your resource group and get your User Object ID:
 
 ```powershell
 # Generate 6-character lowercase suffix (improved collision avoidance)
 $suffix = -join ((97..122) | Get-Random -Count 6 | ForEach-Object {[char]$_})
 
 # Create resource group
-az group create --name "rg-fabrikam-development-$suffix" --location "East US 2"
+$resourceGroupName = "rg-fabrikam-development-$suffix"
+az group create --name $resourceGroupName --location "East US 2"
 
-# Display the resource group name for deployment
-Write-Host "✅ Resource Group Created: rg-fabrikam-development-$suffix"
-Write-Host "📋 Use this name in the ARM template deployment below"
-```
-
-### Step 3: Get Your Azure User ID (for Key Vault access)
-
-```powershell
 # Get your user object ID (needed for Key Vault RBAC permissions)
 $userObjectId = az ad signed-in-user show --query id -o tsv
-Write-Host "👤 Your User Object ID: $userObjectId"
-Write-Host "📋 Use this ID for the 'deployerObjectId' parameter below"
+
+# Display the values you need for deployment
+Write-Host ""
+Write-Host "===============================================" -ForegroundColor Green
+Write-Host "✅ SETUP COMPLETE - Copy these values:" -ForegroundColor Green
+Write-Host "===============================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "📋 Resource Group Name: $resourceGroupName" -ForegroundColor Yellow
+Write-Host "👤 Your User Object ID: $userObjectId" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "� Use these values in the ARM template deployment below" -ForegroundColor Cyan
+Write-Host "===============================================" -ForegroundColor Green
 ```
 
 ## 🚀 Deploy to Azure
 
-**After creating your resource group above**, click the button below to deploy:
+**After running the setup script above**, click the button below to deploy:
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+
+> 💡 **Tip**: Right-click the button and select "Open link in new tab" to keep this page open for reference during deployment.
 
 ## 🎯 Choose Your Authentication Mode During Deployment
 
@@ -90,14 +98,15 @@ The ARM template will prompt you to select one of three authentication modes:
 
 ## 📋 Key Deployment Parameters
 
-When you click "Deploy to Azure", you'll configure these key parameters:
+When you click "Deploy to Azure", you'll configure these key parameters using the values from your setup script:
 
 - **Authentication Mode**: Choose `Disabled`, `BearerToken`, or `EntraExternalId`
-- **Resource Group**: Use the resource group created above
-- **Deployer Object ID**: Use the User Object ID from the prerequisite steps
+- **Resource Group**: Use the **Resource Group Name** from your setup script output
+- **Deployer Object ID**: Use the **User Object ID** from your setup script output
 - **Database Provider**: Choose `InMemory` (demos) or `SqlServer` (persistent)
 
 For **EntraExternalId mode**, you'll also need:
+
 - **Entra Tenant**: Your Entra External ID tenant domain
 - **Client ID**: Application ID from your Entra app registration
 

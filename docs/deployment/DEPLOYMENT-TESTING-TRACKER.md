@@ -40,7 +40,9 @@ This document tracks our active Azure deployments for testing the three authenti
 |------------|--------------|--------------|---------------|
 | **rxnmcw** (Disabled) | ✅ Fixed | ✅ Fixed | Project paths, auth fallbacks |
 | **xmrbiq** (BearerToken) | ✅ Fixed | ✅ Fixed | Complete |
-| **gcpm** (Test) | ✅ Fixed | ✅ Fixed | Complete |
+| **izbD** (Main Branch) | ✅ Active | ✅ Active | Production deployment |
+
+**Cleaned up workflows**: Removed y32g, 2k1f, gcpm, nvxk - no longer needed
 
 ## � Merge-Ready Testing Status
 
@@ -62,6 +64,10 @@ This document tracks our active Azure deployments for testing the three authenti
 
 | Deployment | API Workflow | MCP Workflow | Notes |
 |------------|--------------|--------------|-------|
-| **rxnmcw** (Disabled) | ✅ Fixed & Ready | ✅ Fixed & Ready | Merge-ready |
-| **xmrbiq** (BearerToken) | ✅ Fixed & Ready | ✅ Fixed & Ready | Merge-ready |
-| **gcpm** (Dev/Test) | ✅ Fixed & Ready | ✅ Fixed & Ready | Reference implementation |
+| **rxnmcw** (Disabled) | ✅ Fixed & Ready | ✅ Fixed & Ready | Merge-ready testing |
+| **xmrbiq** (BearerToken) | ✅ Fixed & Ready | ✅ Fixed & Ready | Merge-ready testing |
+| **izbD** (Main Branch) | ✅ Active | ✅ Active | Production deployment |
+
+**Workflow Cleanup Complete**: 
+- ✅ Kept: rxnmcw, xmrbiq (feature testing), izbD (main branch)
+- 🗑️ Removed: y32g, 2k1f, gcpm, nvxk (no longer needed)

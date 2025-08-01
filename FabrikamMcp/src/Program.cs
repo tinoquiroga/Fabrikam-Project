@@ -163,7 +163,7 @@ app.MapGet("/status", (IConfiguration configuration) =>
     {
         Status = "Ready",
         Service = "Fabrikam MCP Server",
-        Version = "1.0.0",
+        Version = "1.1.0",
         Description = "Model Context Protocol server for Fabrikam Modular Homes business operations",
         Transport = "HTTP",
         Authentication = new

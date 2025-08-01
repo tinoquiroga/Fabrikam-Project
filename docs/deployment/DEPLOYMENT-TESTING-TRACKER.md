@@ -16,17 +16,20 @@ This document tracks our active Azure deployments for testing the three authenti
   - Workflows manually fixed with project paths and auth fallbacks
   - GUID-based user tracking for quick demos and POCs
 
-### 🔐 **BearerToken Mode** - New 6-character suffix
+### 🔐 **BearerToken Mode** - xmrbiq (6-character suffix)
 - **Suffix**: `xmrbiq` (6-character lowercase - new pattern)
 - **Authentication Mode**: `BearerToken`
 - **Resource Group**: `rg-fabrikam-development-xmrbiq`
 - **API URL**: `https://fabrikam-api-development-xmrbiq.azurewebsites.net`
 - **MCP URL**: `https://fabrikam-mcp-development-xmrbiq.azurewebsites.net`
-- **Status**: ✅ Fixed workflows, ready for testing
+- **Version**: 1.1.0 (feature branch)
+- **Status**: ✅ Fixed workflows, deployed, ready for testing
 - **Notes**: 
   - Uses improved 6-character lowercase suffix
   - Workflows manually fixed with project paths and auth fallbacks
   - JWT authentication with Key Vault integration
+  - **API**: ✅ Version 1.1.0 deployed successfully (Build: 8/1/2025 4:05:56 AM)
+  - **MCP**: ✅ Version 1.1.0 deployed successfully (Build: 8/1/2025 4:08:10 AM)
 
 ### 🏢 **EntraExternalId Mode** - Planned
 - **Suffix**: TBD (will use 6-character lowercase)

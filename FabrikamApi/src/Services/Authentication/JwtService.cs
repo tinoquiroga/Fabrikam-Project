@@ -252,3 +252,34 @@ public class JwtService : IJwtService
         return DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes);
     }
 }
+
+/// <summary>
+/// Null implementation of IJwtService for Disabled authentication mode
+/// </summary>
+public class NullJwtService : IJwtService
+{
+    public Task<string> GenerateAccessTokenAsync(FabrikamUser user, IList<string> roles, IList<Claim> claims)
+    {
+        throw new InvalidOperationException("JWT tokens are not available in Disabled authentication mode");
+    }
+
+    public string GenerateRefreshToken()
+    {
+        throw new InvalidOperationException("JWT tokens are not available in Disabled authentication mode");
+    }
+
+    public Task<ClaimsPrincipal?> ValidateTokenAsync(string token)
+    {
+        throw new InvalidOperationException("JWT tokens are not available in Disabled authentication mode");
+    }
+
+    public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+    {
+        throw new InvalidOperationException("JWT tokens are not available in Disabled authentication mode");
+    }
+
+    public DateTime GetTokenExpiration()
+    {
+        throw new InvalidOperationException("JWT tokens are not available in Disabled authentication mode");
+    }
+}

@@ -117,6 +117,9 @@ public static class AuthenticationConfigurationExtensions
         // Add a service to handle GUID tracking
         services.AddScoped<IGuidTrackingService, GuidTrackingService>();
         
+        // Add a null JWT service for disabled mode (AuthenticationService requires it)
+        services.AddScoped<IJwtService, NullJwtService>();
+        
         // Add regular authentication service (but policies allow all requests)
         services.AddScoped<IAuthenticationService, AuthenticationService>();
     }

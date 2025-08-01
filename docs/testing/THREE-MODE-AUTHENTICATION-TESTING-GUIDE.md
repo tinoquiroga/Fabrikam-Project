@@ -30,7 +30,7 @@ info:
   description: >-
     Fabrikam MCP Server with GUID tracking (no authentication barriers)
   version: 1.0.0
-host: [YOUR-MCP-DEPLOYMENT-URL]  # e.g., fabrikam-mcp-dev-y32g.azurewebsites.net
+host: [YOUR-MCP-DEPLOYMENT-URL]  # e.g., fabrikam-mcp-development-abc123.azurewebsites.net
 basePath: /mcp
 schemes:
   - https
@@ -138,7 +138,7 @@ info:
   description: >-
     Fabrikam MCP Server with JWT Bearer Token authentication
   version: 1.0.0
-host: [YOUR-MCP-DEPLOYMENT-URL]  # e.g., fabrikam-mcp-dev-y32g.azurewebsites.net
+host: [YOUR-MCP-DEPLOYMENT-URL]  # e.g., fabrikam-mcp-development-abc123.azurewebsites.net
 basePath: /mcp
 schemes:
   - https
@@ -277,7 +277,7 @@ info:
   description: >-
     Fabrikam MCP Server with OAuth 2.0 Entra External ID authentication
   version: 1.0.0
-host: [YOUR-MCP-DEPLOYMENT-URL]  # e.g., fabrikam-mcp-dev-y32g.azurewebsites.net
+host: [YOUR-MCP-DEPLOYMENT-URL]  # e.g., fabrikam-mcp-development-abc123.azurewebsites.net
 basePath: /mcp
 schemes:
   - https

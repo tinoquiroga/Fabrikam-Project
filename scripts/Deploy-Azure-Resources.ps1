@@ -91,18 +91,18 @@ if (-not $WhatIf) {
 }
 
 # Generate random suffix for globally unique resource names
-$randomSuffix = -join ((97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
+$randomSuffix = -join ((97..122) | Get-Random -Count 6 | ForEach-Object {[char]$_})
 Write-Info "Generated random suffix for unique naming: $randomSuffix"
 
 # Set up resource names
-$resourceGroup = "rg-fabrikam-$Environment"
+$resourceGroup = "rg-fabrikam-$Environment-$randomSuffix"
 $apiAppName = "fabrikam-api-$Environment-$randomSuffix"
 $mcpAppName = "fabrikam-mcp-$Environment-$randomSuffix"
-$logWorkspaceName = "log-fabrikam-$Environment"
-$apiInsightsName = "appi-fabrikam-api-$Environment"
-$mcpInsightsName = "appi-fabrikam-mcp-$Environment"
-$apiPlanName = "plan-fabrikam-api-$Environment"
-$mcpPlanName = "plan-fabrikam-mcp-$Environment"
+$logWorkspaceName = "log-fabrikam-$Environment-$randomSuffix"
+$apiInsightsName = "appi-fabrikam-api-$Environment-$randomSuffix"
+$mcpInsightsName = "appi-fabrikam-mcp-$Environment-$randomSuffix"
+$apiPlanName = "plan-fabrikam-api-$Environment-$randomSuffix"
+$mcpPlanName = "plan-fabrikam-mcp-$Environment-$randomSuffix"
 
 Write-Step "Resource Naming Convention"
 Write-Host @"

@@ -1,5 +1,10 @@
 # Coordinated deployment workflow for Fabrikam monorepo
 # This workflow deploys both API and MCP services when core changes are made
+# 
+# 🔧 Fork-Friendly Design:
+# - Uses flexible variables/secrets that work across different Azure tenants
+# - Auto-detects deployment targets using repository variables
+# - Compatible with auto-fix-cicd.yml for Azure Portal integration
 
 name: Deploy Fabrikam Full Stack
 
@@ -124,14 +129,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7B45365BE95A4F148FB5FC53309D576A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F4B38BCC1A3C41DB87825D58D05171B2 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F6B88EEEE4B94A859DB59C0B1D8F3832 }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID || secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy API to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "fabrikam-api-dev-izbD"
+          app-name: ${{ vars.AZURE_API_APP_NAME || 'fabrikam-api-dev' }}
           slot-name: "Production"
           package: .
 
@@ -151,14 +156,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A8C8EF1B326A471D88D0808AB703A5EE }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9C449FA4736D46E6A0CFD35DC61B177A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B4519DE6CF4C4656B779761582012720 }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID || secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy MCP to Azure
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "fabrikam-mcp-dev-izbD"
+          app-name: ${{ vars.AZURE_MCP_APP_NAME || 'fabrikam-mcp-dev' }}
           slot-name: "Production"
           package: .
 

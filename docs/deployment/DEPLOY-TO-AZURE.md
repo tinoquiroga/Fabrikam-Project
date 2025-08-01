@@ -1,23 +1,63 @@
 # 🚀 Deploy to Azure - Three Authentication Modes
 
-## 🎯 Choose Your Authentication Mode
+## 🔧 Prerequisites: Create Resource Group First
 
-The Fabrikam Platform supports three authentication modes to fit different use cases:
+**⚠️ Important**: You must create a resource group before deploying. This ensures proper resource naming and isolation.
+
+### Step 1: Open Azure Cloud Shell
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Click the Cloud Shell icon (`>_`) in the top toolbar
+
+### Step 2: Create Resource Group with Unique Suffix
+
+```powershell
+# Generate 6-character lowercase suffix (improved collision avoidance)
+$suffix = -join ((97..122) | Get-Random -Count 6 | ForEach-Object {[char]$_})
+
+# Create resource group
+az group create --name "rg-fabrikam-development-$suffix" --location "East US 2"
+
+# Display the resource group name for deployment
+Write-Host "✅ Resource Group Created: rg-fabrikam-development-$suffix"
+Write-Host "📋 Use this name in the ARM template deployment below"
+```
+
+### Step 3: Get Your Azure User ID (for Key Vault access)
+
+```powershell
+# Get your user object ID (needed for Key Vault RBAC permissions)
+$userObjectId = az ad signed-in-user show --query id -o tsv
+Write-Host "👤 Your User Object ID: $userObjectId"
+Write-Host "📋 Use this ID for the 'deployerObjectId' parameter below"
+```
+
+## 🚀 Deploy to Azure
+
+**After creating your resource group above**, click the button below to deploy:
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+
+## 🎯 Choose Your Authentication Mode During Deployment
+
+The ARM template will prompt you to select one of three authentication modes:
 
 ### 🔓 **Disabled Mode** - Quick Demos
+
 - **Best for**: POCs, demos, rapid testing
 - **Security**: GUID-based user tracking only
-- **Deploy**: [![Deploy Disabled Mode](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+- **Setup Time**: ⚡ Instant
 
-### 🔐 **BearerToken Mode** - JWT Authentication  
+### 🔐 **BearerToken Mode** - JWT Authentication
+
 - **Best for**: Production APIs, secure demos
 - **Security**: JWT tokens with Key Vault secrets
-- **Deploy**: [![Deploy JWT Mode](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+- **Setup Time**: 🔧 5 minutes
 
 ### 🏢 **EntraExternalId Mode** - Enterprise OAuth
-- **Best for**: Enterprise integration, SSO scenarios  
+
+- **Best for**: Enterprise integration, SSO scenarios
 - **Security**: OAuth 2.0 with Microsoft Entra External ID
-- **Deploy**: [![Deploy Entra Mode](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdavebirr%2FFabrikam-Project%2Ffeature%2Fphase-1-authentication%2Fdeployment%2FAzureDeploymentTemplate.modular.json)
+- **Setup Time**: 🏢 15-30 minutes
 
 ## 📋 Authentication Mode Comparison
 
@@ -45,36 +85,25 @@ The Fabrikam Platform supports three authentication modes to fit different use c
 
 ### Smart Resource Naming:
 - 📋 **Pattern**: `rg-fabrikam-{environment}-{suffix}`
-- 🔀 **Example**: `rg-FabrikamAiDemo-y32g` (matches your actual deployment pattern)
-- ✅ **Benefits**: Unique isolation, easy identification
+- 🔀 **Example**: `rg-fabrikam-development-abc123` (6-character lowercase suffix)
+- ✅ **Benefits**: Unique isolation, easy identification, improved collision avoidance
 
-## � Deployment Parameters by Mode
+## 📋 Key Deployment Parameters
 
-### 🔓 Disabled Mode Parameters
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| **authenticationMode** | `Disabled` | No authentication barriers |
-| **enableUserTracking** | `true` | GUID-based tracking |
-| **Database Provider** | `InMemory` or `SqlServer` | Choose based on persistence needs |
+When you click "Deploy to Azure", you'll configure these key parameters:
 
-### 🔐 BearerToken Mode Parameters  
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| **authenticationMode** | `BearerToken` | JWT token authentication |
-| **enableUserTracking** | `true` | User session tracking |
-| **Database Provider** | `SqlServer` recommended | For user registration storage |
+- **Authentication Mode**: Choose `Disabled`, `BearerToken`, or `EntraExternalId`
+- **Resource Group**: Use the resource group created above
+- **Deployer Object ID**: Use the User Object ID from the prerequisite steps
+- **Database Provider**: Choose `InMemory` (demos) or `SqlServer` (persistent)
 
-### 🏢 EntraExternalId Mode Parameters
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| **authenticationMode** | `EntraExternalId` | OAuth 2.0 with Entra External ID |
-| **entraExternalIdTenant** | `yourcompany.onmicrosoft.com` | Your Entra External ID tenant domain |
-| **entraExternalIdClientId** | `12345678-1234-1234-1234-123456789012` | Application client ID from Entra |
-| **Database Provider** | `SqlServer` recommended | For OAuth user data storage |
+For **EntraExternalId mode**, you'll also need:
+- **Entra Tenant**: Your Entra External ID tenant domain
+- **Client ID**: Application ID from your Entra app registration
 
 ## 🏢 EntraExternalId Setup Prerequisites
 
-Before deploying with EntraExternalId mode, you need:
+If you plan to use **EntraExternalId mode**, complete these steps first:
 
 ### 1. Create Entra External ID Tenant
 ```bash
@@ -106,47 +135,33 @@ After deploying, you'll need to update your app registration:
 
 ## 🏗️ What Gets Deployed
 
-### InMemory + Authentication (Recommended for testing):
+### Improved Resource Naming (2025 Update)
+
+The deployment now uses a **more reliable naming pattern**:
+
+- **6-character lowercase suffix** (vs. old 4-character mixed-case)
+- **Reduced collision probability**: From 1 in 1.6M to 1 in 308M
+- **Pattern**: `{baseName}-{environment}-{6-char-suffix}`
+- **Example**: `fabrikam-development-abc123`
+
+This improves deployment reliability, especially when multiple users fork and deploy simultaneously.
+
+### InMemory + Authentication (Recommended for testing)
+
 - 🌐 **API App Service** (with authentication)
 - 🤖 **MCP App Service** (Model Context Protocol)
 - 🔐 **Key Vault** (with JWT secret)
 - 📊 **Application Insights** (monitoring)
 - 📱 **App Service Plan**
 
-### SQL Server + Authentication (Production-like):
+### SQL Server + Authentication (Production-like)
+
 - 🌐 **API App Service** (with authentication)
 - 🤖 **MCP App Service** (Model Context Protocol)
 - 🔐 **Key Vault** (with JWT + SQL secrets)
 - 🗃️ **SQL Server & Database**
 - 📊 **Application Insights** (monitoring)
 - 📱 **App Service Plan**
-
-## 🔧 Recommended Resource Group Setup
-
-### Before Deployment:
-1. **Open Azure Cloud Shell** in the Azure Portal (click the shell icon `>_` in the top toolbar)
-2. **Create Resource Group** with unique suffix:
-   ```powershell
-   # Generate 4-character suffix
-   $suffix = -join ((65..90) + (97..122) | Get-Random -Count 4 | ForEach-Object {[char]$_})
-   
-   # Create resource group
-   az group create --name "rg-FabrikamAiDemo-$suffix" --location "East US 2"
-   ```
-
-3. **Get your Azure User ID** for Key Vault access:
-   ```powershell
-   # Get your user object ID (needed for Key Vault RBAC permissions)
-   $userObjectId = az ad signed-in-user show --query id -o tsv
-   Write-Host "Your User Object ID: $userObjectId"
-   ```
-
-4. **Note both values** for the ARM template deployment
-
-### After Deployment:
-1. **Test the deployed API** endpoints
-2. **Verify Key Vault** contains secrets and you have access
-3. **Set up CI/CD** using the auto-fix workflows
 
 ## 🔄 CI/CD Integration Testing
 
@@ -167,7 +182,8 @@ After deployment, test the auto-fix CI/CD functionality:
 
 ## 🔍 Testing Your Deployment
 
-### Quick Health Check:
+### Quick Health Check
+
 ```bash
 # API Health Check
 curl https://your-api-app-name.azurewebsites.net/api/orders
@@ -176,7 +192,8 @@ curl https://your-api-app-name.azurewebsites.net/api/orders
 curl https://your-mcp-app-name.azurewebsites.net/mcp/v1/info
 ```
 
-### Authentication Testing:
+### Authentication Testing
+
 ```bash
 # Register a test user
 curl -X POST https://your-api-app-name.azurewebsites.net/api/auth/register \
@@ -199,4 +216,6 @@ curl -X POST https://your-api-app-name.azurewebsites.net/api/auth/login \
 
 ---
 
-**Ready to deploy with enhanced security and Key Vault integration! 🚀**
+## Summary
+
+Ready to deploy with enhanced security and Key Vault integration! 🚀

@@ -8,7 +8,7 @@
   "parameters": {
     "baseName": {
       "type": "string",
-      "defaultValue": "FabrikamAIDemo",
+      "defaultValue": "fabrikam",
       "minLength": 3,
       "maxLength": 15,
       "metadata": {
@@ -17,13 +17,13 @@
     },
     "environment": {
       "type": "string",
-      "defaultValue": "Development",
+      "defaultValue": "development",
       "allowedValues": [
-        "Development",
-        "Production"
+        "development",
+        "production"
       ],
       "metadata": {
-        "description": "Environment for the deployment. Development: For testing and demo preparation. Production: For live business demos."
+        "description": "Environment for the deployment. development: For testing and demo preparation. production: For live business demos."
       }
     },
     "githubRepository": {
@@ -150,27 +150,27 @@
     }
   },
   "variables": {
-    "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)), 0, 4)]",
+    "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)), 0, 6)]",
     "resourceGroupNameParts": "[split(resourceGroup().name, '-')]",
-    "hasResourceGroupSuffix": "[and(greater(length(variables('resourceGroupNameParts')), 2), equals(length(last(variables('resourceGroupNameParts'))), 4))]",
-    "extractedSuffix": "[if(variables('hasResourceGroupSuffix'), last(variables('resourceGroupNameParts')), '')]",
-    "generatedSuffix": "[substring(uniqueString(resourceGroup().id), 0, 4)]",
+    "hasResourceGroupSuffix": "[and(greater(length(variables('resourceGroupNameParts')), 2), equals(length(last(variables('resourceGroupNameParts'))), 6))]",
+    "extractedSuffix": "[if(variables('hasResourceGroupSuffix'), toLower(last(variables('resourceGroupNameParts'))), '')]",
+    "generatedSuffix": "[substring(toLower(uniqueString(resourceGroup().id)), 0, 6)]",
     "finalSuffix": "[if(variables('hasResourceGroupSuffix'), variables('extractedSuffix'), variables('generatedSuffix'))]",
     "resourceBaseName": "[concat(parameters('baseName'), '-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "apiAppName": "[concat('fabrikam-api-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "mcpAppName": "[concat('fabrikam-mcp-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "apiPlanName": "[concat('plan-api-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "mcpPlanName": "[concat('plan-mcp-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "logWorkspaceName": "[concat('log-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "apiInsightsName": "[concat('appi-api-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "mcpInsightsName": "[concat('appi-mcp-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "apiUrl": "[if(parameters('enableCustomDomains'), concat('https://fabrikam-api-', parameters('environment'), '-', variables('finalSuffix'), '.', parameters('customDomain')), concat('https://', variables('apiAppName'), '.azurewebsites.net'))]",
-    "mcpUrl": "[if(parameters('enableCustomDomains'), concat('https://fabrikam-mcp-', parameters('environment'), '-', variables('finalSuffix'), '.', parameters('customDomain')), concat('https://', variables('mcpAppName'), '.azurewebsites.net'))]",
-    "apiCustomDomain": "[concat('fabrikam-api-', parameters('environment'), '-', variables('finalSuffix'), '.', parameters('customDomain'))]",
-    "mcpCustomDomain": "[concat('fabrikam-mcp-', parameters('environment'), '-', variables('finalSuffix'), '.', parameters('customDomain'))]",
-    "sqlServerName": "[concat('sql-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "sqlDatabaseName": "[concat('sqldb-', parameters('environment'), '-', variables('finalSuffix'))]",
-    "keyVaultName": "[concat('kv-', parameters('environment'), '-', variables('finalSuffix'))]",
+    "apiAppName": "[toLower(concat('fabrikam-api-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "mcpAppName": "[toLower(concat('fabrikam-mcp-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "apiPlanName": "[toLower(concat('plan-api-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "mcpPlanName": "[toLower(concat('plan-mcp-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "logWorkspaceName": "[toLower(concat('log-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "apiInsightsName": "[toLower(concat('appi-api-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "mcpInsightsName": "[toLower(concat('appi-mcp-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "apiUrl": "[if(parameters('enableCustomDomains'), concat('https://fabrikam-api-', toLower(parameters('environment')), '-', variables('finalSuffix'), '.', parameters('customDomain')), concat('https://', variables('apiAppName'), '.azurewebsites.net'))]",
+    "mcpUrl": "[if(parameters('enableCustomDomains'), concat('https://fabrikam-mcp-', toLower(parameters('environment')), '-', variables('finalSuffix'), '.', parameters('customDomain')), concat('https://', variables('mcpAppName'), '.azurewebsites.net'))]",
+    "apiCustomDomain": "[concat('fabrikam-api-', toLower(parameters('environment')), '-', variables('finalSuffix'), '.', parameters('customDomain'))]",
+    "mcpCustomDomain": "[concat('fabrikam-mcp-', toLower(parameters('environment')), '-', variables('finalSuffix'), '.', parameters('customDomain'))]",
+    "sqlServerName": "[toLower(concat('sql-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "sqlDatabaseName": "[toLower(concat('sqldb-', parameters('environment'), '-', variables('finalSuffix')))]",
+    "keyVaultName": "[toLower(concat('kv-', parameters('environment'), '-', variables('finalSuffix')))]",
     "jwtSecretName": "FabrikamJwtSecret",
     "sqlConnectionSecretName": "DefaultConnection",
     "isAuthenticationEnabled": "[not(equals(parameters('authenticationMode'), 'Disabled'))]",

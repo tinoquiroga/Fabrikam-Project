@@ -15,17 +15,20 @@ public abstract class AuthenticatedMcpToolBase
     protected readonly IConfiguration _configuration;
     protected readonly IAuthenticationService _authService;
     protected readonly ILogger _logger;
+    protected readonly IHttpContextAccessor? _httpContextAccessor;
 
     protected AuthenticatedMcpToolBase(
         HttpClient httpClient, 
         IConfiguration configuration, 
         IAuthenticationService authService,
-        ILogger logger)
+        ILogger logger,
+        IHttpContextAccessor? httpContextAccessor = null)
     {
         _httpClient = httpClient;
         _configuration = configuration;
         _authService = authService;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
@@ -205,5 +208,132 @@ public abstract class AuthenticatedMcpToolBase
         await AddAuthenticationHeadersAsync(request);
         
         return await _httpClient.SendAsync(request);
+    }
+
+    /// <summary>
+    /// Check if we're in Disabled authentication mode
+    /// </summary>
+    protected bool IsDisabledAuthenticationMode()
+    {
+        return _authService is DisabledAuthenticationService;
+    }
+
+    /// <summary>
+    /// Get user GUID from HTTP context header
+    /// </summary>
+    protected string? GetUserGuidFromContext()
+    {
+        if (_httpContextAccessor?.HttpContext?.Request?.Headers != null)
+        {
+            // Check for X-User-GUID header
+            if (_httpContextAccessor.HttpContext.Request.Headers.TryGetValue("X-User-GUID", out var headerValue))
+            {
+                var guidValue = headerValue.FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(guidValue))
+                {
+                    _logger.LogDebug("Found user GUID in X-User-GUID header: {UserGuid}", guidValue);
+                    return guidValue;
+                }
+            }
+
+            // Fallback: Check query parameters
+            if (_httpContextAccessor.HttpContext.Request.Query.TryGetValue("userGuid", out var queryValue))
+            {
+                var guidValue = queryValue.FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(guidValue))
+                {
+                    _logger.LogDebug("Found user GUID in query parameter: {UserGuid}", guidValue);
+                    return guidValue;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Validate GUID requirement based on authentication mode
+    /// </summary>
+    protected bool ValidateGuidRequirement(string? userGuid, string methodName)
+    {
+        // Get userGuid from HTTP context if not provided in parameters
+        if (string.IsNullOrWhiteSpace(userGuid))
+        {
+            userGuid = GetUserGuidFromContext();
+        }
+
+        // In Disabled authentication mode, GUID is required
+        if (IsDisabledAuthenticationMode())
+        {
+            if (string.IsNullOrWhiteSpace(userGuid))
+            {
+                _logger.LogWarning("User GUID is required in Disabled authentication mode for {MethodName}", methodName);
+                return false;
+            }
+
+            if (!Guid.TryParse(userGuid, out var guidValue) || guidValue == Guid.Empty)
+            {
+                _logger.LogWarning("Invalid GUID format provided for {MethodName}: {UserGuid}", methodName, userGuid);
+                return false;
+            }
+
+            // Set GUID context for disabled authentication
+            SetGuidContext(userGuid);
+            _logger.LogDebug("GUID validated and context set for Disabled mode: {UserGuid}", userGuid);
+            return true;
+        }
+
+        // In BearerToken mode, GUID is optional but still useful for enhanced tracking
+        if (!string.IsNullOrWhiteSpace(userGuid))
+        {
+            if (Guid.TryParse(userGuid, out var guidValue) && guidValue != Guid.Empty)
+            {
+                SetGuidContext(userGuid);
+                _logger.LogDebug("Optional GUID provided for enhanced tracking in BearerToken mode: {UserGuid}", userGuid);
+            }
+            else
+            {
+                _logger.LogWarning("Invalid GUID format provided for {MethodName}, ignoring: {UserGuid}", methodName, userGuid);
+            }
+        }
+
+        return true; // Always valid in BearerToken mode (GUID is optional)
+    }
+
+    /// <summary>
+    /// Create GUID validation error response for Disabled mode
+    /// </summary>
+    protected object CreateGuidValidationErrorResponse(string? userGuid, string methodName)
+    {
+        string errorMessage;
+        if (string.IsNullOrWhiteSpace(userGuid))
+        {
+            errorMessage = "❌ **User GUID Required**\n\n" +
+                          "In Disabled authentication mode, you must provide a valid user GUID.\n\n" +
+                          "**How to provide GUID:**\n" +
+                          "• Via parameter: `\"userGuid\": \"12345678-1234-1234-1234-123456789012\"`\n" +
+                          "• Via header: `X-User-GUID: 12345678-1234-1234-1234-123456789012`\n\n" +
+                          "**Expected format:** `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`";
+        }
+        else
+        {
+            errorMessage = $"❌ **Invalid GUID Format**\n\n" +
+                          $"The provided GUID `{userGuid}` is not in the correct format.\n\n" +
+                          "**Expected format:** `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`\n" +
+                          "**Example:** `12345678-1234-1234-1234-123456789012`";
+        }
+
+        return new
+        {
+            content = new object[]
+            {
+                new
+                {
+                    type = "text",
+                    text = errorMessage
+                }
+            },
+            isError = true
+        };
     }
 }

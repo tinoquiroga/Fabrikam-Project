@@ -1,7 +1,7 @@
 # Test-Shared.ps1 - Enhanced Authentication-Aware Testing Utilities
 # Supports Disabled, BearerToken, and EntraExternalId authentication modes
 
-# Enhanced test configuration with authentication detection
+# Enhanced test configuration with authentication detection and deployment support
 $script:TestConfig = @{
     ApiBaseUrl = "https://localhost:7297"
     McpBaseUrl = "https://localhost:5001"
@@ -19,14 +19,142 @@ $script:TestConfig = @{
         FirstName = "Test"
         LastName = "User"
     }
+    DeploymentConfig = $null
+    CurrentDeployment = "local"
+}
+
+# Load deployment configuration
+function Get-DeploymentConfiguration {
+    param(
+        [string]$ConfigPath = "$PSScriptRoot\..\..\deployment-config.json"
+    )
+    
+    if (Test-Path $ConfigPath) {
+        try {
+            $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+            return $config
+        }
+        catch {
+            Write-Warning "Failed to load deployment configuration from $ConfigPath : $($_.Exception.Message)"
+            return $null
+        }
+    }
+    else {
+        Write-Warning "Deployment configuration file not found at $ConfigPath"
+        return $null
+    }
+}
+
+# Get deployment URLs by name or alias
+function Get-DeploymentUrls {
+    param(
+        [string]$DeploymentName = "local",
+        [switch]$Production
+    )
+    
+    # Load deployment config if not already loaded
+    if (-not $script:TestConfig.DeploymentConfig) {
+        $script:TestConfig.DeploymentConfig = Get-DeploymentConfiguration
+    }
+    
+    if (-not $script:TestConfig.DeploymentConfig) {
+        # Fallback to environment variables if config file not available
+        if ($Production) {
+            $apiUrl = if ($env:API_DOMAIN) { "https://$env:API_DOMAIN" } else { "https://localhost:7297" }
+            $mcpUrl = if ($env:MCP_DOMAIN) { "https://$env:MCP_DOMAIN" } else { "https://localhost:5001" }
+            
+            return @{
+                ApiUrl = $apiUrl
+                McpUrl = $mcpUrl
+                AuthMode = "BearerToken"
+                Description = "Environment Variables"
+            }
+        }
+        else {
+            return @{
+                ApiUrl = "https://localhost:7297"
+                McpUrl = "https://localhost:5001"
+                AuthMode = "BearerToken"
+                Description = "Local Development"
+            }
+        }
+    }
+    
+    $config = $script:TestConfig.DeploymentConfig
+    
+    # Handle production flag with aliases
+    if ($Production) {
+        $DeploymentName = if ($config.aliases.production) { $config.aliases.production } else { "production" }
+    }
+    
+    # Check if it's an alias
+    if ($config.aliases.PSObject.Properties.Name -contains $DeploymentName) {
+        $DeploymentName = $config.aliases.$DeploymentName
+    }
+    
+    # Get the deployment
+    if ($config.deployments.PSObject.Properties.Name -contains $DeploymentName) {
+        $deployment = $config.deployments.$DeploymentName
+        
+        if (-not $deployment.active) {
+            Write-Warning "Deployment '$DeploymentName' is marked as inactive"
+        }
+        
+        return @{
+            ApiUrl = $deployment.apiUrl
+            McpUrl = $deployment.mcpUrl
+            AuthMode = $deployment.authMode
+            Description = $deployment.description
+            Suffix = $deployment.suffix
+            Branch = $deployment.branch
+            LastUpdated = $deployment.lastUpdated
+        }
+    }
+    else {
+        Write-Warning "Deployment '$DeploymentName' not found in configuration"
+        return @{
+            ApiUrl = "https://localhost:7297"
+            McpUrl = "https://localhost:5001"
+            AuthMode = "BearerToken"
+            Description = "Fallback to Local"
+        }
+    }
 }
 
 function Initialize-TestEnvironment {
     param(
-        [string]$ApiBaseUrl = "https://localhost:7297",
-        [string]$McpBaseUrl = "https://localhost:5001",
-        [int]$TimeoutSeconds = 30
+        [string]$ApiBaseUrl = "",
+        [string]$McpBaseUrl = "",
+        [int]$TimeoutSeconds = 30,
+        [string]$DeploymentName = "local",
+        [switch]$Production
     )
+    
+    # If URLs not provided, get them from deployment configuration
+    if ([string]::IsNullOrEmpty($ApiBaseUrl) -or [string]::IsNullOrEmpty($McpBaseUrl)) {
+        $deploymentInfo = Get-DeploymentUrls -DeploymentName $DeploymentName -Production:$Production
+        
+        if ([string]::IsNullOrEmpty($ApiBaseUrl)) {
+            $ApiBaseUrl = $deploymentInfo.ApiUrl
+        }
+        if ([string]::IsNullOrEmpty($McpBaseUrl)) {
+            $McpBaseUrl = $deploymentInfo.McpUrl
+        }
+        
+        # Store deployment context
+        $script:TestConfig.CurrentDeployment = $DeploymentName
+        
+        Write-Host "🌍 Using deployment configuration: $($deploymentInfo.Description)" -ForegroundColor Cyan
+        if ($deploymentInfo.Suffix) {
+            Write-Host "   Suffix: $($deploymentInfo.Suffix)" -ForegroundColor Gray
+        }
+        if ($deploymentInfo.Branch) {
+            Write-Host "   Branch: $($deploymentInfo.Branch)" -ForegroundColor Gray
+        }
+        if ($deploymentInfo.LastUpdated) {
+            Write-Host "   Updated: $($deploymentInfo.LastUpdated)" -ForegroundColor Gray
+        }
+    }
     
     $script:TestConfig.ApiBaseUrl = $ApiBaseUrl
     $script:TestConfig.McpBaseUrl = $McpBaseUrl

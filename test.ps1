@@ -26,9 +26,10 @@ param(
     [switch]$Production,
     [switch]$Status,
     [switch]$Stop,
+    [string]$DeploymentName = "local",
     [int]$TimeoutSeconds = 30,
-    [string]$ApiBaseUrl = "https://localhost:7297",
-    [string]$McpBaseUrl = "https://localhost:5001",
+    [string]$ApiBaseUrl = "",
+    [string]$McpBaseUrl = "",
     [switch]$Help
 )
 
@@ -51,9 +52,15 @@ if ($Help) {
     Write-Host "  .\test.ps1 -McpOnly           # Test MCP server and tools only"
     Write-Host "  .\test.ps1 -AuthOnly          # Test authentication only"
     Write-Host "  .\test.ps1 -IntegrationOnly   # Test API-MCP integration only"
-    Write-Host "  .\test.ps1 -Production        # Test against Azure production endpoints"
+    Write-Host "  .\test.ps1 -Production        # Test against configured production deployment"
     Write-Host "  .\test.ps1 -CleanArtifacts    # Clean build artifacts after testing"
     Write-Host "  .\test.ps1 -Verbose           # Detailed output and comprehensive testing"
+    Write-Host ""
+    Write-Host "Deployment Testing:" -ForegroundColor Yellow
+    Write-Host "  .\test.ps1 -Production                              # Test default production deployment"
+    Write-Host "  .\test.ps1 -DeploymentName ""feature-auth-disabled""  # Test specific deployment"
+    Write-Host "  .\test.ps1 -DeploymentName ""feature-auth-bearer""    # Test Bearer Token deployment"
+    Write-Host "  .\test.ps1 -ApiBaseUrl ""https://...""               # Override with specific URLs"
     Write-Host ""
     Write-Host "Server Management:" -ForegroundColor Yellow
     Write-Host "  .\test.ps1 -Status            # Show current server status (replaces Manage-Project.ps1 status)"

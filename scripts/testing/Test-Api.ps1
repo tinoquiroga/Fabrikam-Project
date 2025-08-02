@@ -81,7 +81,7 @@ function Test-ApiEndpoints {
         $testResults += $result
         
         # Test user profile endpoint
-        $result = Test-EndpointWithAuth -Endpoint "/api/auth/profile" -Description "User Profile"
+        $result = Test-EndpointWithAuth -Endpoint "/api/auth/me" -Description "User Profile"
         $testResults += $result
         
     } elseif ($script:TestConfig.AuthenticationMode -eq "EntraExternalId") {
@@ -235,32 +235,83 @@ function Show-ApiTestSummary {
     
     Write-TestSection "API Test Summary"
     
+    # Collect failures for detailed reporting
+    $failures = @()
+    $warnings = @()
+    
     # Endpoint test summary
     $endpointPassed = ($EndpointResults | Where-Object { $_.Success -eq $true }).Count
     $endpointTotal = $EndpointResults.Count
+    $endpointFailed = $EndpointResults | Where-Object { $_.Success -eq $false }
     
     Write-Host "📊 Endpoint Tests: $endpointPassed/$endpointTotal passed" -ForegroundColor $(if ($endpointPassed -eq $endpointTotal) { "Green" } else { "Yellow" })
+    
+    # Collect endpoint failures
+    foreach ($failed in $endpointFailed) {
+        $failures += "❌ $($failed.Description) - Failed: $($failed.ErrorMessage)"
+    }
     
     # Performance test summary
     if ($PerformanceResults.Count -gt 0) {
         $performancePassed = ($PerformanceResults | Where-Object { $_.Status -eq "Pass" }).Count
         $performanceTotal = $PerformanceResults.Count
+        $performanceFailed = $PerformanceResults | Where-Object { $_.Status -eq "Error" }
+        $performanceSlow = $PerformanceResults | Where-Object { $_.Status -eq "Slow" }
         
         Write-Host "⏱️  Performance Tests: $performancePassed/$performanceTotal within limits" -ForegroundColor $(if ($performancePassed -eq $performanceTotal) { "Green" } else { "Yellow" })
+        
+        # Collect performance failures and warnings
+        foreach ($failed in $performanceFailed) {
+            $failures += "❌ $($failed.Endpoint) Performance - Failed to test"
+        }
+        foreach ($slow in $performanceSlow) {
+            $warnings += "⚠️  $($slow.Endpoint) Performance - Slow: $($slow.ResponseTime)ms"
+        }
     }
     
     # Integrity test summary
     if ($IntegrityResults.Count -gt 0) {
         $integrityPassed = ($IntegrityResults | Where-Object { $_.Status -eq "Pass" }).Count
         $integrityTotal = $IntegrityResults.Count
+        $integrityFailed = $IntegrityResults | Where-Object { $_.Status -eq "Fail" }
+        $integrityWarnings = $IntegrityResults | Where-Object { $_.Status -eq "Warning" -or $_.Status -eq "Error" }
         
         Write-Host "🔍 Data Integrity Tests: $integrityPassed/$integrityTotal passed" -ForegroundColor $(if ($integrityPassed -eq $integrityTotal) { "Green" } else { "Yellow" })
+        
+        # Collect integrity failures and warnings
+        foreach ($failed in $integrityFailed) {
+            $failures += "❌ $($failed.Test) - Failed: $($failed.Details)"
+        }
+        foreach ($warning in $integrityWarnings) {
+            if ($warning.Status -eq "Error") {
+                $failures += "❌ $($warning.Test) - Error: $($warning.Details)"
+            } else {
+                $warnings += "⚠️  $($warning.Test) - Warning: $($warning.Details)"
+            }
+        }
     }
     
     # Authentication mode summary
     Write-Host "🔐 Authentication Mode: $($script:TestConfig.AuthenticationMode)" -ForegroundColor Cyan
     
     Write-Host ""
+    
+    # Show detailed failures and warnings at the end
+    if ($failures.Count -gt 0) {
+        Write-Host "🚨 Test Failures:" -ForegroundColor Red
+        foreach ($failure in $failures) {
+            Write-Host "   $failure" -ForegroundColor Red
+        }
+        Write-Host ""
+    }
+    
+    if ($warnings.Count -gt 0) {
+        Write-Host "⚠️  Test Warnings:" -ForegroundColor Yellow
+        foreach ($warning in $warnings) {
+            Write-Host "   $warning" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    }
     
     # Overall status
     $overallPassed = $endpointPassed -eq $endpointTotal
@@ -276,6 +327,9 @@ function Show-ApiTestSummary {
         return $true
     } else {
         Write-Host "⚠️  Some API tests failed or had warnings" -ForegroundColor Yellow
+        if ($failures.Count -eq 0) {
+            Write-Host "   (Only warnings detected, no critical failures)" -ForegroundColor Gray
+        }
         return $false
     }
 }

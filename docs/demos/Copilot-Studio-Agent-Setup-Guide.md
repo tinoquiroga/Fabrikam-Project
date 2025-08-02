@@ -98,7 +98,7 @@ Your Fabrikam agent will enable business users to:
    
    **Required Changes in Swagger Editor**:
    1. **Update host**: Change `host:` to your MCP server domain (e.g., `your-mcp-app-name.azurewebsites.net`)
-   2. **Add GUID parameter**: In the `paths:` section, add your tracking GUID
+   2. **Add GUID header**: Configure the `X-User-GUID` header for user tracking
    
    **💡 Domain Name Helper**: Your Azure deployment generates predictable domain names based on your resource group name:
    - **Resource Group**: `rg-fabrikamaidemo-gcpm`
@@ -128,6 +128,33 @@ Your Fabrikam agent will enable business users to:
    host: fabrikam-mcp-development-gcpm.azurewebsites.net
    basePath: /mcp
    schemes:
+     - https
+   paths:
+     /:
+       post:
+         summary: MCP Server Streamable HTTP
+         x-ms-agentic-protocol: mcp-streamable-1.0
+         operationId: InvokeMCP
+         parameters:
+           - name: X-User-GUID
+             in: header
+             required: true
+             type: string
+             default: a1b2c3d4-e5f6-7890-abcd-123456789012
+             description: User tracking GUID for Disabled authentication mode
+         responses:
+           '200':
+             description: Success
+   securityDefinitions: {}
+   security: []
+   ```
+   
+   **Replace the sample GUID** (`a1b2c3d4-e5f6-7890-abcd-123456789012`) with your actual generated GUID.
+   
+   **🔐 Important Security Notes**:
+   - The GUID acts as a user identifier in Disabled authentication mode
+   - Each user/session should have a unique GUID for proper tracking
+   - The MCP server will reject requests without a valid GUID format
      - https
    paths:
      /:

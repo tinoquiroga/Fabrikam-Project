@@ -14,8 +14,9 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
         HttpClient httpClient, 
         IConfiguration configuration,
         IAuthenticationService authService,
-        ILogger<FabrikamSalesTools> logger) 
-        : base(httpClient, configuration, authService, logger)
+        ILogger<FabrikamSalesTools> logger,
+        IHttpContextAccessor httpContextAccessor) 
+        : base(httpClient, configuration, authService, logger, httpContextAccessor)
     {
     }
 
@@ -31,20 +32,10 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
         int page = 1,
         int pageSize = 20)
     {
-        // Set GUID context for disabled authentication mode
-        if (!string.IsNullOrWhiteSpace(userGuid))
+        // Validate GUID requirement based on authentication mode
+        if (!ValidateGuidRequirement(userGuid, nameof(GetOrders)))
         {
-            if (!ValidateAndSetGuidContext(userGuid, nameof(GetOrders)))
-            {
-                return new
-                {
-                    error = new
-                    {
-                        code = 400,
-                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    }
-                };
-            }
+            return CreateGuidValidationErrorResponse(userGuid, nameof(GetOrders));
         }
 
         // Validate authorization
@@ -317,20 +308,10 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
     [McpAuthorize(McpRoles.Admin, McpRoles.Sales)]
     public async Task<object> GetSalesAnalytics(string? userGuid = null, string? fromDate = null, string? toDate = null)
     {
-        // Set GUID context for disabled authentication mode
-        if (!string.IsNullOrWhiteSpace(userGuid))
+        // Validate GUID requirement based on authentication mode
+        if (!ValidateGuidRequirement(userGuid, nameof(GetSalesAnalytics)))
         {
-            if (!ValidateAndSetGuidContext(userGuid, nameof(GetSalesAnalytics)))
-            {
-                return new
-                {
-                    error = new
-                    {
-                        code = 400,
-                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    }
-                };
-            }
+            return CreateGuidValidationErrorResponse(userGuid, nameof(GetSalesAnalytics));
         }
 
         // Validate authorization
@@ -517,20 +498,10 @@ public class FabrikamSalesTools : AuthenticatedMcpToolBase
     [McpAuthorize(McpRoles.Admin, McpRoles.Sales, McpRoles.CustomerService)]
     public async Task<object> GetCustomers(string? userGuid = null, int? customerId = null, string? region = null, int page = 1, int pageSize = 20)
     {
-        // Set GUID context for disabled authentication mode
-        if (!string.IsNullOrWhiteSpace(userGuid))
+        // Validate GUID requirement based on authentication mode
+        if (!ValidateGuidRequirement(userGuid, nameof(GetCustomers)))
         {
-            if (!ValidateAndSetGuidContext(userGuid, nameof(GetCustomers)))
-            {
-                return new
-                {
-                    error = new
-                    {
-                        code = 400,
-                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    }
-                };
-            }
+            return CreateGuidValidationErrorResponse(userGuid, nameof(GetCustomers));
         }
 
         // Validate authorization

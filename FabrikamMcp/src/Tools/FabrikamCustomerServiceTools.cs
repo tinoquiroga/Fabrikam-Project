@@ -216,15 +216,12 @@ public class FabrikamCustomerServiceTools : AuthenticatedMcpToolBase
     }
 
     [McpServerTool, Description("Get customer service analytics including ticket volume, resolution times, and breakdowns by status, priority, and category.")]
-    public async Task<string> GetCustomerServiceAnalytics(string? userGuid = null, string? fromDate = null, string? toDate = null)
+    public async Task<object> GetCustomerServiceAnalytics(string? userGuid = null, string? fromDate = null, string? toDate = null)
     {
-        // Set GUID context for disabled authentication mode
-        if (!string.IsNullOrWhiteSpace(userGuid))
+        // Validate GUID requirement based on authentication mode
+        if (!ValidateGuidRequirement(userGuid, nameof(GetCustomerServiceAnalytics)))
         {
-            if (!ValidateAndSetGuidContext(userGuid, nameof(GetCustomerServiceAnalytics)))
-            {
-                return $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-            }
+            return CreateGuidValidationErrorResponse(userGuid, nameof(GetCustomerServiceAnalytics));
         }
 
         try
@@ -241,14 +238,46 @@ public class FabrikamCustomerServiceTools : AuthenticatedMcpToolBase
             if (response.IsSuccessStatusCode)
             {
                 var analytics = await response.Content.ReadAsStringAsync();
-                return $"Customer service analytics:\n{analytics}";
+                return new
+                {
+                    content = new object[]
+                    {
+                        new
+                        {
+                            type = "text",
+                            text = $"Customer service analytics:\n{analytics}"
+                        }
+                    }
+                };
             }
             
-            return $"Error retrieving customer service analytics: {response.StatusCode} - {response.ReasonPhrase}";
+            return new
+            {
+                content = new object[]
+                {
+                    new
+                    {
+                        type = "text",
+                        text = $"Error retrieving customer service analytics: {response.StatusCode} - {response.ReasonPhrase}"
+                    }
+                },
+                isError = true
+            };
         }
         catch (Exception ex)
         {
-            return $"Error retrieving customer service analytics: {ex.Message}";
+            return new
+            {
+                content = new object[]
+                {
+                    new
+                    {
+                        type = "text",
+                        text = $"Error retrieving customer service analytics: {ex.Message}"
+                    }
+                },
+                isError = true
+            };
         }
     }
 

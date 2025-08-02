@@ -1,0 +1,50 @@
+{
+  "deployments": {
+    "local": {
+      "description": "Local development environment",
+      "apiUrl": "https://localhost:7297",
+      "mcpUrl": "https://localhost:5001",
+      "authMode": "BearerToken",
+      "active": true
+    },
+    "main": {
+      "description": "Main branch production deployment",
+      "apiUrl": "",
+      "mcpUrl": "",
+      "authMode": "BearerToken",
+      "active": false,
+      "suffix": "",
+      "lastUpdated": ""
+    },
+    "feature-auth-bearer": {
+      "description": "Feature branch deployment with BearerToken authentication",
+      "apiUrl": "https://fabrikam-api-development-xmrbiq.azurewebsites.net",
+      "mcpUrl": "https://fabrikam-mcp-development-xmrbiq.azurewebsites.net",
+      "authMode": "BearerToken",
+      "active": true,
+      "suffix": "xmrbiq",
+      "lastUpdated": "2025-08-01",
+      "branch": "feature/phase-1-authentication"
+    },
+    "feature-auth-disabled": {
+      "description": "Feature branch deployment with Disabled authentication",
+      "apiUrl": "https://fabrikam-api-development-rxnmcw.azurewebsites.net",
+      "mcpUrl": "https://fabrikam-mcp-development-rxnmcw.azurewebsites.net",
+      "authMode": "Disabled",
+      "active": true,
+      "suffix": "rxnmcw",
+      "lastUpdated": "2025-08-01",
+      "branch": "feature/phase-1-authentication"
+    }
+  },
+  "aliases": {
+    "production": "feature-auth-bearer",
+    "staging": "feature-auth-disabled",
+    "local": "local"
+  },
+  "testing": {
+    "defaultTimeout": 30,
+    "retryAttempts": 3,
+    "productionTestingEnabled": true
+  }
+}

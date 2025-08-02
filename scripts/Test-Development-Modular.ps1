@@ -2,8 +2,9 @@
 # Comprehensive testing with automatic authentication mode detection and server management
 
 param(
-    [string]$ApiBaseUrl = "https://localhost:7297",
-    [string]$McpBaseUrl = "https://localhost:5001",
+    [string]$ApiBaseUrl = "",
+    [string]$McpBaseUrl = "",
+    [string]$DeploymentName = "local",
     [switch]$Quick,
     [switch]$ApiOnly,
     [switch]$McpOnly,
@@ -107,6 +108,23 @@ function Start-TestingWorkflow {
         OverallSuccess = $false
     }
     
+    # Resolve URLs from deployment configuration if needed
+    if ([string]::IsNullOrEmpty($ApiBaseUrl) -or [string]::IsNullOrEmpty($McpBaseUrl)) {
+        # Load shared testing utilities to get deployment configuration
+        $SharedScript = Join-Path $PSScriptRoot "testing/Test-Shared.ps1"
+        if (Test-Path $SharedScript) {
+            . $SharedScript
+            $deploymentInfo = Get-DeploymentUrls -DeploymentName $DeploymentName -Production:$Production
+            
+            if ([string]::IsNullOrEmpty($ApiBaseUrl)) {
+                $script:ApiBaseUrl = $deploymentInfo.ApiUrl
+            }
+            if ([string]::IsNullOrEmpty($McpBaseUrl)) {
+                $script:McpBaseUrl = $deploymentInfo.McpUrl
+            }
+        }
+    }
+    
     Write-Host "🚀 Starting Authentication-Aware Testing Workflow" -ForegroundColor Magenta
     Write-Host "   Started: $($startTime.ToString('yyyy-MM-dd HH:mm:ss'))" -ForegroundColor Gray
     Write-Host "   API URL: $ApiBaseUrl" -ForegroundColor Gray
@@ -168,8 +186,8 @@ function Start-TestingWorkflow {
         Write-Host "🌍 Production Testing Mode - Skipping local server management" -ForegroundColor Cyan
     }
     
-    # Initialize test environment
-    Initialize-TestEnvironment -ApiBaseUrl $ApiBaseUrl -McpBaseUrl $McpBaseUrl
+    # Initialize test environment with deployment configuration support
+    Initialize-TestEnvironment -ApiBaseUrl $ApiBaseUrl -McpBaseUrl $McpBaseUrl -DeploymentName $DeploymentName -Production:$Production
     
     # Check system requirements
     $requirements = Test-SystemRequirements
@@ -369,8 +387,11 @@ function Show-TestingSummary {
     Write-TestSection "Testing Summary"
     
     Write-Host "⏱️  Test Duration: $([math]::Round($TestResults.Duration.TotalSeconds, 2)) seconds" -ForegroundColor Cyan
-    Write-Host "�� Authentication Mode: $($script:TestConfig.AuthenticationMode)" -ForegroundColor Cyan
+    Write-Host "🔐 Authentication Mode: $($script:TestConfig.AuthenticationMode)" -ForegroundColor Cyan
     Write-Host ""
+    
+    # Collect failures for detailed reporting
+    $failures = @()
     
     # Individual test results
     Write-Host "📊 Test Results:" -ForegroundColor White
@@ -379,27 +400,54 @@ function Show-TestingSummary {
         $status = if ($TestResults.Api) { "✅ PASS" } else { "❌ FAIL" }
         $color = if ($TestResults.Api) { "Green" } else { "Red" }
         Write-Host "   API Tests: $status" -ForegroundColor $color
+        if (-not $TestResults.Api) {
+            $failures += "API Tests - Check endpoint connectivity and authentication"
+        }
     }
     
     if ($TestResults.Authentication -ne $null) {
         $status = if ($TestResults.Authentication) { "✅ PASS" } else { "❌ FAIL" }
         $color = if ($TestResults.Authentication) { "Green" } else { "Red" }
         Write-Host "   Authentication Tests: $status" -ForegroundColor $color
+        if (-not $TestResults.Authentication) {
+            $failures += "Authentication Tests - Check authentication mode configuration"
+        }
     }
     
     if ($TestResults.Mcp -ne $null) {
         $status = if ($TestResults.Mcp) { "✅ PASS" } else { "❌ FAIL" }
         $color = if ($TestResults.Mcp) { "Green" } else { "Red" }
         Write-Host "   MCP Tests: $status" -ForegroundColor $color
+        if (-not $TestResults.Mcp) {
+            $failures += "MCP Tests - Check MCP server connectivity and tools"
+        }
     }
     
     if ($TestResults.Integration -ne $null) {
         $status = if ($TestResults.Integration) { "✅ PASS" } else { "❌ FAIL" }
         $color = if ($TestResults.Integration) { "Green" } else { "Red" }
         Write-Host "   Integration Tests: $status" -ForegroundColor $color
+        if (-not $TestResults.Integration) {
+            $failures += "Integration Tests - Check API-MCP communication"
+        }
     }
     
     Write-Host ""
+    
+    # Show detailed failures at the end
+    if ($failures.Count -gt 0) {
+        Write-Host "🚨 Test Failures Detected:" -ForegroundColor Red
+        foreach ($failure in $failures) {
+            Write-Host "   ❌ $failure" -ForegroundColor Red
+        }
+        Write-Host ""
+        Write-Host "💡 Troubleshooting Tips:" -ForegroundColor Yellow
+        Write-Host "   • Run individual test modules with -Verbose for detailed output" -ForegroundColor Gray
+        Write-Host "   • Use .\test.ps1 -CleanBuild to rebuild and restart servers" -ForegroundColor Gray
+        Write-Host "   • Check server logs for specific error details" -ForegroundColor Gray
+        Write-Host "   • Verify authentication configuration matches test mode" -ForegroundColor Gray
+        Write-Host ""
+    }
     
     # Overall result
     if ($TestResults.OverallSuccess) {
@@ -407,7 +455,7 @@ function Show-TestingSummary {
         Write-Host "   The Fabrikam platform is ready for use with $($script:TestConfig.AuthenticationMode) authentication." -ForegroundColor Green
     } else {
         Write-Host "⚠️  Some tests failed or had issues." -ForegroundColor Yellow
-        Write-Host "   Please review the test output above for details." -ForegroundColor Yellow
+        Write-Host "   Please review the failure details above and test output for specifics." -ForegroundColor Yellow
     }
     
     Write-Host ""

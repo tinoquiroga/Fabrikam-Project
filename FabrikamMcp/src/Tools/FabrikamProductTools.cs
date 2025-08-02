@@ -29,20 +29,10 @@ public class FabrikamProductTools : AuthenticatedMcpToolBase
         int page = 1,
         int pageSize = 20)
     {
-        // Set GUID context for disabled authentication mode
-        if (!string.IsNullOrWhiteSpace(userGuid))
+        // Validate GUID requirement based on authentication mode
+        if (!ValidateGuidRequirement(userGuid, nameof(GetProducts)))
         {
-            if (!ValidateAndSetGuidContext(userGuid, nameof(GetProducts)))
-            {
-                return new
-                {
-                    error = new
-                    {
-                        code = 400,
-                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    }
-                };
-            }
+            return CreateGuidValidationErrorResponse(userGuid, nameof(GetProducts));
         }
 
         try
@@ -245,20 +235,10 @@ public class FabrikamProductTools : AuthenticatedMcpToolBase
         string? category = null,
         bool includeOutOfStock = true)
     {
-        // Set GUID context for disabled authentication mode
-        if (!string.IsNullOrWhiteSpace(userGuid))
+        // Validate GUID requirement based on authentication mode
+        if (!ValidateGuidRequirement(userGuid, nameof(GetProductAnalytics)))
         {
-            if (!ValidateAndSetGuidContext(userGuid, nameof(GetProductAnalytics)))
-            {
-                return new
-                {
-                    error = new
-                    {
-                        code = 400,
-                        message = $"Invalid user GUID format: {userGuid}. Expected format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    }
-                };
-            }
+            return CreateGuidValidationErrorResponse(userGuid, nameof(GetProductAnalytics));
         }
 
         try

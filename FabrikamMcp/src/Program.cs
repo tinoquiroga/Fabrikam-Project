@@ -151,13 +151,25 @@ if (authSettings.RequireUserAuthentication && !string.IsNullOrEmpty(jwtSettings.
 // Map controllers for user registration endpoints
 app.MapControllers();
 
-// Map MCP endpoints to the standard /mcp path
-app.MapMcp("/mcp");
+// Map MCP endpoints to the standard /mcp path with conditional authentication
+if (authSettings.Mode == AuthenticationMode.BearerToken && authSettings.RequireUserAuthentication)
+{
+    // BearerToken mode: Require JWT authentication for MCP endpoint
+    app.MapMcp("/mcp").RequireAuthorization();
+}
+else
+{
+    // Disabled mode or no authentication: Allow anonymous access to MCP endpoint
+    app.MapMcp("/mcp");
+}
 
-// Add status and info endpoints
+// Add status and info endpoints (always anonymous for discovery)
 app.MapGet("/status", (IConfiguration configuration) =>
 {
     var authConfig = configuration.GetSection(AuthenticationSettings.SectionName).Get<AuthenticationSettings>() ?? new AuthenticationSettings();
+    
+    // Determine if MCP endpoint actually requires authentication
+    bool mcpRequiresAuth = authConfig.Mode == AuthenticationMode.BearerToken && authConfig.RequireUserAuthentication;
     
     return new
     {
@@ -168,8 +180,9 @@ app.MapGet("/status", (IConfiguration configuration) =>
         Transport = "HTTP",
         Authentication = new
         {
-            Required = authConfig.RequireUserAuthentication,
-            Method = authConfig.RequireUserAuthentication ? "JWT Bearer Token" : "None",
+            Mode = authConfig.Mode.ToString(),
+            Required = mcpRequiresAuth,
+            Method = mcpRequiresAuth ? "JWT Bearer Token" : authConfig.Mode == AuthenticationMode.Disabled ? "User GUID Required" : "None",
             Issuer = authConfig.Jwt.Issuer,
             Audience = authConfig.Jwt.Audience
         },
@@ -184,9 +197,9 @@ app.MapGet("/status", (IConfiguration configuration) =>
         Timestamp = DateTime.UtcNow,
         Environment = app.Environment.EnvironmentName
     };
-});
+}).AllowAnonymous();
 
-// Redirect root path to status for convenience
-app.MapGet("/", () => Results.Redirect("/status"));
+// Redirect root path to status for convenience (always anonymous)
+app.MapGet("/", () => Results.Redirect("/status")).AllowAnonymous();
 
 app.Run();

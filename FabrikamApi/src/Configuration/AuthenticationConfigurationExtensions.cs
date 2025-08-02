@@ -37,12 +37,29 @@ public static class AuthenticationConfigurationExtensions
         var logger = serviceProvider.GetService<ILogger<Program>>();
         logger?.LogInformation("Configuring authentication mode: {AuthenticationMode}", authenticationMode);
 
-        // Register AuthenticationSettings as a service
-        var authSettings = new FabrikamContracts.DTOs.AuthenticationSettings
+        // Register both contract-based settings (for backward compatibility) and new API-specific settings
+        var contractAuthSettings = new FabrikamContracts.DTOs.AuthenticationSettings
         {
             Mode = authenticationMode
         };
-        services.AddSingleton(authSettings);
+        services.AddSingleton(contractAuthSettings);
+
+        // Register API-specific authentication settings
+        var apiAuthSettings = configuration.GetSection(ApiAuthenticationSettings.SectionName).Get<ApiAuthenticationSettings>();
+        if (apiAuthSettings == null)
+        {
+            // Fallback: create from contract settings if new section doesn't exist yet
+            apiAuthSettings = new ApiAuthenticationSettings
+            {
+                Mode = authenticationMode
+            };
+            logger?.LogInformation("Using fallback API authentication settings with mode: {Mode}", authenticationMode);
+        }
+        else
+        {
+            logger?.LogInformation("Using dedicated API authentication settings with mode: {Mode}", apiAuthSettings.Mode);
+        }
+        services.AddSingleton(apiAuthSettings);
 
         switch (authenticationMode)
         {

@@ -1,5 +1,6 @@
 using FabrikamMcp.Tools;
 using FabrikamMcp.Models;
+using FabrikamMcp.Models.Authentication; // Add MCP-specific authentication settings
 using FabrikamMcp.Services;
 using FabrikamContracts.DTOs; // Import consolidated authentication models
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,8 +23,27 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 
 // Configure authentication settings
-var authSettings = builder.Configuration.GetSection(AuthenticationSettings.SectionName).Get<AuthenticationSettings>() ?? new AuthenticationSettings();
+var contractAuthSettings = builder.Configuration.GetSection(AuthenticationSettings.SectionName).Get<AuthenticationSettings>() ?? new AuthenticationSettings();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection(AuthenticationSettings.SectionName));
+
+// Configure MCP-specific authentication settings
+var mcpAuthSettings = builder.Configuration.GetSection(McpAuthenticationSettings.SectionName).Get<McpAuthenticationSettings>();
+if (mcpAuthSettings == null)
+{
+    // Fallback: create from contract settings if new section doesn't exist yet
+    mcpAuthSettings = new McpAuthenticationSettings
+    {
+        Mode = contractAuthSettings.Mode,
+        ServiceJwt = contractAuthSettings.ServiceJwt,
+        GuidValidation = contractAuthSettings.GuidValidation
+    };
+    Console.WriteLine($"Using fallback MCP authentication settings with mode: {mcpAuthSettings.Mode}");
+}
+else
+{
+    Console.WriteLine($"Using dedicated MCP authentication settings with mode: {mcpAuthSettings.Mode}");
+}
+builder.Services.AddSingleton(mcpAuthSettings);
 
 // Add Entity Framework with in-memory database (for development)
 builder.Services.AddDbContext<FabrikamDbContext>(options =>
@@ -36,9 +56,9 @@ builder.Services.AddScoped<IServiceJwtService, ServiceJwtService>();
 // Add controllers for user registration endpoints
 builder.Services.AddControllers();
 
-var jwtSettings = authSettings.Jwt;
+var jwtSettings = mcpAuthSettings.Jwt;
 
-if (authSettings.Mode == AuthenticationMode.BearerToken && !string.IsNullOrEmpty(jwtSettings.SecretKey))
+if (mcpAuthSettings.Mode == AuthenticationMode.BearerToken && !string.IsNullOrEmpty(jwtSettings.SecretKey))
 {
     builder.Services.AddAuthentication(options =>
     {
@@ -84,7 +104,7 @@ if (authSettings.Mode == AuthenticationMode.BearerToken && !string.IsNullOrEmpty
     builder.Services.AddAuthorization();
     
     // Add authentication service based on mode
-    switch (authSettings.Mode)
+    switch (mcpAuthSettings.Mode)
     {
         case AuthenticationMode.BearerToken:
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -97,7 +117,7 @@ if (authSettings.Mode == AuthenticationMode.BearerToken && !string.IsNullOrEmpty
             builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
             break;
         default:
-            throw new InvalidOperationException($"Unsupported authentication mode: {authSettings.Mode}");
+            throw new InvalidOperationException($"Unsupported authentication mode: {mcpAuthSettings.Mode}");
     }
 }
 else
@@ -142,7 +162,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 
 // Add authentication and authorization middleware
-if (authSettings.RequireUserAuthentication && !string.IsNullOrEmpty(jwtSettings.SecretKey))
+if (mcpAuthSettings.RequireUserAuthentication && !string.IsNullOrEmpty(jwtSettings.SecretKey))
 {
     app.UseAuthentication();
     app.UseAuthorization();
@@ -152,7 +172,7 @@ if (authSettings.RequireUserAuthentication && !string.IsNullOrEmpty(jwtSettings.
 app.MapControllers();
 
 // Map MCP endpoints to the standard /mcp path with conditional authentication
-if (authSettings.Mode == AuthenticationMode.BearerToken && authSettings.RequireUserAuthentication)
+if (mcpAuthSettings.Mode == AuthenticationMode.BearerToken && mcpAuthSettings.RequireUserAuthentication)
 {
     // BearerToken mode: Require JWT authentication for MCP endpoint
     app.MapMcp("/mcp").RequireAuthorization();
@@ -164,9 +184,10 @@ else
 }
 
 // Add status and info endpoints (always anonymous for discovery)
-app.MapGet("/status", (IConfiguration configuration) =>
+app.MapGet("/status", (IConfiguration configuration, McpAuthenticationSettings mcpSettings) =>
 {
-    var authConfig = configuration.GetSection(AuthenticationSettings.SectionName).Get<AuthenticationSettings>() ?? new AuthenticationSettings();
+    // Use the dedicated MCP authentication settings
+    var authConfig = mcpSettings;
     
     // Determine if MCP endpoint actually requires authentication
     bool mcpRequiresAuth = authConfig.Mode == AuthenticationMode.BearerToken && authConfig.RequireUserAuthentication;

@@ -185,6 +185,26 @@
               "value": "[parameters('environment')]"
             },
             {
+              "name": "Authentication__Mode",
+              "value": "[parameters('authenticationMode')]"
+            },
+            {
+              "name": "Authentication__Strategy",
+              "value": "[if(variables('isAuthenticationEnabled'), 'AspNetIdentity', 'Disabled')]"
+            },
+            {
+              "name": "Authentication__AspNetIdentity__Jwt__Issuer",
+              "value": "[parameters('apiUrl')]"
+            },
+            {
+              "name": "Authentication__AspNetIdentity__Jwt__Audience",
+              "value": "fabrikam-api"
+            },
+            {
+              "name": "Authentication__AspNetIdentity__Jwt__SecretKey",
+              "value": "[if(variables('isAuthenticationEnabled'), concat('@Microsoft.KeyVault(VaultName=', parameters('keyVaultName'), ';SecretName=', parameters('jwtSecretName'), ')'), '')]"
+            },
+            {
               "name": "FabrikamApi__BaseUrl",
               "value": "[parameters('apiUrl')]"
             },

@@ -1,4 +1,5 @@
 using FabrikamContracts.DTOs;
+using FabrikamMcp.Models.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -40,7 +41,7 @@ public class ServiceJwtService : IServiceJwtService
     private readonly TokenValidationParameters _tokenValidationParameters;
 
     public ServiceJwtService(
-        IOptions<AuthenticationSettings> authSettings,
+        IOptions<McpAuthenticationSettings> authSettings,
         IUserRegistrationService userRegistrationService,
         ILogger<ServiceJwtService> logger)
     {
@@ -48,18 +49,37 @@ public class ServiceJwtService : IServiceJwtService
         _userRegistrationService = userRegistrationService;
         _logger = logger;
 
-        // Configure token validation parameters
-        _tokenValidationParameters = new TokenValidationParameters
+        // Log JWT configuration for debugging
+        _logger.LogDebug("ServiceJwtService: SecretKey length = {SecretKeyLength}, Issuer = {Issuer}, Audience = {Audience}",
+            _jwtSettings.SecretKey?.Length ?? 0, _jwtSettings.Issuer, _jwtSettings.Audience);
+
+        // Only configure JWT validation if we have a valid secret key
+        if (string.IsNullOrEmpty(_jwtSettings.SecretKey))
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey)),
-            ValidateIssuer = true,
-            ValidIssuer = _jwtSettings.Issuer,
-            ValidateAudience = true,
-            ValidAudience = _jwtSettings.Audience,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(5)
-        };
+            _logger.LogWarning("ServiceJwtService: No SecretKey provided - JWT functionality will be limited");
+            _tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = false,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false
+            };
+        }
+        else
+        {
+            // Configure token validation parameters
+            _tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey)),
+                ValidateIssuer = true,
+                ValidIssuer = _jwtSettings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _jwtSettings.Audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(5)
+            };
+        }
     }
 
     /// <summary>
@@ -69,6 +89,13 @@ public class ServiceJwtService : IServiceJwtService
     {
         if (userGuid == Guid.Empty)
             throw new ArgumentException("Valid user GUID is required", nameof(userGuid));
+
+        // Check if JWT is properly configured
+        if (string.IsNullOrEmpty(_jwtSettings.SecretKey))
+        {
+            _logger.LogError("Cannot generate service JWT: SecretKey is not configured");
+            throw new InvalidOperationException("Service JWT is not properly configured - missing SecretKey");
+        }
 
         // Validate the user GUID exists in our system
         var userExists = await _userRegistrationService.ValidateUserGuidAsync(userGuid);

@@ -265,7 +265,9 @@ public class FabrikamBusinessIntelligenceTools : AuthenticatedMcpToolBase
                     toDate,
                     metrics = new
                     {
-                        inventoryHealth = (double)(inStock + lowStock * 0.5) / (inStock + lowStock + outOfStock) * 100,
+                        inventoryHealth = (inStock + lowStock + outOfStock) > 0 ? 
+                            (double)(inStock + lowStock * 0.5) / (inStock + lowStock + outOfStock) * 100 : 
+                            0.0,
                         actionItemsCount = actionItems.Count
                     }
                 }

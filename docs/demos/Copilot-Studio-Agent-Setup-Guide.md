@@ -109,14 +109,35 @@ Your Fabrikam agent will enable business users to:
    
    **🆔 Generate Your GUID**:
    
-   **Option 1: PowerShell**
+   **Option 1: Fabrikam API (Recommended)**
+   
+   ```bash
+   curl -X POST "https://your-api-app-name.azurewebsites.net/api/UserRegistration/disabled-mode" \
+     -H "Content-Type: application/json" \
+     -d '{"firstName": "Demo", "lastName": "User", "email": "demo@company.com"}'
+   ```
+   
+   This returns a response with both your GUID and a service JWT token for advanced scenarios.
+   
+   **Option 2: PowerShell**
+   
    ```powershell
    [System.Guid]::NewGuid().ToString()
    ```
    
-   **Option 2: Online GUID Generator**
-   - Visit: <https://www.guidgenerator.com/>
-   - Copy the generated GUID (e.g., `a1b2c3d4-e5f6-7890-abcd-123456789012`)
+   **Option 3: PowerShell with API Integration**
+   
+   ```powershell
+   $apiUrl = "https://your-api-app-name.azurewebsites.net/api/UserRegistration/disabled-mode"
+   $body = @{
+       firstName = "Demo"
+       lastName = "User" 
+       email = "demo@company.com"
+   } | ConvertTo-Json
+   $response = Invoke-RestMethod -Uri $apiUrl -Method POST -Body $body -ContentType "application/json"
+   Write-Host "Your GUID: $($response.guid)"
+   Write-Host "Service Token: $($response.serviceJwtToken)"
+   ```
    
    **Swagger Customization**:
    ```yaml

@@ -5,6 +5,7 @@ using Xunit;
 using FluentAssertions;
 using FabrikamMcp.Services;
 using FabrikamContracts.DTOs;
+using FabrikamMcp.Models.Authentication;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -37,12 +38,12 @@ public class ServiceJwtServiceTests
             AllowedModes = new[] { AuthenticationMode.Disabled, AuthenticationMode.BearerToken }
         };
 
-        var authSettings = new AuthenticationSettings
+        var authSettings = new McpAuthenticationSettings
         {
             ServiceJwt = _serviceJwtSettings
         };
 
-        var mockAuthSettings = new Mock<IOptions<AuthenticationSettings>>();
+        var mockAuthSettings = new Mock<IOptions<McpAuthenticationSettings>>();
         mockAuthSettings.Setup(x => x.Value).Returns(authSettings);
 
         // Setup default user registration service behavior

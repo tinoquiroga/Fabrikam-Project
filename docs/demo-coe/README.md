@@ -30,6 +30,13 @@
 - Test AI-powered business intelligence tools
 - Real-time data integration
 
+### 🛠️ **Demo Administrator Setup**
+**👉 User Provisioning**: [COE Provisioning Guide](./COE-PROVISIONING.md)
+- Create users in M365 tenant with Global Admin access
+- Set up individual Azure resource groups for each participant
+- Automated script for bulk user provisioning
+- *For demo organizers only*
+
 ---
 
 ## 🚀 Demo Flow (Recommended Order)

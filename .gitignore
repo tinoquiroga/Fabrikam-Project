@@ -1,6 +1,12 @@
 # Root-level .gitignore for Fabrikam Project
 # This file covers common patterns for the entire solution
 
+# Personal/sensitive data files
+docs/demo-coe/coe-users-actual.csv
+docs/demo-coe/*-actual.csv
+**/personal-data.csv
+**/sensitive-*.csv
+
 # .NET Core
 *.swp
 *.*~

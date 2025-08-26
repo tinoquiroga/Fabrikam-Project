@@ -37,6 +37,12 @@
 - Automated script for bulk user provisioning
 - *For demo organizers only*
 
+**👉 Security & Privacy**: [Security Guide](./SECURITY-AND-PRIVACY.md)
+- Personal data protection guidelines
+- Template-based workflow for multiple workshops
+- Best practices for workshop organizers
+- *Important: Read before handling participant data*
+
 ---
 
 ## 🚀 Demo Flow (Recommended Order)

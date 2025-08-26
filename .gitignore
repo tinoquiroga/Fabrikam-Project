@@ -3,6 +3,7 @@
 
 # Personal/sensitive data files
 docs/demo-coe/coe-users-actual.csv
+docs/demo-coe/coe-users.csv
 docs/demo-coe/*-actual.csv
 **/personal-data.csv
 **/sensitive-*.csv

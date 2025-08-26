@@ -4,7 +4,7 @@
 # Date: August 26, 2025
 
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [string]$UserDataFile = "coe-users.csv",
     
     [Parameter(Mandatory = $true)]
@@ -238,6 +238,24 @@ function Set-AzureContributorRole {
 try {
     # Check if user data file exists
     if (-not (Test-Path $UserDataFile)) {
+        Write-Host "❌ User data file not found: $UserDataFile" -ForegroundColor Red
+        Write-Host ""
+        
+        if (Test-Path "coe-users-template.csv") {
+            Write-Host "📋 Template file found. To get started:" -ForegroundColor Yellow
+            Write-Host "1. Copy 'coe-users-template.csv' to '$UserDataFile'" -ForegroundColor White
+            Write-Host "2. Edit '$UserDataFile' with your actual user data" -ForegroundColor White
+            Write-Host "3. Run this script again" -ForegroundColor White
+            Write-Host ""
+            Write-Host "Quick command to copy template:" -ForegroundColor Cyan
+            Write-Host "Copy-Item 'coe-users-template.csv' '$UserDataFile'" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "📋 Create a CSV file named '$UserDataFile' with the format:" -ForegroundColor Yellow
+            Write-Host "DisplayName,Username,OriginalEmail" -ForegroundColor White
+            Write-Host "John Doe,johndoe,johndoe@microsoft.com" -ForegroundColor Gray
+        }
+        
         throw "User data file not found: $UserDataFile"
     }
     

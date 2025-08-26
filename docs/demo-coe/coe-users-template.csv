@@ -1,0 +1,17 @@
+# COE User Data Template
+# Copy this file to 'coe-users.csv' and populate with actual user data
+# Format: DisplayName,Username,OriginalEmail
+# 
+# Example entries:
+# John Doe,johndoe,johndoe@microsoft.com
+# Jane Smith,janesmith,janesmith@microsoft.com
+#
+# Instructions:
+# 1. Copy this file to 'coe-users.csv' in the same directory
+# 2. Remove the comment lines (starting with #)
+# 3. Replace example data with actual participant information
+# 4. The 'coe-users.csv' file is gitignored to protect personal data
+
+Example User 1,user1,user1@microsoft.com
+Example User 2,user2,user2@microsoft.com
+Example User 3,user3,user3@microsoft.com

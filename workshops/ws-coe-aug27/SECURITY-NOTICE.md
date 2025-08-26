@@ -10,8 +10,8 @@ The following patterns are automatically excluded from git commits:
 
 ```gitignore
 # Personal/sensitive data files
-docs/demo-coe/coe-users-actual.csv
-docs/demo-coe/*-actual.csv
+workshops/ws-coe-aug27/coe-users-actual.csv
+workshops/ws-coe-aug27/*-actual.csv
 **/personal-data.csv
 **/sensitive-*.csv
 ```
@@ -82,12 +82,12 @@ docs/demo-coe/*-actual.csv
 
 Check what files are tracked by git:
 ```powershell
-git ls-files docs/demo-coe/
+git ls-files workshops/ws-coe-aug27/
 ```
 
 Verify sensitive files are ignored:
 ```powershell
-git check-ignore docs/demo-coe/coe-users-actual.csv
+git check-ignore workshops/ws-coe-aug27/coe-users-actual.csv
 ```
 
 Check gitignore is working:

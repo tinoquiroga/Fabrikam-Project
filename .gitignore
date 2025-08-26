@@ -5,6 +5,7 @@
 docs/demo-coe/coe-users-actual.csv
 docs/demo-coe/coe-users.csv
 docs/demo-coe/*-actual.csv
+docs/demo-coe/coe-config.json
 **/personal-data.csv
 **/sensitive-*.csv
 

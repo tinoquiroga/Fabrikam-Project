@@ -1,0 +1,41 @@
+{
+  "_comment": "COE Demo Configuration Template - Copy to coe-config.json and customize",
+  "_instructions": [
+    "1. Copy this file to 'coe-config.json'",
+    "2. Update the values below with your actual tenant and subscription details",
+    "3. Add your COE participants to the 'users' array",
+    "4. The actual config file (coe-config.json) is gitignored for security"
+  ],
+  "tenantId": "YOUR-ENTRA-TENANT-ID-HERE",
+  "tenantDomain": "YOUR-TENANT-DOMAIN.onmicrosoft.com",
+  "azureSubscriptionId": "YOUR-AZURE-SUBSCRIPTION-ID-HERE",
+  "azureLocation": "East US 2",
+  "defaultPassword": "TempPassword123!",
+  "users": [
+    {
+      "displayName": "Sample User One",
+      "username": "sampleuser1",
+      "originalEmail": "sampleuser1@microsoft.com"
+    },
+    {
+      "displayName": "Sample User Two", 
+      "username": "sampleuser2",
+      "originalEmail": "sampleuser2@microsoft.com"
+    },
+    {
+      "displayName": "Sample User Three",
+      "username": "sampleuser3", 
+      "originalEmail": "sampleuser3@microsoft.com"
+    }
+  ],
+  "_examples": {
+    "tenantId": "394985c9-594b-433f-973d-c6a1f9c124f3",
+    "tenantDomain": "fabrikam.cspsecurityaccelerate.com",
+    "azureSubscriptionId": "b7699934-0c99-4899-8799-763fffc90878",
+    "realUserExample": {
+      "displayName": "Chris DePalma",
+      "username": "chridep", 
+      "originalEmail": "chridep@microsoft.com"
+    }
+  }
+}

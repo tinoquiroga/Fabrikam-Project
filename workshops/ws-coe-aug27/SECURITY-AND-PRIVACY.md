@@ -16,7 +16,7 @@ This guide explains how personal data is protected in the COE provisioning syste
 ### File Structure
 
 ```
-docs/demo-coe/
+workshops/ws-coe-aug27/
 ├── coe-users-template.csv     # ✅ Safe template (in source control)
 ├── coe-users.csv              # ❌ Actual user data (gitignored)
 ├── Provision-COE-Users.ps1    # ✅ Provisioning script (in source control)
@@ -65,9 +65,9 @@ The following patterns are automatically ignored:
 
 ```gitignore
 # Personal/sensitive data files
-docs/demo-coe/coe-users-actual.csv
-docs/demo-coe/coe-users.csv
-docs/demo-coe/*-actual.csv
+workshops/ws-coe-aug27/coe-users-actual.csv
+workshops/ws-coe-aug27/coe-users.csv
+workshops/ws-coe-aug27/*-actual.csv
 **/personal-data.csv
 **/sensitive-*.csv
 ```
@@ -111,7 +111,7 @@ git ls-files | findstr coe-users
 
 ### Test gitignore patterns
 ```powershell
-git check-ignore docs/demo-coe/coe-users.csv
+git check-ignore workshops/ws-coe-aug27/coe-users.csv
 # Should return the file path if properly ignored
 ```
 
@@ -123,12 +123,12 @@ If personal data was committed to git:
 
 1. **Remove from staging**:
    ```powershell
-   git reset HEAD docs/demo-coe/coe-users.csv
+   git reset HEAD workshops/ws-coe-aug27/coe-users.csv
    ```
 
 2. **Remove from git history** (if already committed):
    ```powershell
-   git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch docs/demo-coe/coe-users.csv' --prune-empty --tag-name-filter cat -- --all
+   git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch workshops/ws-coe-aug27/coe-users.csv' --prune-empty --tag-name-filter cat -- --all
    ```
 
 3. **Force push** (dangerous - coordinate with team):

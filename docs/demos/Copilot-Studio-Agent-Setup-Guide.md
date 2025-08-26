@@ -1,8 +1,43 @@
 # 🤖 Building a Fabrikam MCP Agent in Copilot Studio
 
-This guide walks you through creating a Microsoft Copilot Studio agent that connects to your Fabrikam Modular Homes MCP server, enabling natural language interactions with business data for Sales, Inventory, and Customer Service operations.
+⚠️ **NOTICE: This guide has been superseded by focused, authentication-specific guides.**
 
-## 📋 Prerequisites
+## 📚 Please Use the Updated Guides
+
+For a better setup experience, please use one of these focused guides instead:
+
+### 🔓 **[Disabled Authentication Setup](./Copilot-Studio-Disabled-Setup-Guide.md)**
+- Perfect for demos, development, and proof-of-concept
+- Fastest setup with no authentication complexity
+- Use when: `Authentication.Mode: "Disabled"`
+
+### 🔐 **[JWT Authentication Setup](./Copilot-Studio-JWT-Setup-Guide.md)**
+- Production-ready security with JWT tokens
+- Demo user accounts with role-based access
+- Use when: `Authentication.Mode: "BearerToken"`
+
+### 🛡️ **[Entra External ID Setup](./Copilot-Studio-Entra-Setup-Guide.md)**
+- Enterprise-grade OAuth 2.0 authentication (Coming Soon)
+- Single Sign-On with Microsoft Entra External ID
+- Use when: `Authentication.Mode: "EntraExternalId"`
+
+### 📖 **[Setup Guide Index](./README.md)**
+- Decision tree to choose the right guide
+- Authentication mode detection instructions
+- Quick start recommendations
+
+## 🔄 Migration Notice
+
+This comprehensive guide contained information for all authentication modes, which made it complex to follow. The new focused guides provide:
+
+- ✅ **Clearer instructions** specific to each authentication mode
+- ✅ **Reduced complexity** by focusing on one scenario at a time
+- ✅ **Better troubleshooting** with mode-specific solutions
+- ✅ **Faster setup** with relevant steps only
+
+---
+
+## 📋 Original Prerequisites (For Reference)
 
 - Access to Microsoft Copilot Studio
 - Access to Power Apps for creating custom connectors
@@ -255,6 +290,48 @@ Your Fabrikam agent will enable business users to:
    **Authentication Configuration**:
    - In the Power Apps connector Security tab, you'll see the API Key field
    - Enter: `Bearer YOUR_JWT_TOKEN` (replace with actual token from login)
+
+  **JWT Example**:
+  ```
+  swagger: '2.0'
+  info:
+    title: MCP Server with JWT Authentication
+    description: >-
+      This MCP Server requires JWT Bearer token authentication.
+      Get your JWT token from the Fabrikam API authentication endpoint.
+    version: 1.0.0
+  host: fabrikam-mcp-development-rdtywx.azurewebsites.net
+  basePath: /mcp
+  schemes:
+    - https
+  consumes: []
+  produces: []
+  securityDefinitions:
+    BearerAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: "JWT Bearer token. Format: 'Bearer {token}'"
+  security:
+    - BearerAuth: []
+  paths:
+    /:
+      post:
+        summary: MCP Server Streamable HTTP with JWT Authentication
+        x-ms-agentic-protocol: mcp-streamable-1.0
+        operationId: InvokeMCP
+        security:
+          - BearerAuth: []
+        responses:
+          '200':
+            description: Success
+          '401':
+            description: Unauthorized - Invalid or missing JWT token
+  definitions: {}
+  parameters: {}
+  responses: {}
+  tags: []
+  ```
 
    #### 🏢 **EntraExternalId Mode Customization** (Enterprise OAuth)
    

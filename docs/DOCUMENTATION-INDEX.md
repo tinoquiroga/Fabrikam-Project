@@ -25,19 +25,18 @@
 
 ### **📋 Strategic Planning**
 - **[Business Model Summary](architecture/BUSINESS-MODEL-SUMMARY.md)** - Core business logic and entities
-- **[Authentication Strategy](architecture/AUTHENTICATION-AUTHORIZATION-STRATEGY.md)** - Role-based authorization design
-- **[Dual Authentication Strategy](architecture/DUAL-AUTHENTICATION-STRATEGY.md)** - ASP.NET Identity + future B2C integration
+- **[Authentication & Authorization](architecture/AUTHENTICATION.md)** - Comprehensive authentication strategy, implementation, and security
+- **[API Architecture](architecture/API-ARCHITECTURE.md)** - System design and patterns
 
 ### **🔐 Security Implementation**
-- **[JWT Security Strategy](architecture/JWT-SECURITY-STRATEGY.md)** - Token management and Key Vault integration
-- **[Azure Key Vault Integration](deployment/DEPLOY-TO-AZURE.md#key-vault-setup)** - RBAC and managed identity setup
+- **[Authentication Guide](architecture/AUTHENTICATION.md)** - JWT tokens, Key Vault integration, and demo users
+- **[Azure Key Vault Setup](deployment/DEPLOY-TO-AZURE.md#key-vault-configuration)** - Production secret management
 
 ## 🛠️ **Development Guides**
 
 ### **🎯 Authentication Implementation**
-- **[Authentication Implementation Guide](architecture/AUTHENTICATION-IMPLEMENTATION-GUIDE.md)** - Complete technical documentation
-- **[Authentication Lessons Learned](development/AUTHENTICATION-LESSONS-LEARNED.md)** - Implementation insights
-- **[Demo User Guide](demos/DEMO-USER-AUTHENTICATION-GUIDE.md)** - Demo user management
+- **[Authentication Guide](architecture/AUTHENTICATION.md)** - Complete authentication strategy, implementation, and workshop integration
+- **[Demo User Guide](demos/DEMO-USER-AUTHENTICATION-GUIDE.md)** - Demo user management and workshop setup
 
 ### **⚙️ Development Setup**
 - **[Local Development Setup](getting-started/SETTING-UP-FOR-LOCAL-DEVELOPMENT.md)** - Environment configuration

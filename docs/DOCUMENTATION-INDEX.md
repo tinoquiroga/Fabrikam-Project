@@ -59,16 +59,30 @@
 - **[Multi-Instance Workflow](deployment/MULTI-INSTANCE-WORKFLOW-FIX.md)** - Managing multiple deployments
 - **[Database Choice Enhancement](deployment/DATABASE-CHOICE-ENHANCEMENT.md)** - InMemory vs SQL Server options
 
-## 🎮 **Demo & Presentation**
+## 🎮 **Demo & Workshops**
 
 ### **🎯 Demo Resources**
-- **[Demo Ready Summary](docs/demos/DEMO-READY-SUMMARY.md)** - Presentation preparation
-- **[Copilot Demo Prompts](docs/demos/COPILOT-DEMO-PROMPTS.md)** - AI assistant demonstrations
-- **[Quick Demo Prompts](docs/demos/QUICK-DEMO-PROMPTS.md)** - Fast demonstration scripts
+- **[Demo Overview](demos/README.md)** - Complete demonstration framework
+- **[Copilot Studio Integration](demos/copilot-studio/README.md)** - Microsoft Copilot Studio setup guides
+- **[Demo Prompts Library](demos/prompts/README.md)** - Curated prompts for all audiences
+- **[Demo Validation Tools](demos/validation/README.md)** - Automated demo environment testing
 
-### **🤖 Copilot Integration**
-- **[Copilot Studio Setup](docs/demos/Copilot-Studio-Agent-Setup-Guide.md)** - AI agent configuration
-- **[MCP Server Integration](FabrikamMcp/README.md)** - Model Context Protocol implementation
+### **🤖 Copilot Studio Setup**
+- **[No Authentication Setup](demos/copilot-studio/NO-AUTH-SETUP.md)** - Quick demo setup (15 minutes)
+- **[JWT Authentication Setup](demos/copilot-studio/JWT-AUTH-SETUP.md)** - Production-ready demos (25 minutes)
+- **[Enterprise Authentication](demos/copilot-studio/ENTRA-AUTH-SETUP.md)** - Enterprise SSO integration (coming soon)
+- **[Troubleshooting Guide](demos/copilot-studio/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### **🎭 Demo Scenarios**
+- **[Quick Demo Scripts](demos/prompts/README.md#-quick-demo-scripts)** - 3-5 minute presentations
+- **[Business Value Prompts](demos/prompts/README.md#-business-value-prompts)** - Executive demonstrations
+- **[Technical Prompts](demos/prompts/README.md#-technical-prompts)** - Developer and architect demos
+- **[Authentication Demos](demos/authentication/README.md)** - Role-based demo scenarios
+
+### **🎓 Workshop Materials**
+- **[Workshop Overview](workshops/README.md)** - Structured learning experiences
+- **[COE Workshop Example](workshops/ws-coe-aug27/README.md)** - Complete workshop implementation
+- **[Workshop Templates](workshops/templates/)** - Reusable workshop patterns
 
 ## 📈 **Project Management**
 

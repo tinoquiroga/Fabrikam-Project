@@ -8,41 +8,41 @@
 | Document | Purpose | Status |
 |----------|---------|--------|
 | **[🎯 Current Status Summary](PROJECT-STATUS-SUMMARY.md)** | Complete project status with metrics | ✅ Current |
-| **[🎉 Authentication Implementation Complete](AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)** | Authentication system results | ✅ 100% Success |
-| **[📋 Changelog](CHANGELOG.md)** | Version history and updates | ✅ Updated |
-| **[📝 Business Model Summary](BUSINESS-MODEL-SUMMARY.md)** | Business logic and data models | ✅ Current |
+| **[🎉 Authentication Implementation Complete](../archive/completed-tasks/AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)** | Authentication system results | ✅ 100% Success |
+| **[📋 Changelog](../CHANGELOG.md)** | Version history and updates | ✅ Updated |
+| **[📝 Business Model Summary](architecture/BUSINESS-MODEL-SUMMARY.md)** | Business logic and data models | ✅ Current |
 
 ## 🚀 **Quick Start Resources**
 
 | Resource | Purpose | Status |
 |----------|---------|--------|
-| **[🚀 Deploy to Azure](DEPLOY-TO-AZURE.md)** | One-click deployment with Key Vault RBAC | ✅ Production Ready |
-| **[🎉 Authentication Complete](AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)** | Implementation summary & results | ✅ 100% Success Rate |
-| **[🧪 Testing Scripts](Test-Development.ps1)** | Automated testing & validation | ✅ Local + Production |
-| **[👥 Demo Authentication](Demo-Authentication.ps1)** | User management & credentials | ✅ 7 Demo Users |
+| **[🚀 Deploy to Azure](deployment/DEPLOY-TO-AZURE.md)** | One-click deployment with Key Vault RBAC | ✅ Production Ready |
+| **[🎉 Authentication Complete](../archive/completed-tasks/AUTHENTICATION-IMPLEMENTATION-COMPLETE.md)** | Implementation summary & results | ✅ 100% Success Rate |
+| **[🧪 Testing Scripts](../test.ps1)** | Automated testing & validation | ✅ Local + Production |
+| **[👥 Demo Authentication](demos/DEMO-USER-AUTHENTICATION-GUIDE.md)** | User management & credentials | ✅ 7 Demo Users |
 
 ## 🏗️ **Architecture & Strategy**
 
 ### **📋 Strategic Planning**
-- **[Business Model Summary](BUSINESS-MODEL-SUMMARY.md)** - Core business logic and entities
-- **[Authentication Strategy](docs/architecture/AUTHENTICATION-AUTHORIZATION-STRATEGY.md)** - Role-based authorization design
-- **[Dual Authentication Strategy](docs/architecture/DUAL-AUTHENTICATION-STRATEGY.md)** - ASP.NET Identity + future B2C integration
+- **[Business Model Summary](architecture/BUSINESS-MODEL-SUMMARY.md)** - Core business logic and entities
+- **[Authentication Strategy](architecture/AUTHENTICATION-AUTHORIZATION-STRATEGY.md)** - Role-based authorization design
+- **[Dual Authentication Strategy](architecture/DUAL-AUTHENTICATION-STRATEGY.md)** - ASP.NET Identity + future B2C integration
 
 ### **🔐 Security Implementation**
-- **[JWT Security Strategy](docs/development/JWT-SECURITY-STRATEGY.md)** - Token management and Key Vault integration
-- **[Azure RBAC Guide](docs/deployment/RBAC-INTEGRATION-GUIDE.md)** - Role-based access control setup
+- **[JWT Security Strategy](architecture/JWT-SECURITY-STRATEGY.md)** - Token management and Key Vault integration
+- **[Azure Key Vault Integration](deployment/DEPLOY-TO-AZURE.md#key-vault-setup)** - RBAC and managed identity setup
 
 ## 🛠️ **Development Guides**
 
 ### **🎯 Authentication Implementation**
-- **[Authentication Implementation Guide](docs/development/AUTHENTICATION-IMPLEMENTATION-GUIDE.md)** - Complete technical documentation
-- **[Authentication Lessons Learned](docs/development/AUTHENTICATION-LESSONS-LEARNED.md)** - Implementation insights
-- **[Demo User Guide](docs/demos/DEMO-USER-AUTHENTICATION-GUIDE.md)** - Demo user management
+- **[Authentication Implementation Guide](architecture/AUTHENTICATION-IMPLEMENTATION-GUIDE.md)** - Complete technical documentation
+- **[Authentication Lessons Learned](development/AUTHENTICATION-LESSONS-LEARNED.md)** - Implementation insights
+- **[Demo User Guide](demos/DEMO-USER-AUTHENTICATION-GUIDE.md)** - Demo user management
 
 ### **⚙️ Development Setup**
-- **[Local Development Setup](docs/getting-started/SETTING-UP-FOR-LOCAL-DEVELOPMENT.md)** - Environment configuration
-- **[Development Workflow](docs/getting-started/DEVELOPMENT-WORKFLOW.md)** - Daily development practices
-- **[VS Code Tasks Guide](docs/development/VS-CODE-TASKS-GUIDE.md)** - IDE configuration and tasks
+- **[Local Development Setup](getting-started/SETTING-UP-FOR-LOCAL-DEVELOPMENT.md)** - Environment configuration
+- **[Development Workflow](getting-started/DEVELOPMENT-WORKFLOW.md)** - Daily development practices
+- **[VS Code Tasks Guide](getting-started/VS-CODE-TASKS-GUIDE.md)** - IDE configuration and tasks
 
 ### **🧪 Testing & Quality**
 - **[Testing Strategy](docs/development/testing/TESTING-STRATEGY.md)** - Comprehensive testing approach

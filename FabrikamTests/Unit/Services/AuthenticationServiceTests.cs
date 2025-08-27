@@ -71,7 +71,7 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
     #region User Registration Tests
 
     [Fact]
-    public async Task RegisterAsync_WithValidRequest_CreatesUserSuccessfully()
+    public Task RegisterAsync_WithValidRequest_CreatesUserSuccessfully()
     {
         // Given
         RegisterRequest request = null!;
@@ -147,10 +147,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 user.LastName.Should().Be(req.LastName, "Last name should match");
                 user.IsActive.Should().BeTrue("New user should be active");
             });
-    }
+            
+            return Task.CompletedTask;
+        }
 
     [Fact]
-    public async Task RegisterAsync_WithExistingEmail_ReturnsFailure()
+    public Task RegisterAsync_WithExistingEmail_ReturnsFailure()
     {
         // Given
         RegisterRequest request = null!;
@@ -191,10 +193,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.ErrorMessage.Should().Be("User with this email already exists", "Should return appropriate error message");
                 resp.AccessToken.Should().BeNullOrEmpty("Should not return access token on failure");
             });
-    }
+            
+            return Task.CompletedTask;
+        }
 
     [Fact]
-    public async Task RegisterAsync_WithInvalidCustomerId_ReturnsFailure()
+    public Task RegisterAsync_WithInvalidCustomerId_ReturnsFailure()
     {
         // Given
         RegisterRequest request = null!;
@@ -241,10 +245,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Registration should fail for invalid customer ID");
                 resp.ErrorMessage.Should().Be("Invalid customer ID", "Should return appropriate error message");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task RegisterAsync_WithIdentityFailure_ReturnsFailure()
+    public Task RegisterAsync_WithIdentityFailure_ReturnsFailure()
     {
         // Given
         RegisterRequest request = null!;
@@ -293,6 +299,8 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.ErrorMessage.Should().Contain("Password too short", "Should contain specific error");
                 resp.ErrorMessage.Should().Contain("Password requires digit", "Should contain specific error");
             });
+
+            return Task.CompletedTask;
     }
 
     #endregion
@@ -300,7 +308,7 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
     #region User Login Tests
 
     [Fact]
-    public async Task LoginAsync_WithValidCredentials_ReturnsSuccessfulResponse()
+    public Task LoginAsync_WithValidCredentials_ReturnsSuccessfulResponse()
     {
         // Given
         LoginRequest request = null!;
@@ -373,10 +381,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.User.Should().NotBeNull("Should return user info");
                 resp.User.Email.Should().Be("user@test.com", "Should return correct user email");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task LoginAsync_WithNonExistentUser_ReturnsFailure()
+    public Task LoginAsync_WithNonExistentUser_ReturnsFailure()
     {
         // Given
         LoginRequest request = null!;
@@ -413,10 +423,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.ErrorMessage.Should().Be("Invalid email or password", "Should not reveal user existence");
                 resp.AccessToken.Should().BeNullOrEmpty("Should not return access token");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task LoginAsync_WithInactiveUser_ReturnsFailure()
+    public Task LoginAsync_WithInactiveUser_ReturnsFailure()
     {
         // Given
         LoginRequest request = null!;
@@ -463,10 +475,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Login should fail for inactive user");
                 resp.ErrorMessage.Should().Be("User account is inactive", "Should indicate account is inactive");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task LoginAsync_WithLockedOutUser_ReturnsFailure()
+    public Task LoginAsync_WithLockedOutUser_ReturnsFailure()
     {
         // Given
         LoginRequest request = null!;
@@ -516,10 +530,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Login should fail for locked out user");
                 resp.ErrorMessage.Should().Be("Account is locked due to multiple failed login attempts", "Should indicate lockout");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task LoginAsync_WithInvalidPassword_ReturnsFailure()
+    public Task LoginAsync_WithInvalidPassword_ReturnsFailure()
     {
         // Given
         LoginRequest request = null!;
@@ -569,6 +585,8 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Login should fail for invalid password");
                 resp.ErrorMessage.Should().Be("Invalid email or password", "Should not reveal password invalidity specifically");
             });
+
+            return Task.CompletedTask;
     }
 
     #endregion
@@ -576,7 +594,7 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
     #region Token Refresh Tests
 
     [Fact]
-    public async Task RefreshTokenAsync_WithValidToken_ReturnsNewTokens()
+    public Task RefreshTokenAsync_WithValidToken_ReturnsNewTokens()
     {
         // Given
         RefreshTokenRequest request = null!;
@@ -653,10 +671,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.RefreshToken.Should().Be("new-refresh-token", "Should return new refresh token");
                 resp.User.Should().NotBeNull("Should return user info");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task RefreshTokenAsync_WithInvalidAccessToken_ReturnsFailure()
+    public Task RefreshTokenAsync_WithInvalidAccessToken_ReturnsFailure()
     {
         // Given
         RefreshTokenRequest request = null!;
@@ -692,10 +712,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Token refresh should fail for invalid token");
                 resp.ErrorMessage.Should().Be("Invalid access token", "Should indicate invalid token");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task RefreshTokenAsync_WithMissingUserIdClaim_ReturnsFailure()
+    public Task RefreshTokenAsync_WithMissingUserIdClaim_ReturnsFailure()
     {
         // Given
         RefreshTokenRequest request = null!;
@@ -742,10 +764,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Token refresh should fail for missing user ID");
                 resp.ErrorMessage.Should().Be("Invalid token claims", "Should indicate invalid claims");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task RefreshTokenAsync_WithInactiveUser_ReturnsFailure()
+    public Task RefreshTokenAsync_WithInactiveUser_ReturnsFailure()
     {
         // Given
         RefreshTokenRequest request = null!;
@@ -804,6 +828,8 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 resp.Success.Should().BeFalse("Token refresh should fail for inactive user");
                 resp.ErrorMessage.Should().Be("User not found or inactive", "Should indicate user issue");
             });
+
+            return Task.CompletedTask;
     }
 
     #endregion
@@ -811,7 +837,7 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
     #region Password Change Tests
 
     [Fact]
-    public async Task ChangePasswordAsync_WithValidRequest_ReturnsSuccess()
+    public Task ChangePasswordAsync_WithValidRequest_ReturnsSuccess()
     {
         // Given
         string userId = "user-123";
@@ -862,10 +888,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 res.Should().BeTrue("Password change should succeed");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task ChangePasswordAsync_WithNonExistentUser_ReturnsFailure()
+    public Task ChangePasswordAsync_WithNonExistentUser_ReturnsFailure()
     {
         // Given
         string userId = "non-existent-user";
@@ -904,10 +932,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 res.Should().BeFalse("Password change should fail for non-existent user");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task ChangePasswordAsync_WithInvalidCurrentPassword_ReturnsFailure()
+    public Task ChangePasswordAsync_WithInvalidCurrentPassword_ReturnsFailure()
     {
         // Given
         string userId = "user-123";
@@ -963,6 +993,8 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 res.Should().BeFalse("Password change should fail for wrong current password");
             });
+
+            return Task.CompletedTask;
     }
 
     #endregion
@@ -970,7 +1002,7 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
     #region User Info Retrieval Tests
 
     [Fact]
-    public async Task GetUserInfoAsync_WithValidUserId_ReturnsUserInfo()
+    public Task GetUserInfoAsync_WithValidUserId_ReturnsUserInfo()
     {
         // Given
         string userId = "user-123";
@@ -1035,10 +1067,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 info.Roles.Should().Contain(new[] { "User", "Manager" }, "Should contain user roles");
                 info.Permissions.Should().Contain("permission", "Should contain user permissions");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task GetUserInfoAsync_WithNonExistentUser_ReturnsNull()
+    public Task GetUserInfoAsync_WithNonExistentUser_ReturnsNull()
     {
         // Given
         string userId = "non-existent-user";
@@ -1068,10 +1102,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 info.Should().BeNull("Should return null for non-existent user");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task GetUserInfoByEmailAsync_WithValidEmail_ReturnsUserInfo()
+    public Task GetUserInfoByEmailAsync_WithValidEmail_ReturnsUserInfo()
     {
         // Given
         string email = "user@test.com";
@@ -1123,10 +1159,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 info.FirstName.Should().Be(usr.FirstName, "First name should match");
                 info.LastName.Should().Be(usr.LastName, "Last name should match");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task GetUserInfoByEmailAsync_WithNonExistentEmail_ReturnsNull()
+    public Task GetUserInfoByEmailAsync_WithNonExistentEmail_ReturnsNull()
     {
         // Given
         string email = "nonexistent@test.com";
@@ -1156,6 +1194,8 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 info.Should().BeNull("Should return null for non-existent email");
             });
+
+            return Task.CompletedTask;
     }
 
     #endregion
@@ -1163,7 +1203,7 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
     #region Password Reset Tests
 
     [Fact]
-    public async Task RequestPasswordResetAsync_WithValidEmail_ReturnsSuccess()
+    public Task RequestPasswordResetAsync_WithValidEmail_ReturnsSuccess()
     {
         // Given
         ResetPasswordRequest request = null!;
@@ -1210,10 +1250,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 res.Should().BeTrue("Password reset request should succeed");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task RequestPasswordResetAsync_WithNonExistentEmail_ReturnsSuccessForSecurity()
+    public Task RequestPasswordResetAsync_WithNonExistentEmail_ReturnsSuccessForSecurity()
     {
         // Given
         ResetPasswordRequest request = null!;
@@ -1249,10 +1291,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 // Returns true for security - don't reveal if user exists
                 res.Should().BeTrue("Should return true to not reveal user existence");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task ConfirmPasswordResetAsync_WithValidToken_ReturnsSuccess()
+    public Task ConfirmPasswordResetAsync_WithValidToken_ReturnsSuccess()
     {
         // Given
         ConfirmPasswordResetRequest request = null!;
@@ -1301,10 +1345,12 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 res.Should().BeTrue("Password reset confirmation should succeed");
             });
+
+            return Task.CompletedTask;
     }
 
     [Fact]
-    public async Task ConfirmPasswordResetAsync_WithInvalidToken_ReturnsFailure()
+    public Task ConfirmPasswordResetAsync_WithInvalidToken_ReturnsFailure()
     {
         // Given
         ConfirmPasswordResetRequest request = null!;
@@ -1358,6 +1404,8 @@ public class AuthenticationServiceTests : GivenWhenThenTestBase, IDisposable
                 
                 res.Should().BeFalse("Password reset confirmation should fail for invalid token");
             });
+
+            return Task.CompletedTask;
     }
 
     #endregion

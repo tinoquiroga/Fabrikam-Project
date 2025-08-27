@@ -38,7 +38,7 @@ public class SeedDataValidationTests : AuthenticationTestBase
             "API should return exactly the same number of products as defined in seed data");
 
         // Validate against seed data using our helper
-        await SeedDataHelper.ValidateProductListResponse(products);
+        await SeedDataHelper.ValidateProductListResponse(products!);
     }
 
     [Theory]

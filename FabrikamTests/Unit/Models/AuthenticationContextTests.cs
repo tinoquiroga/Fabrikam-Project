@@ -143,9 +143,9 @@ public class AuthenticationContextTests
         };
 
         // Act & Assert
-        context.HasAnyRole(null).Should().BeFalse("Should handle null role gracefully");
+        context.HasAnyRole(null!).Should().BeFalse("Should handle null role gracefully");
         context.HasAnyRole("").Should().BeFalse("Should handle empty role gracefully");
-        context.HasAnyRole("User", null, "Admin").Should().BeTrue("Should match existing roles despite null");
+        context.HasAnyRole("User", null!, "Admin").Should().BeTrue("Should match existing roles despite null");
         context.HasAnyRole("", "User").Should().BeTrue("Should match existing roles despite empty string");
     }
 

@@ -221,6 +221,40 @@ You now have your own copy at: `https://github.com/[your-username]/Fabrikam-Proj
 
 ## 🔄 Step 5: Set Up CI/CD Pipeline
 
+### 📚 Understanding CI/CD Pipelines
+
+**What is CI/CD?**
+- **CI (Continuous Integration)**: Automatically builds and tests your code whenever changes are pushed to GitHub
+- **CD (Continuous Deployment)**: Automatically deploys your tested code to Azure when builds pass
+
+**Why use CI/CD?**
+- 🔍 **Quality Assurance**: Catch bugs before they reach production
+- 🚀 **Faster Deployments**: No manual deployment steps
+- 📈 **Reliability**: Consistent, repeatable deployment process
+- 👥 **Team Collaboration**: Everyone's changes are automatically tested and deployed
+
+### 🗂️ GitHub Workflow Files in Your Repository
+
+Your Fabrikam project will have **4 GitHub workflow files** in `.github/workflows/`:
+
+| Workflow File | Purpose | When It Runs |
+|---------------|---------|--------------|
+| **`testing.yml`** | 🧪 **Quality Gate** - Runs unit tests and validates code quality | Every push and pull request |
+| **`authentication-validation.yml`** | 🔐 **Security Check** - Validates authentication configurations | Pull requests only (or manual trigger) |
+| **`main_fabrikam-api-development-[suffix].yml`** | 🌐 **API Deployment** - Deploys API to Azure App Service | When code changes and tests pass |
+| **`main_fabrikam-mcp-development-[suffix].yml`** | 🤖 **MCP Deployment** - Deploys MCP server to Azure App Service | When code changes and tests pass |
+
+**How they work together:**
+1. 📤 You push code to GitHub
+2. 🧪 Testing workflow runs first (quality gate)
+3. 🔐 Authentication validation ensures security (runs on pull requests to validate code before merging)
+4. ✅ If tests pass, deployment workflows run automatically
+5. 🚀 Your apps are updated in Azure
+
+**💡 Note**: Since COE workshops typically use direct pushes to main (not pull requests), you may not see the authentication-validation workflow run automatically. This is by design - it's meant to validate security before code reaches production. You can trigger it manually from the GitHub Actions tab if needed.
+
+---
+
 **🎯 Goal**: Configure automatic deployment from your GitHub repository to Azure App Services using Azure Portal's Deployment Center, then fix the generated workflows for monorepo compatibility.
 
 > **💡 Alternative Approach**: For advanced users who prefer full control over their CI/CD pipeline, see the [COE Advanced Setup Guide](COE-ADVANCED-SETUP-GUIDE.md) which covers manual workflow creation with optimized monorepo support and path-based triggering.
@@ -329,7 +363,7 @@ You now have your own copy at: `https://github.com/[your-username]/Fabrikam-Proj
    - You should see workflow runs for both API and MCP deployments
    - **Note**: Your fork starts with 2 core workflows (testing + security), and Azure Portal adds 2 deployment workflows
 
-2. **Test Automatic Deployment**:
+2. **Test Automatic Deployment (Optional)**:
    - After fixing the workflows, make a small change to trigger the pipeline:
      - Edit `README.md` in your repository
      - Add a line: `<!-- Updated by [Your Name] for COE demo -->`

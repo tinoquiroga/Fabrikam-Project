@@ -65,7 +65,7 @@ public class DisabledAuthenticationServiceTests
     public void SetUserGuidContext_WithNullGuid_LogsWarning()
     {
         // Act
-        _authService.SetUserGuidContext(null);
+        _authService.SetUserGuidContext(null!);
 
         // Assert
         _authService.IsAuthenticated().Should().BeFalse();
@@ -229,7 +229,7 @@ public class DisabledAuthenticationServiceTests
         _authService.HasRole("User").Should().BeTrue();
         _authService.HasRole("NonExistentRole").Should().BeTrue();
         _authService.HasRole("").Should().BeTrue();
-        _authService.HasRole(null).Should().BeTrue();
+        _authService.HasRole(null!).Should().BeTrue();
     }
 
     #endregion
@@ -360,9 +360,9 @@ public class DisabledAuthenticationServiceTests
             x => x.Log(
                 level,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(message)),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(message)),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }
 

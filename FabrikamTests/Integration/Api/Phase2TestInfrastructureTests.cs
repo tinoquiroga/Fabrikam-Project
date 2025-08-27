@@ -205,6 +205,8 @@ public class Phase2TestInfrastructureTests : AuthenticationTestBase
         customToken.Should().Contain(".");
         customClient.Should().NotBeNull();
         customClient.DefaultRequestHeaders.Authorization!.Parameter.Should().Be(customToken);
+        
+        await Task.CompletedTask;
     }
 
     [Fact]

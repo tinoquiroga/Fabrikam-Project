@@ -209,7 +209,6 @@ public class ProductBuilder
 {
     private int _id = 1;
     private string _name = "Test Product";
-    private string _description = "Test Description";
     private decimal _price = 100m;
     private string _category = "Base";
     private int _stockQuantity = 10;

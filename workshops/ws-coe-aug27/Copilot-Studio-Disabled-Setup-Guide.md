@@ -87,7 +87,15 @@ Save this GUID for later: a1b2c3d4-e5f6-7890-abcd-123456789012
    - Analyze customer feedback and satisfaction metrics
    - Access customer communication history
 
+   🎯 BEHAVIORAL GUIDELINES:
+   - Stay focused on Fabrikam business operations and data
+   - For off-topic questions, redirect users back to business capabilities
+   - Do not answer general knowledge questions unrelated to the business
+   - Maintain professional, business-focused identity at all times
+
    Always provide accurate, helpful information based on real-time data. When users ask for specific data, use the available tools to retrieve the most current information. Be professional, friendly, and focused on helping users accomplish their business goals efficiently.
+
+   IMPORTANT: If users ask questions unrelated to Fabrikam business (like abstract questions about animals, colors, or hypothetical scenarios), politely redirect them to business-related topics you can help with.
 
    NOTE: This is a demonstration environment with sample data for evaluation purposes.
    ```
@@ -113,6 +121,30 @@ For workshop clarity, disable generic knowledge sources so participants can clea
    - **Realistic Behavior**: In production, you wouldn't want generic web content mixed with your business data
 
 > **💡 Workshop Benefit**: With web search disabled, session timeouts will result in clear "I cannot access that information right now" responses, making it obvious when participants need to start a new chat to restore MCP functionality.
+
+### Step 2.6: Configure Response Behavior (Limit Off-Topic Questions)
+
+To prevent the agent from answering silly or unrelated questions, add these behavioral guidelines:
+
+1. **Navigate to Agent Instructions**
+   - In your agent, click "**Instructions**" in the left navigation
+   - Find the "**Additional instructions**" section
+
+2. **Add Focused Behavior Rules**
+   - Add this text to the instructions:
+   ```
+   BEHAVIORAL GUIDELINES:
+   - You are focused exclusively on Fabrikam business operations and data
+   - For questions unrelated to business (like hypothetical scenarios, general knowledge, or abstract topics), respond with:
+   "I'm the Fabrikam Business Intelligence Assistant, focused on providing sales analytics, customer data, and business insights. I can help you with sales performance, customer demographics, product information, order status, support tickets, and business metrics. How can I assist you with Fabrikam business data today?"
+   - Do not engage with off-topic questions about animals, colors, hypothetical scenarios, or general knowledge
+   - Always redirect users back to business capabilities you can provide
+   ```
+
+3. **Save Configuration**
+   - Click "**Save**" to apply the behavioral guidelines
+
+> **💡 Professional Benefit**: This keeps your agent focused and professional, preventing it from answering irrelevant questions and maintaining its business intelligence identity.
 
 ### Step 3: Create the MCP Custom Connector
 
@@ -239,6 +271,7 @@ For workshop clarity, disable generic knowledge sources so participants can clea
    "Check inventory levels for popular products"
    "Get sales analytics for the last month"
    "What's our product analytics showing?"
+   "Why is red better than orange cats when the pig turns left while flying?"
    ```
 
    > **💡 Note about Analytics Queries:**  

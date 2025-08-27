@@ -80,9 +80,9 @@ public class OrdersController : ControllerBase
                     Total = o.Total,
                     Customer = new OrderCustomerDto
                     {
-                        Id = o.Customer.Id,
+                        Id = o.Customer!.Id,
                         Name = $"{o.Customer.FirstName} {o.Customer.LastName}",
-                        Region = o.Customer.Region
+                        Region = o.Customer.Region!
                     }
                 })
                 .ToListAsync();
@@ -132,18 +132,18 @@ public class OrdersController : ControllerBase
                 Total = order.Total,
                 Customer = new OrderCustomerDto
                 {
-                    Id = order.Customer.Id,
+                    Id = order.Customer!.Id,
                     Name = $"{order.Customer.FirstName} {order.Customer.LastName}",
                     Email = order.Customer.Email,
-                    Phone = order.Customer.Phone,
-                    Region = order.Customer.Region
+                    Phone = order.Customer.Phone!,
+                    Region = order.Customer.Region!
                 },
-                Items = order.OrderItems.Select(oi => new OrderItemDetailDto
+                Items = order.OrderItems!.Select(oi => new OrderItemDetailDto
                 {
                     Id = oi.Id,
                     Product = new OrderItemProductDto
                     {
-                        Id = oi.Product.Id,
+                        Id = oi.Product!.Id,
                         Name = oi.Product.Name,
                         Category = oi.Product.Category.ToString()
                     },

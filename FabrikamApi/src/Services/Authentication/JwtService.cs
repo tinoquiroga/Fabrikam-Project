@@ -88,11 +88,11 @@ public class JwtService : IJwtService
             var tokenClaims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.Id),
-                new(ClaimTypes.Name, user.UserName ?? user.Email),
+                new(ClaimTypes.Name, user.UserName ?? user.Email ?? string.Empty),
                 new(ClaimTypes.Email, user.Email ?? string.Empty),
-                new("firstName", user.FirstName),
-                new("lastName", user.LastName),
-                new("displayName", user.DisplayName),
+                new("firstName", user.FirstName ?? string.Empty),
+                new("lastName", user.LastName ?? string.Empty),
+                new("displayName", user.DisplayName ?? string.Empty),
                 new("isActive", user.IsActive.ToString()),
                 new("isAdmin", user.IsAdmin.ToString()),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
@@ -129,7 +129,7 @@ public class JwtService : IJwtService
             _logger.LogInformation("Generated JWT token for user {UserId} with {RoleCount} roles and {ClaimCount} claims",
                 user.Id, roles.Count, claims.Count);
 
-            return tokenString;
+            return await Task.FromResult(tokenString);
         }
         catch (Exception ex)
         {
@@ -184,26 +184,26 @@ public class JwtService : IJwtService
                 jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
             {
                 _logger.LogDebug("Successfully validated JWT token");
-                return principal;
+                return await Task.FromResult(principal);
             }
 
             _logger.LogWarning("JWT token validation failed: Invalid algorithm");
-            return null;
+            return await Task.FromResult<ClaimsPrincipal?>(null);
         }
         catch (SecurityTokenExpiredException)
         {
             _logger.LogDebug("JWT token validation failed: Token expired");
-            return null;
+            return await Task.FromResult<ClaimsPrincipal?>(null);
         }
         catch (SecurityTokenException ex)
         {
             _logger.LogWarning(ex, "JWT token validation failed: {Message}", ex.Message);
-            return null;
+            return await Task.FromResult<ClaimsPrincipal?>(null);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error validating JWT token");
-            return null;
+            return await Task.FromResult<ClaimsPrincipal?>(null);
         }
     }
 

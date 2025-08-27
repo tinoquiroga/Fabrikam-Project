@@ -53,11 +53,11 @@ public class CustomersController : ControllerBase
                 {
                     Id = c.Id,
                     Name = $"{c.FirstName} {c.LastName}",
-                    Email = c.Email,
-                    Phone = c.Phone,
-                    City = c.City,
-                    State = c.State,
-                    Region = c.Region,
+                    Email = c.Email!,
+                    Phone = c.Phone!,
+                    City = c.City!,
+                    State = c.State!,
+                    Region = c.Region!,
                     CreatedDate = c.CreatedDate,
                     OrderCount = c.Orders.Count(),
                     TotalSpent = c.Orders.Sum(o => o.Total)

@@ -1,15 +1,6 @@
 # 🚀 COE Complete Setup Guide - From GitHub Account to Production Deployment
 
-**Welcome to the COE Team! This guide will take you from zero to a fully deployed Fabr2. **Verify your resource group exists**: 
-   - Search for `rg-fabrikam-coe-[your-username]`
-   - For example: `rg-fabrikam-coe-imatest`
-   - You should see it in your resource groups list
-
-3. **Verify your permissions** (pre-configured during COE setup):
-   - **Reader** access to entire subscription (can see all participants' work)
-   - **Contributor** + **User Access Administrator** to your resource group (can deploy ARM templates)
-
-4. **Get your User Object ID** (Because **David** hasn't figured out a more elegant method to set up Key Vault **yet**):roject with CI/CD in your own Azure environment.**
+**Welcome to the COE Team! This guide will take you from zero to a fully deployed Fabrikam project with CI/CD in your own Azure environment.**
 
 ## 📋 Overview
 
@@ -161,6 +152,30 @@ Before starting, ensure you have:
 
 You now have your own copy at: `https://github.com/[your-username]/Fabrikam-Project`
 
+### 3.3 🔄 Important: Fork Management & Updates
+
+**Understanding Forks:**
+- Your fork is a **complete copy** of the original repository
+- You can make changes, deploy, and customize without affecting the original
+- **This same process** can be used to update your fork when new features are added to the original
+
+**📋 Future Updates Process:**
+1. Visit your fork on GitHub
+2. Click **"Sync fork"** button (appears when updates are available)
+3. Choose **"Update branch"** to pull latest changes
+
+**⚠️ CRITICAL WARNING - Never Discard Commits:**
+
+> **🚨 NEVER click "Discard commits" when syncing your fork!**
+> 
+> **Why?** When you deploy to Azure, the system creates custom workflow files (`.github/workflows/`) specific to your deployment. Discarding commits will **delete these files** and break your CI/CD pipeline.
+> 
+> **Always choose "Update branch"** instead, which safely merges new changes while preserving your custom workflows.
+
+**✅ Safe Update Process:**
+- ✅ Click "Sync fork" → "Update branch" (preserves your workflow files)
+- ❌ Never click "Discard commits" (deletes your deployment configuration)
+
 ---
 
 ## ☁️ Step 4: Deploy to Azure
@@ -178,7 +193,7 @@ You now have your own copy at: `https://github.com/[your-username]/Fabrikam-Proj
    - For example: `rg-fabrikam-coe-imatest`
    - You should see it in your resource groups list
 
-3. **Get your User Object ID** (Because **David** hasn't figured out a more elegant method to set up Key Vault **yet**:
+3. **Get your User Object ID** (required for Key Vault permissions setup):
    - Open **Cloud Shell**: Click the terminal icon (`>_`) in the top toolbar
    - Choose **PowerShell** when prompted (recommended for consistency, if you want Bash it's fine)
    - Choose **No storage account required** (You can create one if you want, this is faster)
@@ -397,33 +412,45 @@ Your Fabrikam project will have **4 GitHub workflow files** in `.github/workflow
    - Application Insights
    - Container Registry
 
-### 5.2 Test the API
+### 5.2 Test the API ✅
 
 1. **Find your API URL**:
    - Go to your App Service in Azure Portal
    - Copy the "Default domain" URL
    - It should look like: `https://fabrikam-api-development-[suffix].azurewebsites.net`
 
-2. **Test the API**:
-   - Open: `https://[your-api-url]/swagger`
-   - Try the `/api/info` endpoint
-   - You should see application information
+2. **Test the API endpoints**:
+   - **Swagger UI** (✅ Works): Open `https://[your-api-url]/swagger`
+   - **API Info endpoint** (✅ Works): `https://[your-api-url]/api/info`
+     - Should return JSON with application information
+     - Example: `{"applicationName":"Fabrikam Modular Homes API","version":"1.1.0"...}`
 
-### 5.3 Test Authentication (if using BearerToken mode)
+> **💡 Note**: If browser testing fails, try using a different browser profile or incognito/private mode. The endpoints work correctly when tested with tools like curl or Postman.
+
+### 5.3 Test Authentication (Optional - BearerToken mode only)
+
+> **⚠️ Note**: Authentication testing may not work reliably in all browsers due to CORS and cookie policies. This is expected for workshop/demo environments.
+
+If your deployment uses BearerToken authentication mode:
 
 1. **Get demo credentials**:
    - Use the `/api/auth/demo-credentials` endpoint in Swagger
    - Copy the provided test credentials
 
-2. **Login and test**:
+2. **Login and test** (Optional):
    - Use `/api/auth/login` endpoint with demo credentials
    - Copy the JWT token from the response
    - Use "Authorize" button in Swagger to set Bearer token
    - Try authenticated endpoints like `/api/customers`
 
+**Expected Results:**
+- ✅ Swagger UI loads and displays endpoints
+- ✅ `/api/info` returns application data
+- ⚠️ Authentication may fail in browser (expected for workshop setup)
+
 ---
 
-## 🤖 Step 7: Set Up Copilot Studio Integration (Optional)
+## 🤖 Step 7: Set Up Copilot Studio Integration
 
 If you want to test the AI capabilities:
 
@@ -444,8 +471,11 @@ Confirm everything is working:
 - [ ] ✅ Azure resources deployed without errors
 - [ ] ✅ CI/CD pipeline configured and working
 - [ ] ✅ API accessible via Swagger interface
-- [ ] ✅ Authentication working (if configured)
+- [ ] ✅ `/api/info` endpoint returns application data
+- [ ] ⚠️ Authentication working (optional - may fail in browser)
 - [ ] ✅ MCP server accessible (if testing Copilot Studio)
+
+**🎉 Success Criteria**: Swagger UI loads and `/api/info` returns valid JSON data. Authentication issues are expected in workshop environments and don't prevent success.
 
 ---
 

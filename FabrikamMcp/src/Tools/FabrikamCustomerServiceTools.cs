@@ -20,6 +20,8 @@ public class FabrikamCustomerServiceTools : AuthenticatedMcpToolBase
 
     // Temporarily disabled complex tools for build success
     // TODO: Convert to JsonDocument approach
+    // Temporarily disabled complex tools for build success
+    // TODO: Convert to JsonDocument approach
     /*
     [McpServerTool, Description("Get support tickets with optional filtering by status, priority, category, region, assigned agent, or specific ticket ID. Use ticketId for detailed ticket info, or use filters for ticket lists. Set urgent=true for high/critical priority tickets. When called without parameters, returns active tickets requiring attention.")]
     public async Task<object> GetSupportTickets(

@@ -25,37 +25,26 @@ Your Fabrikam agent will enable business users to:
 
 Since authentication is disabled, you need a GUID for user tracking and session management.
 
-**Option 1: Fabrikam API (Recommended)**
-
-```bash
-curl -X POST "https://your-api-app-name.azurewebsites.net/api/UserRegistration/disabled-mode" \
-  -H "Content-Type: application/json" \
-  -d '{"firstName": "Demo", "lastName": "User", "email": "demo@company.com"}'
-```
-
-**PowerShell Alternative**:
-```powershell
-$apiUrl = "https://your-api-app-name.azurewebsites.net/api/UserRegistration/disabled-mode"
-$body = @{
-    firstName = "Demo"
-    lastName = "User" 
-    email = "demo@company.com"
-} | ConvertTo-Json
-
-$response = Invoke-RestMethod -Uri $apiUrl -Method POST -Body $body -ContentType "application/json"
-Write-Host "Your GUID: $($response.guid)"
-```
-
-**Option 2: Generate Locally**
+**🎯 Generate a GUID (Simple & Reliable):**
 
 ```powershell
-[System.Guid]::NewGuid().ToString()
+# Generate a new GUID
+$userGuid = [System.Guid]::NewGuid().ToString()
+Write-Host "Your GUID: $userGuid"
+
+# Copy this GUID - you'll need it for the connector configuration
+Write-Host "Save this GUID for later: $userGuid"
 ```
 
-**Save your GUID** - you'll need it for the connector configuration. It will look like:
+**Expected Output:**
 ```
-a1b2c3d4-e5f6-7890-abcd-123456789012
+Your GUID: a1b2c3d4-e5f6-7890-abcd-123456789012
+Save this GUID for later: a1b2c3d4-e5f6-7890-abcd-123456789012
 ```
+
+**💾 Save your GUID** - you'll need it for the connector configuration in the next steps.
+
+> **💡 Why a GUID?** In disabled authentication mode, the system uses a GUID to track your session and associate API calls with a virtual user context, enabling personalized responses without requiring full authentication.
 
 ### Step 2: Create a New Agent
 
@@ -69,7 +58,7 @@ a1b2c3d4-e5f6-7890-abcd-123456789012
    - Choose "**Skip to configure**" (we'll add knowledge later)
 
 3. **Agent Configuration**
-   - **Name**: `Fabrikam Business Assistant (Demo)`
+   - **Name**: `Business Assistant (username)`
    - **Description**: `Demo AI assistant for Fabrikam Modular Homes business operations`
    - **Instructions**: 
    ```
@@ -106,108 +95,159 @@ a1b2c3d4-e5f6-7890-abcd-123456789012
 4. **Save Initial Configuration**
    - Click "**Create**" to save your agent
 
+### Step 2.5: Configure Knowledge Sources (Recommended)
+
+For workshop clarity, disable generic knowledge sources so participants can clearly see when MCP tools are working vs. failing:
+
+1. **Navigate to Overview**
+   - In your agent, click "**Overview**" in the left navigation
+   - Scroll down to find the "**Web search**" setting
+
+2. **Disable Web Search**
+   - Toggle **OFF** the "**Web search**" option
+   - This prevents fallback to generic sales analytics content
+
+3. **Why Disable?**
+   - **Clear Failure Mode**: When MCP session expires, you'll get a clear "I don't have access to that information" instead of generic web content
+   - **Workshop Focus**: Participants see the difference between live business data vs. no data
+   - **Realistic Behavior**: In production, you wouldn't want generic web content mixed with your business data
+
+> **💡 Workshop Benefit**: With web search disabled, session timeouts will result in clear "I cannot access that information right now" responses, making it obvious when participants need to start a new chat to restore MCP functionality.
+
 ### Step 3: Create the MCP Custom Connector
 
-1. **Open Power Platform Admin Center**
-   - Navigate to [Power Platform Admin Center](https://admin.powerplatform.microsoft.com/)
-   - Go to "**Data**" > "**Custom connectors**"
+1. **Navigate to Tools in Copilot Studio**
+   - In your Copilot Studio agent, click "**Tools**" in the left-hand navigation
+   - Click "**+ New Tool**"
+   - Select "**Custom Connector**" (this opens the connector page at make.powerapps.com)
 
 2. **Create New Custom Connector**
-   - Click "**+ New custom connector**"
-   - Select "**Import an OpenAPI from URL**"
+   - Click "**+ New Custom Connector**"
+   - Select "**Import from Github**"
+   - **Connector type**: Select "**Custom**"
+   - **Branch**: Select "**dev**"
+   - **Connector**: Select "**MCP-Streamable-HTTP**"
 
-3. **Import MCP Swagger Definition**
+3. **Configure Connector Settings**
+   - **Change Name**: From "MCP-Streamable-HTTP" to "**Fabrikam MCP-[username]**"
+     - Example: `Fabrikam MCP-imatest`
    
-   Copy and paste this Swagger definition:
+   - **Set Host**: Enter your MCP default domain (⚠️ **Note**: This is the MCP server, not the API)
+     - Example: `fabrikam-mcp-development-bb7fsc.azurewebsites.net`
+
+4. **Configure Security**
+   - Press "**Security**" tab
+   - Leave option as "**No Authentication**"
+
+5. **Update Definition**
+   - Press "**Definition**" tab
+   - **Change Summary**: From "MCP Server Streamable HTTP" to "**Fabrikam MCP -[username]-**"
+
+6. **Modify Code Configuration**
+   - Click "**Code**" tab
+   - Click "**Create Connector**"
+
+7. **Add GUID Parameter Using Swagger Editor**
+   - **Open the Swagger Editor** (slider on top)
+   - **Locate** the `operationId: InvokeMCP` section
+   - **Add the GUID parameter** under `parameters:` (⚠️ **Indentation is important!**)
 
    ```yaml
-   swagger: '2.0'
-   info:
-     title: Fabrikam MCP Server (Demo Mode)
-     description: >-
-       Demo MCP Server for Fabrikam Business Operations with no authentication required.
-       Perfect for demonstrations and proof-of-concept scenarios.
-     version: 1.0.0
-   host: your-mcp-app-name.azurewebsites.net
-   basePath: /mcp
-   schemes:
-     - https
-   consumes: []
-   produces: []
-   paths:
-     /:
-       post:
-         summary: MCP Server Demo Mode
-         x-ms-agentic-protocol: mcp-streamable-1.0
-         operationId: InvokeMCP
-         parameters:
-           - name: X-User-GUID
-             in: header
-             required: true
-             type: string
-             default: a1b2c3d4-e5f6-7890-abcd-123456789012
-             description: User tracking GUID for session management
-         responses:
-           '200':
-             description: Success
-           '400':
-             description: Bad Request - Missing or invalid GUID
-   definitions: {}
-   parameters: {}
-   responses: {}
-   securityDefinitions: {}
-   security: []
-   tags: []
+   parameters:
+     - name: X-User-GUID
+       in: header
+       required: true
+       type: string
+       default: a1b2c3d4-e5f6-7890-abcd-123456789012
+       description: User tracking GUID for session management
    ```
 
-4. **Configure the Connector**
-   - **Update host**: Change `host:` to your MCP server domain (e.g., `fabrikam-mcp-development-xyz.azurewebsites.net`)
-   - **Update default GUID**: Replace the default GUID with the one you generated in Step 1
-   - **Connector Name**: `Fabrikam MCP Server (Demo)`
-   - **Description**: `Demo connection to Fabrikam MCP Server with no authentication`
+   > **💡 Replace the default GUID** with the one you generated in Step 1
 
-### Step 4: Test the Connector
+8. **Save and Verify**
+   - Press "**Update connector**" again
+   - **Open Swagger editor** to confirm:
+     - ✅ All changes saved correctly
+     - ✅ The 'host' matches your MCP app service domain
+     - ✅ The GUID parameter is properly formatted
 
-1. **Update and Test**
-   - Click "**Update connector**"
-   - Go to the "**Test**" tab
-   - The **X-User-GUID** field should be pre-filled with your GUID
-   - Click "**Test operation**"
-   - You should see a successful response with MCP capabilities
+### Step 5: Create the Connection
 
-### Step 5: Add Connector to Your Agent
+1. **Navigate to Test Page**
+   - Click on the "**Test**" tab in your custom connector
+
+2. **Create New Connection**
+   - Press "**+ New Connection**"
+   - A dialog box will appear with your connector name (e.g., "Fabrikam MCP-imatest")
+   - Press "**Create**"
+
+3. **Verify Connection**
+   - The connection should be created successfully
+   - You should see your new connection listed in the connections area
+
+### Step 6: Test the Connector
+
+1. **Verify Connector Setup**
+   - The connector is now created and the connection is established
+   - **Note**: Full MCP testing requires a session, so we'll verify the basic connectivity
+
+2. **Optional: Test Basic Connectivity**
+   - You can test that the MCP server is responding by checking if your Azure deployment is accessible
+   - The connector is ready to be added to your Copilot Studio agent
+   - Full functionality testing will happen when the agent uses the connector with proper session management
+
+> **💡 Why not test the MCP endpoint directly?**  
+> MCP servers require session establishment before handling requests. Testing the raw endpoint would return a "Session not found" error. The connector will work properly when used within Copilot Studio, which handles session management automatically.
+
+### Step 7: Add Connector to Your Agent
 
 1. **Return to Copilot Studio**
    - Open your Fabrikam Business Assistant agent
-   - Go to "**Actions**" in the left navigation
+   - Go to "**Tools**" in the left navigation or refresh the page that took you to Power Apps
 
 2. **Add Custom Connector**
-   - Click "**+ Add an action**"
-   - Select "**Connectors**"
-   - Find "**Fabrikam MCP Server (Demo)**" in your custom connectors
-   - Click "**Add**"
+   - You should see the custom connector you just made (there may be others from other users)
+   - Click the "**...**" (three dots) on your connector
+   - Select "**Add to agent**"
 
 3. **Configure the Connection**
    - The X-User-GUID should be automatically configured
    - Click "**Save**"
 
-### Step 6: Test Your Agent
+### Step 8: Test Your Agent
 
 1. **Start a Test Conversation**
    - In Copilot Studio, click "**Test**" in the top-right corner
    - Try these example queries:
 
-2. **Test Queries**
+2. **First-Time Authorization (Important!)**
+   - ⚠️ **Expected**: Your first test query will fail - this is normal!
+   - You'll see a link in the test dialog to "**open connection manager**"
+   - Click this link to open a new tab for user connections
+   - **Authorize the connection** in the new tab
+   - Return to Copilot Studio and start a **new test** to retry your query
+
+   > **💡 Connection Authorization Notes:**
+   > - This authorization step is required for all new custom connectors
+   > - If your agent has been idle for some time, you may need to re-authorize
+   > - Always start a **new test** after authorization (don't retry in the same conversation)
+
+3. **Test Queries**
    ```
    "Show me the executive dashboard"
    "What orders do we have pending?"
    "Check inventory levels for popular products"
-   "Are there any open customer service tickets?"
-   "What's our revenue trend this month?"
+   "Get sales analytics for the last month"
+   "What's our product analytics showing?"
    ```
 
-3. **Verify Functionality**
-   - All responses should include business data from your Fabrikam deployment
+   > **💡 Note about Analytics Queries:**  
+   > • **Customer Analytics**: Not yet implemented - use "Get customers by region" for customer directory  
+   > • **Customer Service**: Technical issue - use "Show me the executive dashboard" for support metrics  
+   > • **Sales & Product Analytics**: ✅ Working perfectly
+
+4. **Verify Functionality**
+   - After authorization, all responses should include business data from your Fabrikam deployment
    - The agent should be able to access all available business functions
 
 ## 🔧 Troubleshooting
@@ -225,6 +265,17 @@ a1b2c3d4-e5f6-7890-abcd-123456789012
 **❌ "No Data Returned" Error**
 - **Cause**: Fabrikam deployment might not be running or configured properly
 - **Solution**: Check your Azure deployment status and ensure demo data is seeded
+
+**❌ "Session not found" Error After Inactivity**
+- **Cause**: MCP session has expired due to inactivity or timeout
+- **Error Details**: `{"reasonCode":"RequestFailure","errorMessage":"Connector request failed","HttpStatusCode":"notFound","errorResponse":"[{\"jsonrpc\":\"2.0\",\"id\":\"\",\"error\":{\"Code\":-32001,\"Message\":\"Session not found\"}}]"}`
+- **Agent Behavior (Web Search Enabled)**: The agent will fall back to knowledge sources and return generic information instead of live business data
+- **Agent Behavior (Web Search Disabled)**: The agent will clearly state it cannot access the information, making the failure obvious
+- **Solution**: Start a **new chat conversation** in the test panel
+- **Note**: This is normal MCP behavior - sessions have limited lifespans
+
+> **💡 Session Management & Fallback Behavior:**  
+> MCP sessions are temporary and will expire after periods of inactivity. With web search disabled (recommended for workshops), session failures result in clear "I cannot access that information" messages rather than confusing generic content. Always start a new chat conversation when you encounter session errors to restore MCP tool functionality.
 
 ### GUID Management
 

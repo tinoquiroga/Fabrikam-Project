@@ -99,7 +99,7 @@ public class ServiceJwtSettingsTests : GivenWhenThenTestBase
         Given.That("we have JWT settings with a null secret key", () =>
             {
                 settings = TestDataBuilders.ServiceJwtSettings()
-                    .WithSecretKey(null)
+                    .WithSecretKey(null!)
                     .Build();
                 StoreInContext("ServiceJwtSettings", settings);
             });
@@ -230,7 +230,7 @@ public class ServiceJwtSettingsTests : GivenWhenThenTestBase
         Given.That("we have JWT settings with a null issuer", () =>
             {
                 settings = TestDataBuilders.ServiceJwtSettings()
-                    .WithIssuer(null)
+                    .WithIssuer(null!)
                     .Build();
                 StoreInContext("ServiceJwtSettings", settings);
             });
@@ -327,7 +327,7 @@ public class ServiceJwtSettingsTests : GivenWhenThenTestBase
         Given.That("we have JWT settings with a null audience", () =>
             {
                 settings = TestDataBuilders.ServiceJwtSettings()
-                    .WithAudience(null)
+                    .WithAudience(null!)
                     .Build();
                 StoreInContext("ServiceJwtSettings", settings);
             });
@@ -530,7 +530,7 @@ public class ServiceJwtSettingsTests : GivenWhenThenTestBase
             {
                 settings = TestDataBuilders.ServiceJwtSettings()
                     .WithSecretKey("ValidSecretKeyThatIsLongEnoughForHS256")
-                    .WithIssuer(null) // Invalid issuer
+                    .WithIssuer(null!) // Invalid issuer
                     .WithAudience("FabrikamTestAudience")
                     .WithTokenLifetimeInMinutes(60)
                     .Build();

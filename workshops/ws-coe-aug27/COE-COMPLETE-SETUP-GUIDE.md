@@ -210,21 +210,7 @@ You now have your own copy at: `https://github.com/[your-username]/Fabrikam-Proj
 
 **Wait for deployment** (typically 10-15 minutes)
 
-### 4.3 Troubleshooting Deployment Issues
-
-**❌ If you get "Authorization failed for roleAssignments" errors:**
-
-This means you're missing the **User Access Administrator** role. The ARM template needs to assign roles to Key Vault for the applications.
-
-**Solution:**
-1. **Contact the workshop facilitator** - they can fix this quickly
-2. **Or run this fix yourself** (if you have admin access):
-   ```powershell
-   # In Azure Cloud Shell
-   az role assignment create --assignee [YOUR-EMAIL] --role "User Access Administrator" --resource-group rg-fabrikam-coe-[YOUR-USERNAME]
-   ```
-
-**✅ Required permissions for successful deployment:**
+**✅ Azure permissions for successful deployment:**
 - 📖 **Reader** - Subscription level (can see all resources)
 - 🔐 **Contributor** - Resource Group level (can create/modify resources)
 - 🔑 **User Access Administrator** - Resource Group level (can assign roles to Key Vault)
@@ -235,7 +221,9 @@ This means you're missing the **User Access Administrator** role. The ARM templa
 
 ## 🔄 Step 5: Set Up CI/CD Pipeline
 
-**🎯 Goal**: Configure automatic deployment from your GitHub repository to Azure App Services using Azure Portal's Deployment Center.
+**🎯 Goal**: Configure automatic deployment from your GitHub repository to Azure App Services using Azure Portal's Deployment Center, then fix the generated workflows for monorepo compatibility.
+
+> **💡 Alternative Approach**: For advanced users who prefer full control over their CI/CD pipeline, see the [COE Advanced Setup Guide](COE-ADVANCED-SETUP-GUIDE.md) which covers manual workflow creation with optimized monorepo support and path-based triggering.
 
 ### 5.1 Configure API App Service Deployment
 
@@ -279,18 +267,61 @@ This means you're missing the **User Access Administrator** role. The ARM templa
    - **Branch**: main
    - **Save** the configuration
 
-### 5.3 Verify CI/CD Pipeline Setup
+### 5.3 Fix Generated Workflows for Monorepo Compatibility
 
-1. **Make a small change** to trigger the pipeline:
-   - Edit `README.md` in your repository
-   - Add a line like: `<!-- Updated by [Your Name] for COE demo -->`
-   - Commit the change
+**⚠️ IMPORTANT**: Azure Portal generates workflows that need modification to work with our monorepo structure. I'm still working on automating / eliminating this step for these workshops so we have super simple CI/CD setup with no customization required.
 
-2. **Check the Actions tab** to see your pipeline running
+1. **Go to your GitHub repository** and navigate to **Actions** tab
 
-3. **Verify deployment** by checking your Azure resource group
+2. **Wait for the initial deployments to complete** (they will likely fail - this is expected)
 
-### 5.3 Verify CI/CD Pipeline Setup
+3. **Edit the API workflow**:
+   - Go to `.github/workflows/` in your repository
+   - Find the file that starts with your API app service name (e.g., `main_fabrikam-api-development-bb7fsc.yml`)
+   - Click **Edit** (pencil icon)
+
+4. **Update the API workflow** by modifying the `dotnet publish` line under   `jobs:`:
+   ```yaml
+   # Change this line:
+   - name: dotnet publish
+     run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+   # To this:
+   - name: dotnet publish
+     run: dotnet publish FabrikamApi/src/FabrikamApi.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+   ```
+
+6. **Commit the API workflow fix**: 
+   - Click **"Commit changes..."** button
+   - Commit message: "Fix API workflow for monorepo"
+   - Click **"Commit changes"**
+
+#### Fix MCP Deployment Workflow
+
+7. **Edit the MCP workflow**:
+   - **Go back to `.github/workflows/`** (you'll be redirected to file list after commit)
+   - Find the file that starts with your MCP app service name (e.g., `main_fabrikam-mcp-development-bb7fsc.yml`)
+   - Click the filename → Click **Edit** (pencil icon)
+
+8. **Update the MCP workflow** by modifying the `dotnet publish` line:
+   ```yaml
+   # Change this line:
+   - name: dotnet publish
+     run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+   # To this:
+   - name: dotnet publish
+     run: dotnet publish FabrikamMcp/src/FabrikamMcp.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+   ```
+
+9. **Commit the MCP workflow fix**: 
+   - Click **"Commit changes..."** button  
+   - Commit message: "Fix MCP workflow for monorepo"
+   - Click **"Commit changes"**
+
+**💡 Note**: You must commit each workflow file separately - GitHub's web interface doesn't allow editing multiple files in one commit.
+
+### 5.4 Verify CI/CD Pipeline Setup
 
 1. **Check GitHub Actions**:
    - Go to your forked repository on GitHub
@@ -299,7 +330,7 @@ This means you're missing the **User Access Administrator** role. The ARM templa
    - **Note**: Your fork starts with 2 core workflows (testing + security), and Azure Portal adds 2 deployment workflows
 
 2. **Test Automatic Deployment**:
-   - Make a small change to trigger the pipeline:
+   - After fixing the workflows, make a small change to trigger the pipeline:
      - Edit `README.md` in your repository
      - Add a line: `<!-- Updated by [Your Name] for COE demo -->`
      - Commit and push the change
@@ -313,6 +344,8 @@ This means you're missing the **User Access Administrator** role. The ARM templa
 **✅ Success Criteria**: 
 - Both App Services show "Success" in Deployment Center
 - GitHub Actions show 4 workflows total (2 core + 2 deployment)
+- All workflow runs show green checkmarks
+- Making code changes triggers automatic deployments
 - All workflow runs show green checkmarks
 - Making code changes triggers automatic deployments
 

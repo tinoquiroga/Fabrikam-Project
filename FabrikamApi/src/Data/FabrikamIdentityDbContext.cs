@@ -281,10 +281,8 @@ public class FabrikamIdentityDbContext : IdentityDbContext<FabrikamUser, Fabrika
     /// </summary>
     private void SeedIdentityData(ModelBuilder modelBuilder)
     {
-        var adminRoleId = "1";
-        var userRoleId = "2";
-        var managerRoleId = "3";
-
+        // Variables removed - not used since seeding is disabled
+        
         // Seed default roles - DISABLED to prevent conflicts with AuthenticationSeedService
         // modelBuilder.Entity<FabrikamRole>().HasData(
         //     new FabrikamRole

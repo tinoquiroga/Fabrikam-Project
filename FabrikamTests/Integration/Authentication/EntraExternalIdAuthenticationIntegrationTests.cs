@@ -53,6 +53,7 @@ public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<Entra
         var authMode = configuration.GetValue<string>("Authentication:Mode");
 
         // Assert
+        await Task.CompletedTask;
         Assert.Equal("EntraExternalId", authMode);
     }
 
@@ -99,6 +100,7 @@ public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<Entra
         Assert.Equal("test-tenant.onmicrosoft.com", tenantId);
         Assert.Equal("test-client-id", clientId);
         Assert.Equal("https://test-tenant.b2clogin.com/test-tenant.onmicrosoft.com/v2.0", authority);
+        await Task.CompletedTask;
     }
 
     [Fact]
@@ -112,6 +114,7 @@ public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<Entra
         var authService = scope.ServiceProvider.GetService<FabrikamApi.Services.Authentication.IEntraExternalIdAuthenticationService>();
         
         Assert.NotNull(authService);
+        await Task.CompletedTask;
     }
 
     [Fact]
@@ -126,6 +129,7 @@ public class EntraExternalIdAuthenticationIntegrationTests : IClassFixture<Entra
 
         // Assert
         Assert.NotEmpty(authSchemes);
+        await Task.CompletedTask;
     }
 
     // Simulated OAuth token tests (in real scenarios, you'd use actual OAuth tokens)
